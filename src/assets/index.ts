@@ -1,0 +1,2 @@
+// Asset exports placeholder
+export {};
