@@ -7,7 +7,7 @@ import { CustomButton, CustomInput } from '@/components/common';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { updateProfile } from '@/redux/slices/authSlice';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { validateEmail, validatePhone, validateRequired } from '@/utils/validators';
+import { validateEmail, validatePhone, validateName, validateCompany } from '@/utils/validators';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 
@@ -40,7 +40,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
         <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>Edit Profile</Text>
         {(['name', 'email', 'phone', 'company'] as const).map(field => (
           <Controller key={field} control={control} name={field}
-            rules={{ validate: field === 'email' ? validateEmail : field === 'phone' ? validatePhone : (v: string) => validateRequired(v, field) }}
+            rules={{ validate: field === 'name' ? (v: string) => validateName(v) : field === 'email' ? validateEmail : field === 'phone' ? validatePhone : validateCompany }}
             render={({ field: { onChange, value } }) => (
               <CustomInput label={field.charAt(0).toUpperCase() + field.slice(1)} value={value} onChangeText={onChange} error={errors[field]?.message as string} />
             )} />

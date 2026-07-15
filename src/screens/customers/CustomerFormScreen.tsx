@@ -6,7 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput } from '@/components/common';
 import { customerService } from '@/services/customerService';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { validateEmail, validatePhone, validateRequired } from '@/utils/validators';
+import { validateEmail, validatePhone, validateName, validateOptionalText } from '@/utils/validators';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 
@@ -40,11 +40,11 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const fields = [
-    { name: 'name' as const, label: 'Name', validate: (v: string) => validateRequired(v, 'Name') },
+    { name: 'name' as const, label: 'Name', validate: (v: string) => validateName(v) },
     { name: 'email' as const, label: 'Email', validate: validateEmail },
     { name: 'phone' as const, label: 'Phone', validate: validatePhone },
-    { name: 'company' as const, label: 'Company', validate: () => true },
-    { name: 'address' as const, label: 'Address', validate: () => true },
+    { name: 'company' as const, label: 'Company', validate: (v: string) => validateOptionalText(v, 'Company', 100) },
+    { name: 'address' as const, label: 'Address', validate: (v: string) => validateOptionalText(v, 'Address', 200) },
   ];
 
   return (

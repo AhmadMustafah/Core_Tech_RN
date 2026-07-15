@@ -10,16 +10,17 @@ import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, CustomInput, PasswordInput } from '@/components/common';
 import { useAppDispatch } from '@/redux/hooks';
 import { register as registerAction } from '@/redux/slices/authSlice';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import {
   validateEmail,
-  validatePassword,
+  validateSecurePassword,
   validatePhone,
-  validateRequired,
+  validateName,
+  validateCompany,
   validateConfirmPassword,
 } from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
@@ -74,12 +75,12 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
         {(
           [
-            { name: 'name' as const, label: 'Full Name', icon: 'account-outline', validate: (v: string) => validateRequired(v, 'Name') },
-            { name: 'email' as const, label: 'Email', icon: 'email-outline', validate: validateEmail, keyboard: 'email-address' as const },
-            { name: 'phone' as const, label: 'Phone', icon: 'phone-outline', validate: validatePhone, keyboard: 'phone-pad' as const },
-            { name: 'company' as const, label: 'Company', icon: 'office-building-outline', validate: (v: string) => validateRequired(v, 'Company') },
-            { name: 'password' as const, label: 'Password', icon: 'lock-outline', validate: validatePassword, secure: true },
-            { name: 'confirmPassword' as const, label: 'Confirm Password', icon: 'lock-check-outline', validate: (v: string) => validateConfirmPassword(password, v), secure: true },
+            { name: 'name' as const, label: 'Full Name', icon: 'account-outline', validate: (v: string) => validateName(v, 'Full name'), keyboard: 'default' as const, secure: false, showStrength: false },
+            { name: 'email' as const, label: 'Email', icon: 'email-outline', validate: validateEmail, keyboard: 'email-address' as const, secure: false, showStrength: false },
+            { name: 'phone' as const, label: 'Phone', icon: 'phone-outline', validate: validatePhone, keyboard: 'phone-pad' as const, secure: false, showStrength: false },
+            { name: 'company' as const, label: 'Company', icon: 'office-building-outline', validate: validateCompany, keyboard: 'default' as const, secure: false, showStrength: false },
+            { name: 'password' as const, label: 'Password', icon: 'lock-outline', validate: validateSecurePassword, keyboard: 'default' as const, secure: true, showStrength: true },
+            { name: 'confirmPassword' as const, label: 'Confirm Password', icon: 'lock-check-outline', validate: (v: string) => validateConfirmPassword(password, v), keyboard: 'default' as const, secure: true, showStrength: false },
           ] as const
         ).map(field => (
           <Controller
@@ -87,19 +88,30 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             control={control}
             name={field.name}
             rules={{ validate: field.validate }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <CustomInput
-                label={field.label}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                secureTextEntry={'secure' in field ? field.secure : false}
-                keyboardType={'keyboard' in field ? field.keyboard : 'default'}
-                autoCapitalize={field.name === 'email' ? 'none' : 'sentences'}
-                left={<CustomInput.Icon icon={field.icon} />}
-                error={errors[field.name]?.message as string}
-              />
-            )}
+            render={({ field: { onChange, onBlur, value } }) =>
+              field.secure ? (
+                <PasswordInput
+                  label={field.label}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  showStrength={field.showStrength}
+                  autoComplete={field.name === 'password' ? 'password-new' : 'password'}
+                  error={errors[field.name]?.message as string}
+                />
+              ) : (
+                <CustomInput
+                  label={field.label}
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  keyboardType={field.keyboard}
+                  autoCapitalize={field.name === 'email' ? 'none' : 'sentences'}
+                  left={<CustomInput.Icon icon={field.icon} />}
+                  error={errors[field.name]?.message as string}
+                />
+              )
+            }
           />
         ))}
 

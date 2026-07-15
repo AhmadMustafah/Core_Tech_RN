@@ -14,9 +14,9 @@ const now = new Date().toISOString();
 
 export const mockUser: User = {
   id: '1',
-  name: 'Ahmed Khan',
-  email: 'ahmed@coretech.com',
-  phone: '+92 300 1234567',
+  name: 'Ahmad Butt',
+  email: 'ahmad@coretech.com',
+  phone: '+92 3241121048',
   company: 'CoreTech Solutions',
   role: 'Admin',
   createdAt: now,

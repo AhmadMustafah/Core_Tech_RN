@@ -10,12 +10,12 @@ import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, CustomInput, PasswordInput } from '@/components/common';
 import { useAppDispatch } from '@/redux/hooks';
 import { login as loginAction } from '@/redux/slices/authSlice';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { validateEmail, validatePassword } from '@/utils/validators';
+import { validateEmail, validateLoginPassword } from '@/utils/validators';
 import { APP_NAME } from '@/constants';
 import type { AuthStackParamList } from '@/types/navigation';
 import type { LoginRequest } from '@/types';
@@ -87,6 +87,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               onBlur={onBlur}
               keyboardType="email-address"
               autoCapitalize="none"
+              maxLength={100}
               left={<CustomInput.Icon icon="email-outline" />}
               error={errors.email?.message as string}
             />
@@ -96,15 +97,14 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         <Controller
           control={control}
           name="password"
-          rules={{ validate: validatePassword }}
+          rules={{ validate: validateLoginPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
-            <CustomInput
+            <PasswordInput
               label="Password"
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              secureTextEntry
-              left={<CustomInput.Icon icon="lock-outline" />}
+              autoComplete="current-password"
               error={errors.password?.message as string}
             />
           )}

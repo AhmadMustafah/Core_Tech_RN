@@ -1,5 +1,7 @@
 export { CustomButton } from './CustomButton';
 export { CustomInput } from './CustomInput';
+export { PasswordInput } from './PasswordInput';
+export { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 export { CustomCard } from './CustomCard';
 export { EmptyState } from './EmptyState';
 export { LoadingState } from './LoadingState';

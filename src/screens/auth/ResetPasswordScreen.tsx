@@ -3,10 +3,14 @@ import { StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, PasswordInput } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { validatePassword, validateConfirmPassword } from '@/utils/validators';
+import {
+  validateSecurePassword,
+  validateConfirmPassword,
+  validateLoginPassword,
+} from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 
@@ -62,15 +66,15 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         <Controller
           control={control}
           name="password"
-          rules={{ validate: validatePassword }}
+          rules={{ validate: validateSecurePassword }}
           render={({ field: { onChange, onBlur, value } }) => (
-            <CustomInput
+            <PasswordInput
               label="New Password"
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              secureTextEntry
-              left={<CustomInput.Icon icon="lock-outline" />}
+              showStrength
+              autoComplete="password-new"
               error={errors.password?.message as string}
             />
           )}
@@ -81,13 +85,12 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
           name="confirmPassword"
           rules={{ validate: v => validateConfirmPassword(password, v) }}
           render={({ field: { onChange, onBlur, value } }) => (
-            <CustomInput
+            <PasswordInput
               label="Confirm Password"
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
-              secureTextEntry
-              left={<CustomInput.Icon icon="lock-check-outline" />}
+              autoComplete="password-new"
               error={errors.confirmPassword?.message as string}
             />
           )}

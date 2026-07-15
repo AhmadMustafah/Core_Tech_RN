@@ -3,10 +3,14 @@ import { StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-na
 import { Text, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, PasswordInput } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { validatePassword, validateConfirmPassword } from '@/utils/validators';
+import {
+  validateLoginPassword,
+  validateSecurePassword,
+  validateConfirmPassword,
+} from '@/utils/validators';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 
@@ -37,12 +41,21 @@ export const ChangePasswordScreen: React.FC<Props> = () => {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>Change Password</Text>
         {error && <Text style={{ color: colors.error, marginBottom: spacing.md }}>{error}</Text>}
-        <Controller control={control} name="currentPassword" rules={{ validate: validatePassword }}
-          render={({ field: { onChange, value } }) => <CustomInput label="Current Password" value={value} onChangeText={onChange} secureTextEntry error={errors.currentPassword?.message as string} />} />
-        <Controller control={control} name="newPassword" rules={{ validate: validatePassword }}
-          render={({ field: { onChange, value } }) => <CustomInput label="New Password" value={value} onChangeText={onChange} secureTextEntry error={errors.newPassword?.message as string} />} />
+        <Controller control={control} name="currentPassword" rules={{ validate: validateLoginPassword }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <PasswordInput label="Current Password" value={value} onChangeText={onChange} onBlur={onBlur}
+              autoComplete="current-password" error={errors.currentPassword?.message as string} />
+          )} />
+        <Controller control={control} name="newPassword" rules={{ validate: validateSecurePassword }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <PasswordInput label="New Password" value={value} onChangeText={onChange} onBlur={onBlur}
+              showStrength autoComplete="password-new" error={errors.newPassword?.message as string} />
+          )} />
         <Controller control={control} name="confirmPassword" rules={{ validate: v => validateConfirmPassword(newPassword, v) }}
-          render={({ field: { onChange, value } }) => <CustomInput label="Confirm Password" value={value} onChangeText={onChange} secureTextEntry error={errors.confirmPassword?.message as string} />} />
+          render={({ field: { onChange, onBlur, value } }) => (
+            <PasswordInput label="Confirm Password" value={value} onChangeText={onChange} onBlur={onBlur}
+              autoComplete="password-new" error={errors.confirmPassword?.message as string} />
+          )} />
         <CustomButton title="Change Password" onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
       </ScrollView>
       <Snackbar visible={success} onDismiss={() => setSuccess(false)}>Password changed successfully!</Snackbar>
