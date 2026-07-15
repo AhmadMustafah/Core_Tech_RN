@@ -1,19 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   View,
+  Alert,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CommonActions } from '@react-navigation/native';
 import { CustomButton, CustomInput, PasswordInput } from '@/components/common';
-import { useAppDispatch } from '@/redux/hooks';
-import { register as registerAction } from '@/redux/slices/authSlice';
-import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import {
   validateEmail,
@@ -29,28 +26,101 @@ import { spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
+const defaultValues: RegisterRequest = {
+  name: '',
+  email: '',
+  phone: '',
+  company: '',
+  password: '',
+  confirmPassword: '',
+};
+
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
-  const dispatch = useAppDispatch();
   const { colors } = useAppTheme();
-  const { isLoading, error } = useAuth();
+  const [formError, setFormError] = useState<string | null>(null);
 
   const {
     control,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<RegisterRequest>();
+  } = useForm<RegisterRequest>({
+    defaultValues,
+    mode: 'onSubmit',
+    reValidateMode: 'onChange',
+  });
 
-  const password = watch('password');
+  const password = watch('password') ?? '';
 
-  const onSubmit = async (data: RegisterRequest) => {
-    const result = await dispatch(registerAction(data));
-    if (registerAction.fulfilled.match(result)) {
-      navigation.getParent()?.dispatch(
-        CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
-      );
-    }
+  const onInvalid = () => {
+    setFormError('Please fill in all required fields correctly.');
   };
+
+  const onSubmit = (_data: RegisterRequest) => {
+    setFormError(null);
+    Alert.alert(
+      'Registration Unavailable',
+      'Backend APIs are not connected yet, so signup is not available at this time.\n\nPlease use the demo login account:\nEmail: ahmed@coretech.com\nPassword: password123',
+      [{ text: 'OK' }],
+    );
+  };
+
+  const fields = [
+    {
+      name: 'name' as const,
+      label: 'Full Name',
+      icon: 'account-outline',
+      validate: (v: string) => validateName(v ?? '', 'Full name'),
+      keyboard: 'default' as const,
+      secure: false,
+      showStrength: false,
+    },
+    {
+      name: 'email' as const,
+      label: 'Email',
+      icon: 'email-outline',
+      validate: (v: string) => validateEmail(v ?? ''),
+      keyboard: 'email-address' as const,
+      secure: false,
+      showStrength: false,
+    },
+    {
+      name: 'phone' as const,
+      label: 'Phone',
+      icon: 'phone-outline',
+      validate: (v: string) => validatePhone(v ?? ''),
+      keyboard: 'phone-pad' as const,
+      secure: false,
+      showStrength: false,
+    },
+    {
+      name: 'company' as const,
+      label: 'Company',
+      icon: 'office-building-outline',
+      validate: (v: string) => validateCompany(v ?? ''),
+      keyboard: 'default' as const,
+      secure: false,
+      showStrength: false,
+    },
+    {
+      name: 'password' as const,
+      label: 'Password',
+      icon: 'lock-outline',
+      validate: (v: string) => validateSecurePassword(v ?? ''),
+      keyboard: 'default' as const,
+      secure: true,
+      showStrength: true,
+    },
+    {
+      name: 'confirmPassword' as const,
+      label: 'Confirm Password',
+      icon: 'lock-check-outline',
+      validate: (v: string) => validateConfirmPassword(password, v ?? ''),
+      keyboard: 'default' as const,
+      secure: true,
+      showStrength: false,
+    },
+  ];
 
   return (
     <KeyboardAvoidingView
@@ -67,22 +137,13 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           Register your business account
         </Text>
 
-        {error && (
+        {formError && (
           <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
-            <Text style={{ color: colors.error }}>{error}</Text>
+            <Text style={{ color: colors.error }}>{formError}</Text>
           </View>
         )}
 
-        {(
-          [
-            { name: 'name' as const, label: 'Full Name', icon: 'account-outline', validate: (v: string) => validateName(v, 'Full name'), keyboard: 'default' as const, secure: false, showStrength: false },
-            { name: 'email' as const, label: 'Email', icon: 'email-outline', validate: validateEmail, keyboard: 'email-address' as const, secure: false, showStrength: false },
-            { name: 'phone' as const, label: 'Phone', icon: 'phone-outline', validate: validatePhone, keyboard: 'phone-pad' as const, secure: false, showStrength: false },
-            { name: 'company' as const, label: 'Company', icon: 'office-building-outline', validate: validateCompany, keyboard: 'default' as const, secure: false, showStrength: false },
-            { name: 'password' as const, label: 'Password', icon: 'lock-outline', validate: validateSecurePassword, keyboard: 'default' as const, secure: true, showStrength: true },
-            { name: 'confirmPassword' as const, label: 'Confirm Password', icon: 'lock-check-outline', validate: (v: string) => validateConfirmPassword(password, v), keyboard: 'default' as const, secure: true, showStrength: false },
-          ] as const
-        ).map(field => (
+        {fields.map(field => (
           <Controller
             key={field.name}
             control={control}
@@ -92,8 +153,11 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               field.secure ? (
                 <PasswordInput
                   label={field.label}
-                  value={value}
-                  onChangeText={onChange}
+                  value={value ?? ''}
+                  onChangeText={text => {
+                    onChange(text);
+                    if (formError) setFormError(null);
+                  }}
                   onBlur={onBlur}
                   showStrength={field.showStrength}
                   autoComplete={field.name === 'password' ? 'password-new' : 'password'}
@@ -102,8 +166,11 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               ) : (
                 <CustomInput
                   label={field.label}
-                  value={value}
-                  onChangeText={onChange}
+                  value={value ?? ''}
+                  onChangeText={text => {
+                    onChange(text);
+                    if (formError) setFormError(null);
+                  }}
                   onBlur={onBlur}
                   keyboardType={field.keyboard}
                   autoCapitalize={field.name === 'email' ? 'none' : 'sentences'}
@@ -117,8 +184,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
         <CustomButton
           title="Create Account"
-          onPress={handleSubmit(onSubmit)}
-          loading={isLoading}
+          onPress={handleSubmit(onSubmit, onInvalid)}
           fullWidth
           style={{ marginTop: spacing.md }}
         />
