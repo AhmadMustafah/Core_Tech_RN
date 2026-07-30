@@ -12,5 +12,6 @@ module.exports = {
       },
     ],
     'react-native-paper/babel',
+    'react-native-reanimated/plugin',
   ],
 };

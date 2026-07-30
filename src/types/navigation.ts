@@ -49,19 +49,28 @@ export type ProfileStackParamList = {
   AboutApp: undefined;
 };
 
+export type DashboardStackParamList = {
+  DashboardHome: undefined;
+  Activity: undefined;
+};
+
 export type MainTabParamList = {
-  Dashboard: undefined;
+  Dashboard: NavigatorScreenParams<DashboardStackParamList>;
   Inventory: NavigatorScreenParams<InventoryStackParamList>;
   Sales: NavigatorScreenParams<SalesStackParamList>;
   Purchases: NavigatorScreenParams<PurchaseStackParamList>;
   Profile: NavigatorScreenParams<ProfileStackParamList>;
 };
 
+export type DrawerParamList = {
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
+};
+
 export type RootStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
   Auth: NavigatorScreenParams<AuthStackParamList>;
-  Main: NavigatorScreenParams<MainTabParamList>;
+  Main: NavigatorScreenParams<DrawerParamList>;
 };
 
 declare global {
