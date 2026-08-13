@@ -2,15 +2,12 @@ import React, { useEffect } from 'react';
 import {
   StyleSheet,
   View,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
-import { CustomButton, CustomInput, PasswordInput } from '@/components/common';
+import { CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
 import { useAppDispatch } from '@/redux/hooks';
 import { login as loginAction } from '@/redux/slices/authSlice';
 import { useAuth } from '@/hooks/useAuth';
@@ -52,13 +49,9 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
+    <FormScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+      contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
           <Text style={styles.logo}>🏢</Text>
           <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
@@ -133,8 +126,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
             style={styles.registerLink}
           />
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 

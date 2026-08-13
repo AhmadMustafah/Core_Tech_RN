@@ -151,4 +151,5 @@ export interface PaginatedResponse<T> {
 }
 
 export type ThemeMode = 'light' | 'dark' | 'system';
+export type { ThemePreset } from '@/theme';
 export type Language = 'en' | 'ur';

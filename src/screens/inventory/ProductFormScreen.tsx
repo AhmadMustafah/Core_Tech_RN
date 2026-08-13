@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, KeyboardAvoidingView, Platform, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, Menu, Button } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { productService } from '@/services/productService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import {
@@ -94,10 +94,9 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <KeyboardAvoidingView
+    <FormScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      contentContainerStyle={styles.scroll}>
         <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>
           {isEdit ? 'Edit Product' : 'Add Product'}
         </Text>
@@ -191,8 +190,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           fullWidth
           style={{ marginTop: spacing.md }}
         />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 

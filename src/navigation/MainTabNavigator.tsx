@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import {
   BottomTabBar,
   createBottomTabNavigator,
@@ -11,56 +11,123 @@ import { InventoryNavigator } from './InventoryNavigator';
 import { SalesNavigator } from './SalesNavigator';
 import { PurchaseNavigator } from './PurchaseNavigator';
 import { ProfileNavigator } from './ProfileNavigator';
-import { useDrawer } from './drawerContext';
+import { useDrawer, type ActiveRoute } from './drawerContext';
 import type { MainTabParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
+import { layout, tabPerformanceOptions, typography } from '@/theme';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const DrawerTabBar: React.FC<BottomTabBarProps> = props => {
-  const { setTabNavigation } = useDrawer();
+const getActiveRoute = (navigation: NavigationProp<MainTabParamList>): ActiveRoute => {
+  const state = navigation.getState();
+  const tabRoute = state.routes[state.index];
+  const nestedState = tabRoute.state;
+  const nestedRoute =
+    nestedState && nestedState.index != null
+      ? nestedState.routes[nestedState.index]
+      : undefined;
+
+  return {
+    tab: tabRoute.name as keyof MainTabParamList,
+    screen: nestedRoute?.name,
+  };
+};
+
+const DrawerTabBar: React.FC<BottomTabBarProps> = memo(props => {
+  const { setTabNavigation, setActiveRoute } = useDrawer();
+
+  const tabNavigation = props.navigation as unknown as NavigationProp<MainTabParamList>;
 
   useEffect(() => {
-    setTabNavigation(props.navigation as NavigationProp<MainTabParamList>);
+    setTabNavigation(tabNavigation);
     return () => setTabNavigation(null);
-  }, [props.navigation, setTabNavigation]);
+  }, [tabNavigation, setTabNavigation]);
+
+  useEffect(() => {
+    const updateActiveRoute = () => {
+      setActiveRoute(getActiveRoute(tabNavigation));
+    };
+
+    updateActiveRoute();
+    const unsubscribe = tabNavigation.addListener('state', updateActiveRoute);
+    return unsubscribe;
+  }, [tabNavigation, setActiveRoute]);
 
   return <BottomTabBar {...props} />;
-};
+});
+
+DrawerTabBar.displayName = 'DrawerTabBar';
 
 export const MainTabNavigator: React.FC = () => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
 
-  return (
-    <Tab.Navigator
-      tabBar={props => <DrawerTabBar {...props} />}
-      screenOptions={({ route }) => ({
+  const tabTitles = useMemo(
+    () => ({
+      Dashboard: t('tab.dashboard'),
+      Inventory: t('tab.inventory'),
+      Sales: t('tab.sales'),
+      Purchases: t('tab.purchases'),
+      Profile: t('tab.profile'),
+    }),
+    [t],
+  );
+
+  const screenOptions = useMemo(
+    () =>
+      ({ route }: { route: { name: string } }) => ({
+        ...tabPerformanceOptions,
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          paddingBottom: 4,
-          height: 60,
+          borderTopColor: colors.borderLight,
+          borderTopWidth: 1,
+          paddingBottom: 6,
+          paddingTop: 4,
+          height: layout.tabBarHeight,
+          elevation: 8,
+          shadowColor: colors.cardShadow,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 1,
+          shadowRadius: 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
-        tabBarIcon: ({ color, size }) => {
+        tabBarLabelStyle: {
+          ...(typography.caption as object),
+          fontWeight: '600' as const,
+          marginTop: -2,
+        },
+        tabBarIcon: ({
+          color,
+          size,
+          focused,
+        }: {
+          color: string;
+          size: number;
+          focused: boolean;
+        }) => {
           const icons: Record<string, string> = {
-            Dashboard: 'view-dashboard-outline',
-            Inventory: 'package-variant',
-            Sales: 'cart-outline',
-            Purchases: 'truck-outline',
-            Profile: 'account-outline',
+            Dashboard: focused ? 'view-dashboard' : 'view-dashboard-outline',
+            Inventory: focused ? 'package-variant' : 'package-variant-closed',
+            Sales: focused ? 'cart' : 'cart-outline',
+            Purchases: focused ? 'truck' : 'truck-outline',
+            Profile: focused ? 'account-circle' : 'account-circle-outline',
           };
-          return <Icon name={icons[route.name] || 'circle'} size={size} color={color} />;
+          return <Icon name={icons[route.name] || 'circle'} size={size - 1} color={color} />;
         },
-      })}>
-      <Tab.Screen name="Dashboard" component={DashboardNavigator} />
-      <Tab.Screen name="Inventory" component={InventoryNavigator} />
-      <Tab.Screen name="Sales" component={SalesNavigator} />
-      <Tab.Screen name="Purchases" component={PurchaseNavigator} />
-      <Tab.Screen name="Profile" component={ProfileNavigator} />
+      }),
+    [colors],
+  );
+
+  return (
+    <Tab.Navigator tabBar={props => <DrawerTabBar {...props} />} screenOptions={screenOptions}>
+      <Tab.Screen name="Dashboard" component={DashboardNavigator} options={{ title: tabTitles.Dashboard }} />
+      <Tab.Screen name="Inventory" component={InventoryNavigator} options={{ title: tabTitles.Inventory }} />
+      <Tab.Screen name="Sales" component={SalesNavigator} options={{ title: tabTitles.Sales }} />
+      <Tab.Screen name="Purchases" component={PurchaseNavigator} options={{ title: tabTitles.Purchases }} />
+      <Tab.Screen name="Profile" component={ProfileNavigator} options={{ title: tabTitles.Profile }} />
     </Tab.Navigator>
   );
 };

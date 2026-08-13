@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import {
   StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
   View,
   Alert,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, PasswordInput } from '@/components/common';
+import { CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import {
   validateEmail,
@@ -123,13 +120,9 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   ];
 
   return (
-    <KeyboardAvoidingView
+    <FormScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
+      contentContainerStyle={styles.scroll}>
         <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
           Create Account
         </Text>
@@ -195,8 +188,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           onPress={() => navigation.navigate('Login')}
           style={{ marginTop: spacing.md }}
         />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Text, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { updateProfile } from '@/redux/slices/authSlice';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -35,8 +35,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+    <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
         <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>Edit Profile</Text>
         {(['name', 'email', 'phone', 'company'] as const).map(field => (
           <Controller key={field} control={control} name={field}
@@ -46,9 +45,8 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
             )} />
         ))}
         <CustomButton title="Save Changes" onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-      </ScrollView>
       <Snackbar visible={success} onDismiss={() => setSuccess(false)}>Profile updated successfully!</Snackbar>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 

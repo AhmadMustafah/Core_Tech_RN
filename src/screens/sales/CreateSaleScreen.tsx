@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text, Menu, Button, Divider } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { saleService } from '@/services/saleService';
 import { productService } from '@/services/productService';
 import { customerService } from '@/services/customerService';
@@ -93,7 +93,7 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
+    <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>Create Sale</Text>
       {formError && (
         <Text style={{ color: colors.error, marginBottom: spacing.sm }}>{formError}</Text>
@@ -150,7 +150,7 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.totalRow}><Text variant="titleMedium" style={{ color: colors.text }}>Total</Text><Text variant="titleLarge" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(totalAmount)}</Text></View>
 
       <CustomButton title="Create Sale" onPress={handleSubmit} loading={loading} fullWidth disabled={!selectedCustomer || items.length === 0} style={{ marginTop: spacing.lg }} />
-    </ScrollView>
+    </FormScrollView>
   );
 };
 

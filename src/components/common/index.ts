@@ -10,3 +10,4 @@ export { StatCard } from './StatCard';
 export { SearchBar } from './SearchBar';
 export { FilterChips } from './FilterChips';
 export { ScreenHeader } from './ScreenHeader';
+export { FormScrollView } from './FormScrollView';

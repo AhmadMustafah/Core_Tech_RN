@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, Menu, Button } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton } from '@/components/common';
+import { CustomButton, FormScrollView } from '@/components/common';
 import { purchaseService } from '@/services/purchaseService';
 import { productService } from '@/services/productService';
 import { supplierService } from '@/services/supplierService';
@@ -55,7 +55,7 @@ export const CreatePurchaseScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
+    <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>Create Purchase</Text>
 
       <Menu visible={supplierMenu} onDismiss={() => setSupplierMenu(false)} anchor={
@@ -85,7 +85,7 @@ export const CreatePurchaseScreen: React.FC<Props> = ({ navigation }) => {
 
       <CustomButton title="Create Purchase" onPress={handleSubmit} loading={loading} fullWidth
         disabled={!selectedSupplier || items.length === 0} style={{ marginTop: spacing.lg }} />
-    </ScrollView>
+    </FormScrollView>
   );
 };
 

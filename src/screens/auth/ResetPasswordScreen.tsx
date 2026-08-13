@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, PasswordInput } from '@/components/common';
+import { CustomButton, PasswordInput, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import {
@@ -45,10 +45,10 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <KeyboardAvoidingView
+    <FormScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.content}>
+      contentContainerStyle={styles.content}>
+      <View>
         <Text style={styles.icon}>🔑</Text>
         <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
           Reset Password
@@ -102,13 +102,13 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
       <Snackbar visible={success} onDismiss={() => setSuccess(false)}>
         Password reset successfully! Redirecting to login...
       </Snackbar>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
+  content: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
   icon: { fontSize: 56, textAlign: 'center', marginBottom: spacing.lg },
   errorBox: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.md },
 });

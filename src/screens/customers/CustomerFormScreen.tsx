@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { customerService } from '@/services/customerService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { validateEmail, validatePhone, validateName, validateOptionalText } from '@/utils/validators';
@@ -48,8 +48,7 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
   ];
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+    <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
         <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>{isEdit ? 'Edit Customer' : 'Add Customer'}</Text>
         {fields.map(f => (
           <Controller key={f.name} control={control} name={f.name} rules={{ validate: f.validate }}
@@ -59,8 +58,7 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
             )} />
         ))}
         <CustomButton title={isEdit ? 'Update' : 'Add Customer'} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-      </ScrollView>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 

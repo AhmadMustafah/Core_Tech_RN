@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput } from '@/components/common';
+import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { validateOtp } from '@/utils/validators';
@@ -34,10 +34,10 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
   };
 
   return (
-    <KeyboardAvoidingView
+    <FormScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.content}>
+      contentContainerStyle={styles.content}>
+      <View>
         <Text style={styles.icon}>📱</Text>
         <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
           Verify OTP
@@ -73,13 +73,13 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
         <CustomButton title="Verify OTP" onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
         <CustomButton title="Back" variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
       </View>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
+  content: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
   icon: { fontSize: 56, textAlign: 'center', marginBottom: spacing.lg },
   errorBox: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.md },
 });

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Text, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, PasswordInput } from '@/components/common';
+import { CustomButton, PasswordInput, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import {
@@ -37,8 +37,7 @@ export const ChangePasswordScreen: React.FC<Props> = () => {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+    <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
         <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>Change Password</Text>
         {error && <Text style={{ color: colors.error, marginBottom: spacing.md }}>{error}</Text>}
         <Controller control={control} name="currentPassword" rules={{ validate: validateLoginPassword }}
@@ -57,9 +56,8 @@ export const ChangePasswordScreen: React.FC<Props> = () => {
               autoComplete="password-new" error={errors.confirmPassword?.message as string} />
           )} />
         <CustomButton title="Change Password" onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-      </ScrollView>
       <Snackbar visible={success} onDismiss={() => setSuccess(false)}>Password changed successfully!</Snackbar>
-    </KeyboardAvoidingView>
+    </FormScrollView>
   );
 };
 

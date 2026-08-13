@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   BackHandler,
@@ -8,81 +8,190 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, Avatar, Divider, IconButton, TouchableRipple } from 'react-native-paper';
+import { Text, Avatar, TouchableRipple } from 'react-native-paper';
 import {
   CommonActions,
   useNavigation,
   type NavigationProp,
 } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { MainTabNavigator } from './MainTabNavigator';
-import { DrawerContext } from './drawerContext';
-import type {
-  DashboardStackParamList,
-  InventoryStackParamList,
-  MainTabParamList,
-  ProfileStackParamList,
-  PurchaseStackParamList,
-  RootStackParamList,
-  SalesStackParamList,
-} from '@/types/navigation';
+import { DrawerContext, type ActiveRoute } from './drawerContext';
+import type { MainTabParamList, RootStackParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppSelector } from '@/redux/hooks';
 import { getInitials } from '@/utils/formatters';
-import { borderRadius, spacing } from '@/theme';
+import { borderRadius, layout, shadows, spacing, typography } from '@/theme';
+import { useLocalization } from '@/hooks/useLocalization';
+import type { TranslationKey } from '@/localization';
 
-const DRAWER_WIDTH = 280;
-const OPEN_DURATION = 260;
-const CLOSE_DURATION = 220;
+const OPEN_DURATION = 200;
+const CLOSE_DURATION = 180;
 
-type DrawerAction =
-  | {
-      label: string;
-      icon: string;
-      tab: 'Inventory';
-      screen: keyof InventoryStackParamList;
-    }
-  | {
-      label: string;
-      icon: string;
-      tab: 'Sales';
-      screen: keyof SalesStackParamList;
-    }
-  | {
-      label: string;
-      icon: string;
-      tab: 'Purchases';
-      screen: keyof PurchaseStackParamList;
-    }
-  | {
-      label: string;
-      icon: string;
-      tab: 'Profile';
-      screen: keyof ProfileStackParamList;
-    }
-  | {
-      label: string;
-      icon: string;
-      tab: 'Dashboard';
-      screen: keyof DashboardStackParamList;
-    };
+type DrawerMenuItem = {
+  id: string;
+  labelKey: TranslationKey;
+  icon: string;
+  tab: keyof MainTabParamList;
+  screen: string;
+  section: 'overview' | 'operations' | 'insights';
+};
 
-const drawerActions: DrawerAction[] = [
-  { label: 'Add Product', icon: 'plus-box', tab: 'Inventory', screen: 'AddProduct' },
-  { label: 'New Sale', icon: 'cart-plus', tab: 'Sales', screen: 'CreateSale' },
-  { label: 'New Purchase', icon: 'truck-plus', tab: 'Purchases', screen: 'CreatePurchase' },
-  { label: 'Customers', icon: 'account-group', tab: 'Profile', screen: 'CustomerList' },
-  { label: 'Activity', icon: 'history', tab: 'Dashboard', screen: 'Activity' },
+const MENU_SECTIONS: { key: DrawerMenuItem['section']; titleKey: TranslationKey }[] = [
+  { key: 'overview', titleKey: 'drawer.section.overview' },
+  { key: 'operations', titleKey: 'drawer.section.operations' },
+  { key: 'insights', titleKey: 'drawer.section.insights' },
 ];
 
-const DrawerPanel: React.FC<{
+const DRAWER_MENU_ITEMS: DrawerMenuItem[] = [
+  {
+    id: 'profile',
+    labelKey: 'drawer.profile',
+    icon: 'account-circle-outline',
+    tab: 'Profile',
+    screen: 'ProfileHome',
+    section: 'overview',
+  },
+  {
+    id: 'dashboard',
+    labelKey: 'drawer.dashboard',
+    icon: 'view-dashboard-outline',
+    tab: 'Dashboard',
+    screen: 'DashboardHome',
+    section: 'overview',
+  },
+  {
+    id: 'sales',
+    labelKey: 'drawer.sales',
+    icon: 'cart-outline',
+    tab: 'Sales',
+    screen: 'SalesList',
+    section: 'operations',
+  },
+  {
+    id: 'purchases',
+    labelKey: 'drawer.purchases',
+    icon: 'truck-outline',
+    tab: 'Purchases',
+    screen: 'PurchaseList',
+    section: 'operations',
+  },
+  {
+    id: 'inventory',
+    labelKey: 'drawer.inventory',
+    icon: 'warehouse',
+    tab: 'Inventory',
+    screen: 'ProductList',
+    section: 'operations',
+  },
+  {
+    id: 'products',
+    labelKey: 'drawer.products',
+    icon: 'package-variant-closed',
+    tab: 'Inventory',
+    screen: 'AddProduct',
+    section: 'operations',
+  },
+  {
+    id: 'reports',
+    labelKey: 'drawer.reports',
+    icon: 'chart-line',
+    tab: 'Dashboard',
+    screen: 'Activity',
+    section: 'insights',
+  },
+  {
+    id: 'notifications',
+    labelKey: 'drawer.notifications',
+    icon: 'bell-outline',
+    tab: 'Profile',
+    screen: 'Notifications',
+    section: 'insights',
+  },
+  {
+    id: 'settings',
+    labelKey: 'drawer.settings',
+    icon: 'cog-outline',
+    tab: 'Profile',
+    screen: 'Settings',
+    section: 'insights',
+  },
+  {
+    id: 'help',
+    labelKey: 'drawer.help',
+    icon: 'help-circle-outline',
+    tab: 'Profile',
+    screen: 'AboutApp',
+    section: 'insights',
+  },
+];
+
+const isItemActive = (item: DrawerMenuItem, activeRoute: ActiveRoute | null) => {
+  if (!activeRoute) {
+    return false;
+  }
+
+  return item.tab === activeRoute.tab && item.screen === activeRoute.screen;
+};
+
+const DrawerMenuRow = memo<{
+  item: DrawerMenuItem;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}>(({ item, label, active, onPress }) => {
+  const { colors } = useAppTheme();
+
+  return (
+    <TouchableRipple
+      onPress={onPress}
+      style={[
+        styles.menuItem,
+        active && { backgroundColor: colors.primaryMuted },
+      ]}
+      borderless
+      rippleColor={colors.primary + '18'}>
+      <View style={styles.menuItemContent}>
+        <View
+          style={[
+            styles.menuIconWrap,
+            {
+              backgroundColor: active ? colors.primary + '22' : colors.surfaceVariant,
+            },
+          ]}>
+          <Icon
+            name={item.icon}
+            size={20}
+            color={active ? colors.primary : colors.textSecondary}
+          />
+        </View>
+        <Text
+          style={[
+            styles.menuLabel,
+            { color: active ? colors.primary : colors.text },
+            active && styles.menuLabelActive,
+          ]}>
+          {label}
+        </Text>
+      </View>
+    </TouchableRipple>
+  );
+});
+
+DrawerMenuRow.displayName = 'DrawerMenuRow';
+
+const DrawerPanel = memo<{
   visible: boolean;
   slideAnim: Animated.Value;
+  activeRoute: ActiveRoute | null;
   onClose: (onClosed?: () => void) => void;
   tabNavigationRef: React.RefObject<NavigationProp<MainTabParamList> | null>;
-}> = ({ visible, slideAnim, onClose, tabNavigationRef }) => {
+}>(({ visible, slideAnim, activeRoute, onClose, tabNavigationRef }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
+  const insets = useSafeAreaInsets();
   const { user } = useAppSelector(state => state.auth);
   const { logout } = useAuth();
   const rootNavigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -100,23 +209,23 @@ const DrawerPanel: React.FC<{
     return () => subscription.remove();
   }, [visible, onClose]);
 
-  const navigateTo = (action: DrawerAction) => {
-    onClose(() => {
+  const navigateTo = useCallback(
+    (item: DrawerMenuItem) => {
       const tabNavigation = tabNavigationRef.current;
-      if (!tabNavigation) {
-        return;
+      if (tabNavigation) {
+        tabNavigation.dispatch(
+          CommonActions.navigate({
+            name: item.tab,
+            params: { screen: item.screen },
+          }),
+        );
       }
+      onClose();
+    },
+    [onClose, tabNavigationRef],
+  );
 
-      tabNavigation.dispatch(
-        CommonActions.navigate({
-          name: action.tab,
-          params: { screen: action.screen },
-        }),
-      );
-    });
-  };
-
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     onClose(() => {
       logout();
       rootNavigation.dispatch(
@@ -126,7 +235,7 @@ const DrawerPanel: React.FC<{
         }),
       );
     });
-  };
+  }, [logout, onClose, rootNavigation]);
 
   if (!visible) {
     return null;
@@ -135,7 +244,7 @@ const DrawerPanel: React.FC<{
   return (
     <>
       <Pressable
-        style={styles.backdrop}
+        style={[styles.backdrop, { backgroundColor: colors.overlay }]}
         onPress={() => onClose()}
         accessibilityLabel="Close menu"
         accessibilityRole="button"
@@ -143,91 +252,78 @@ const DrawerPanel: React.FC<{
       <Animated.View
         style={[
           styles.drawerPanel,
+          shadows.drawer,
           {
-            width: DRAWER_WIDTH,
-            backgroundColor: colors.surface,
-            borderRightColor: colors.border,
+            width: layout.drawerWidth,
+            backgroundColor: colors.drawerSurface,
+            paddingTop: insets.top,
             transform: [{ translateX: slideAnim }],
           },
         ]}>
-        <ScrollView contentContainerStyle={styles.drawerContent}>
-          <View style={styles.drawerHeader}>
-            <View style={styles.drawerHeaderTop}>
-              <Avatar.Text
-                size={56}
-                label={getInitials(user?.name || 'User')}
-                style={{ backgroundColor: colors.primary }}
-              />
-              <IconButton
-                icon="close"
-                size={20}
-                iconColor={colors.textSecondary}
-                onPress={() => onClose()}
-                accessibilityLabel="Close menu"
-              />
+        <View style={[styles.drawerHeader, { backgroundColor: colors.drawerHeader }]}>
+          <Avatar.Text
+            size={52}
+            label={getInitials(user?.name || 'User')}
+            style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}
+            color="#FFFFFF"
+          />
+          <Text style={styles.drawerName}>{user?.name || 'User'}</Text>
+          <Text style={styles.drawerCompany}>{user?.company || 'CoreTech ERP'}</Text>
+        </View>
+
+        <ScrollView
+          contentContainerStyle={[
+            styles.drawerScroll,
+            { paddingBottom: spacing.lg + insets.bottom },
+          ]}
+          showsVerticalScrollIndicator={false}>
+          {MENU_SECTIONS.map((section, sectionIndex) => (
+            <View key={section.key}>
+              {sectionIndex > 0 ? (
+                <View style={[styles.sectionDivider, { backgroundColor: colors.borderLight }]} />
+              ) : null}
+              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
+                {t(section.titleKey)}
+              </Text>
+              {DRAWER_MENU_ITEMS.filter(item => item.section === section.key).map(item => (
+                <DrawerMenuRow
+                  key={item.id}
+                  item={item}
+                  label={t(item.labelKey)}
+                  active={isItemActive(item, activeRoute)}
+                  onPress={() => navigateTo(item)}
+                />
+              ))}
             </View>
-            <Text variant="titleMedium" style={[styles.drawerName, { color: colors.text }]}>
-              {user?.name || 'User'}
-            </Text>
-            <Text variant="bodySmall" style={{ color: colors.textSecondary }}>
-              {user?.company || 'CoreTech ERP'}
-            </Text>
-          </View>
-
-          <Divider style={{ backgroundColor: colors.border }} />
-
-          <Text
-            variant="labelMedium"
-            style={[styles.drawerSectionLabel, { color: colors.textSecondary }]}>
-            MENU
-          </Text>
-
-          {drawerActions.map(action => (
-            <TouchableRipple
-              key={action.label}
-              onPress={() => navigateTo(action)}
-              style={styles.drawerItem}
-              borderless
-              rippleColor={colors.primary + '22'}>
-              <View style={styles.drawerItemContent}>
-                <View style={[styles.drawerItemIcon, { backgroundColor: colors.primary + '15' }]}>
-                  <Icon name={action.icon} size={20} color={colors.primary} />
-                </View>
-                <Text variant="bodyLarge" style={{ color: colors.text, flex: 1 }}>
-                  {action.label}
-                </Text>
-                <Icon name="chevron-right" size={18} color={colors.textSecondary} />
-              </View>
-            </TouchableRipple>
           ))}
 
-          <View style={[styles.logoutSection, { borderTopColor: colors.border }]}>
-            <TouchableRipple
-              onPress={handleLogout}
-              style={styles.drawerItem}
-              borderless
-              rippleColor={colors.error + '22'}>
-              <View style={styles.drawerItemContent}>
-                <View style={[styles.drawerItemIcon, { backgroundColor: colors.error + '15' }]}>
-                  <Icon name="logout" size={20} color={colors.error} />
-                </View>
-                <Text
-                  variant="bodyLarge"
-                  style={{ color: colors.error, flex: 1, fontWeight: '600' }}>
-                  Logout
-                </Text>
+          <View style={[styles.sectionDivider, { backgroundColor: colors.borderLight }]} />
+          <TouchableRipple
+            onPress={handleLogout}
+            style={styles.logoutItem}
+            borderless
+            rippleColor={colors.error + '18'}>
+            <View style={styles.menuItemContent}>
+              <View style={[styles.menuIconWrap, { backgroundColor: colors.error + '14' }]}>
+                <Icon name="logout" size={20} color={colors.error} />
               </View>
-            </TouchableRipple>
-          </View>
+              <Text style={[styles.menuLabel, { color: colors.error, fontWeight: '600' }]}>
+                {t('drawer.logout')}
+              </Text>
+            </View>
+          </TouchableRipple>
         </ScrollView>
       </Animated.View>
     </>
   );
-};
+});
+
+DrawerPanel.displayName = 'DrawerPanel';
 
 export const DrawerNavigator: React.FC = () => {
   const [visible, setVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const [activeRoute, setActiveRoute] = useState<ActiveRoute | null>(null);
+  const slideAnim = useRef(new Animated.Value(-layout.drawerWidth)).current;
   const tabNavigationRef = useRef<NavigationProp<MainTabParamList> | null>(null);
 
   const setTabNavigation = useCallback(
@@ -240,7 +336,7 @@ export const DrawerNavigator: React.FC = () => {
   const animateDrawer = useCallback(
     (open: boolean, onFinished?: () => void) => {
       Animated.timing(slideAnim, {
-        toValue: open ? 0 : -DRAWER_WIDTH,
+        toValue: open ? 0 : -layout.drawerWidth,
         duration: open ? OPEN_DURATION : CLOSE_DURATION,
         easing: open ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
         useNativeDriver: true,
@@ -278,8 +374,10 @@ export const DrawerNavigator: React.FC = () => {
       openDrawer,
       closeDrawer,
       setTabNavigation,
+      activeRoute,
+      setActiveRoute,
     }),
-    [openDrawer, closeDrawer, setTabNavigation],
+    [openDrawer, closeDrawer, setTabNavigation, activeRoute],
   );
 
   return (
@@ -289,6 +387,7 @@ export const DrawerNavigator: React.FC = () => {
         <DrawerPanel
           visible={visible}
           slideAnim={slideAnim}
+          activeRoute={activeRoute}
           onClose={closeDrawer}
           tabNavigationRef={tabNavigationRef}
         />
@@ -302,8 +401,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    ...StyleSheet.absoluteFill,
     zIndex: 10,
   },
   drawerPanel: {
@@ -312,59 +410,66 @@ const styles = StyleSheet.create({
     left: 0,
     bottom: 0,
     zIndex: 11,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    elevation: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-  },
-  drawerContent: {
-    paddingTop: spacing.xl,
-    flexGrow: 1,
   },
   drawerHeader: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
-  drawerHeaderTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
   drawerName: {
-    marginTop: spacing.sm,
-    fontWeight: '700',
+    ...(typography.h3 as object),
+    color: '#FFFFFF',
+    marginTop: spacing.md,
   },
-  drawerSectionLabel: {
-    paddingHorizontal: spacing.md,
+  drawerCompany: {
+    ...(typography.bodySmall as object),
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: spacing.xs,
+  },
+  drawerScroll: {
+    paddingTop: spacing.sm,
+  },
+  sectionLabel: {
+    ...(typography.label as object),
+    paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
-    letterSpacing: 0.8,
   },
-  drawerItem: {
+  sectionDivider: {
+    height: 1,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  menuItem: {
     marginHorizontal: spacing.sm,
-    marginBottom: spacing.xs,
+    marginBottom: 2,
     borderRadius: borderRadius.md,
   },
-  drawerItemContent: {
+  menuItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    gap: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
   },
-  drawerItemIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: borderRadius.md,
+  menuIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: borderRadius.sm + 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoutSection: {
-    borderTopWidth: 1,
-    marginTop: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
+  menuLabel: {
+    ...(typography.body as object),
+    flex: 1,
+    fontWeight: '500',
+  },
+  menuLabelActive: {
+    fontWeight: '600',
+  },
+  logoutItem: {
+    marginHorizontal: spacing.sm,
+    marginTop: spacing.xs,
+    borderRadius: borderRadius.md,
   },
 });

@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   USER: '@coretech/user',
   ONBOARDING_COMPLETE: '@coretech/onboarding_complete',
   THEME_MODE: '@coretech/theme_mode',
+  THEME_PRESET: '@coretech/theme_preset',
   LANGUAGE: '@coretech/language',
   NOTIFICATIONS_ENABLED: '@coretech/notifications_enabled',
 };

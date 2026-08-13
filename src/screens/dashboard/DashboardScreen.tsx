@@ -6,6 +6,7 @@ import {
   RefreshControl,
   useWindowDimensions,
   TouchableOpacity,
+  type DimensionValue,
 } from 'react-native';
 import { Text, Icon } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
@@ -30,7 +31,7 @@ import type {
   MainTabParamList,
   RootStackParamList,
 } from '@/types/navigation';
-import { borderRadius, spacing } from '@/theme';
+import { borderRadius, layout, shadows, spacing, typography } from '@/theme';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<DashboardStackParamList, 'DashboardHome'>,
@@ -41,7 +42,7 @@ type Props = CompositeScreenProps<
 >;
 
 const RECENT_ACTIVITY_LIMIT = 5;
-const MAX_CONTENT_WIDTH = 720;
+const MAX_CONTENT_WIDTH = layout.maxContentWidth;
 
 const MOCK_TRANSACTIONS = [
   {
@@ -129,7 +130,7 @@ const getLayoutMetrics = (width: number) => {
     isWide,
     contentPadding,
     kpiColumns,
-    kpiItemWidth: kpiColumns === 1 ? '100%' : '48%',
+    kpiItemWidth: (kpiColumns === 1 ? '100%' : '48%') as DimensionValue,
   };
 };
 
@@ -157,28 +158,27 @@ const KpiStatCard: React.FC<KpiStatCardProps> = ({
     <View
       style={[
         kpiStyles.card,
+        shadows.sm,
         {
           backgroundColor: colors.surface,
-          borderLeftColor: accentColor,
+          borderColor: colors.borderLight,
         },
       ]}>
-      <View style={[kpiStyles.iconContainer, { backgroundColor: accentColor + '15' }]}>
-        <Text style={kpiStyles.iconText}>{icon}</Text>
+      <View style={[kpiStyles.iconContainer, { backgroundColor: accentColor + '14' }]}>
+        <Icon source={icon} size={22} color={accentColor} />
       </View>
       <View style={kpiStyles.content}>
         <Text
-          variant="headlineSmall"
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.65}
           style={[
-            kpiStyles.value,
-            compactValue && kpiStyles.valueCompact,
+            compactValue ? typography.kpiValueCompact : typography.kpiValue,
             { color: colors.text },
           ]}>
           {value}
         </Text>
-        <Text variant="bodySmall" style={{ color: colors.textSecondary }}>
+        <Text style={[typography.bodySmall, { color: colors.textSecondary, marginTop: 2 }]}>
           {title}
         </Text>
       </View>
@@ -187,7 +187,7 @@ const KpiStatCard: React.FC<KpiStatCardProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={kpiStyles.wrapper}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.82} style={kpiStyles.wrapper}>
         {content}
       </TouchableOpacity>
     );
@@ -206,34 +206,23 @@ const kpiStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.md,
-    borderRadius: borderRadius.md,
-    borderLeftWidth: 4,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
     minHeight: 96,
-    elevation: 1,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
     flexShrink: 0,
   },
-  iconText: {
-    fontSize: 24,
-  },
   content: {
     flex: 1,
     minWidth: 0,
     justifyContent: 'center',
-  },
-  value: {
-    fontWeight: '700',
-  },
-  valueCompact: {
-    fontSize: 20,
-    lineHeight: 26,
   },
 });
 
@@ -304,21 +293,21 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         key: 'products',
         title: 'Products',
         value: summary?.totalProducts ?? 0,
-        icon: '📦',
+        icon: 'package-variant',
         color: colors.primary,
       },
       {
         key: 'customers',
         title: 'Customers',
         value: summary?.totalCustomers ?? 0,
-        icon: '👥',
+        icon: 'account-group-outline',
         color: colors.info,
       },
       {
         key: 'purchases',
         title: 'Purchases',
         value: formatCurrency(summary?.purchasesAmount ?? 0),
-        icon: '🛒',
+        icon: 'cart-outline',
         color: colors.secondary,
         compactValue: true,
       },
@@ -326,7 +315,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         key: 'low-stock',
         title: 'Low Stock',
         value: summary?.lowStockCount ?? 0,
-        icon: '⚠️',
+        icon: 'alert-circle-outline',
         color: colors.lowStock,
         onPress: () =>
           navigation.navigate('Inventory', { screen: 'ProductList' }),
@@ -368,12 +357,13 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         userName={user?.name || 'User'}
       />
 
-      <CustomCard
-        style={StyleSheet.flatten([
+      <View
+        style={[
           styles.section,
           styles.heroCard,
-          { backgroundColor: colors.primary },
-        ])}>
+          shadows.md,
+          { backgroundColor: colors.primary, borderColor: colors.primaryDark },
+        ]}>
         <View style={[styles.heroContent, isCompact && styles.heroContentCompact]}>
           <View style={styles.heroText}>
             <Text style={styles.heroLabel}>Total Revenue</Text>
@@ -388,14 +378,14 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
               {user?.company || 'CoreTech Enterprise'} · {summary?.totalSales ?? 0} sales
             </Text>
           </View>
-          <View style={[styles.heroBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
-            <Text style={styles.heroBadgeText}>📈</Text>
+          <View style={styles.heroBadge}>
+            <Icon source="chart-line" size={28} color="#FFFFFF" />
           </View>
         </View>
-      </CustomCard>
+      </View>
 
       <View style={styles.section}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: colors.text }]}>
+        <Text style={[styles.sectionTitle, typography.label, { color: colors.textMuted }]}>
           Key Metrics
         </Text>
         <View style={styles.kpiGrid}>
@@ -630,6 +620,9 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     marginBottom: 0,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
   heroContent: {
     flexDirection: 'row',
@@ -646,14 +639,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   heroLabel: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '500',
-    letterSpacing: 0.3,
+    ...typography.caption,
+    color: 'rgba(255,255,255,0.88)',
+    textTransform: 'uppercase',
   },
   heroValue: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...typography.h1,
     color: '#FFFFFF',
     marginTop: spacing.xs,
   },
@@ -661,8 +652,8 @@ const styles = StyleSheet.create({
     fontSize: 24,
   },
   heroMeta: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
+    ...typography.bodySmall,
+    color: 'rgba(255,255,255,0.78)',
     marginTop: spacing.xs,
   },
   heroBadge: {
@@ -672,10 +663,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
-  heroBadgeText: { fontSize: 26 },
   sectionTitle: {
-    fontWeight: '600',
     marginBottom: spacing.md,
   },
   kpiGrid: {
