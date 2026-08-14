@@ -138,5 +138,5 @@ const styles = StyleSheet.create({
   },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.sm },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  fab: { position: 'absolute', right: spacing.md, bottom: spacing.md },
+  fab: { position: 'absolute', end: spacing.md, bottom: spacing.md },
 });

@@ -12,6 +12,7 @@ import { useAppDispatch } from '@/redux/hooks';
 import { login as loginAction } from '@/redux/slices/authSlice';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { validateEmail, validateLoginPassword } from '@/utils/validators';
 import { APP_NAME } from '@/constants';
 import type { AuthStackParamList } from '@/types/navigation';
@@ -23,6 +24,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const { isLoading, error, clearError } = useAuth();
 
   const {
@@ -55,10 +57,10 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         <View style={styles.header}>
           <Text style={styles.logo}>🏢</Text>
           <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
-            Welcome Back
+            {t('auth.welcomeBack')}
           </Text>
           <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: 4 }}>
-            Sign in to {APP_NAME}
+            {t('auth.signInTo', { app: APP_NAME })}
           </Text>
         </View>
 
@@ -74,7 +76,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           rules={{ validate: validateEmail }}
           render={({ field: { onChange, onBlur, value } }) => (
             <CustomInput
-              label="Email"
+              label={t('auth.email')}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -93,7 +95,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
           rules={{ validate: validateLoginPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput
-              label="Password"
+              label={t('auth.password')}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -104,23 +106,23 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         />
 
         <CustomButton
-          title="Forgot Password?"
+          title={t('auth.forgotPassword')}
           variant="text"
           onPress={() => navigation.navigate('ForgotPassword')}
           style={styles.forgotButton}
         />
 
         <CustomButton
-          title="Sign In"
+          title={t('auth.signIn')}
           onPress={handleSubmit(onSubmit)}
           loading={isLoading}
           fullWidth
         />
 
         <View style={styles.footer}>
-          <Text style={{ color: colors.textSecondary }}>Don't have an account? </Text>
+          <Text style={{ color: colors.textSecondary }}>{t('auth.noAccount')} </Text>
           <CustomButton
-            title="Register"
+            title={t('auth.register')}
             variant="text"
             onPress={() => navigation.navigate('Register')}
             style={styles.registerLink}
@@ -161,6 +163,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
   },
   registerLink: {
-    marginLeft: -spacing.sm,
+    marginStart: -spacing.sm,
   },
 });

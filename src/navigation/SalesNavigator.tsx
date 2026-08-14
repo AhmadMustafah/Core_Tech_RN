@@ -24,9 +24,9 @@ export const SalesNavigator: React.FC = () => {
         component={SalesListScreen}
         options={{ title: t('screen.sales'), headerLeft: renderDrawerHeaderLeft }}
       />
-      <Stack.Screen name="SaleDetails" component={SaleDetailsScreen} options={{ title: 'Sale Details' }} />
-      <Stack.Screen name="CreateSale" component={CreateSaleScreen} options={{ title: 'Create Sale' }} />
-      <Stack.Screen name="InvoicePreview" component={InvoicePreviewScreen} options={{ title: 'Invoice' }} />
+      <Stack.Screen name="SaleDetails" component={SaleDetailsScreen} options={{ title: t('screen.saleDetails') }} />
+      <Stack.Screen name="CreateSale" component={CreateSaleScreen} options={{ title: t('screen.createSale') }} />
+      <Stack.Screen name="InvoicePreview" component={InvoicePreviewScreen} options={{ title: t('screen.invoice') }} />
     </Stack.Navigator>
   );
 };

@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
   header: { padding: spacing.md, paddingBottom: 0 },
   list: { padding: spacing.md, paddingBottom: 80 },
   card: { flexDirection: 'row', padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, alignItems: 'center', elevation: 1 },
-  info: { marginLeft: spacing.md, flex: 1 },
-  fab: { position: 'absolute', right: spacing.md, bottom: spacing.md },
+  info: { marginStart: spacing.md, flex: 1 },
+  fab: { position: 'absolute', end: spacing.md, bottom: spacing.md },
 });

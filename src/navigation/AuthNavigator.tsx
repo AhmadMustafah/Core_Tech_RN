@@ -7,11 +7,13 @@ import { OtpVerificationScreen } from '@/screens/auth/OtpVerificationScreen';
 import { ResetPasswordScreen } from '@/screens/auth/ResetPasswordScreen';
 import type { AuthStackParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export const AuthNavigator: React.FC = () => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
 
   return (
     <Stack.Navigator
@@ -22,10 +24,10 @@ export const AuthNavigator: React.FC = () => {
         contentStyle: { backgroundColor: colors.background },
       }}>
       <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Register' }} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot Password' }} />
-      <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} options={{ title: 'Verify OTP' }} />
-      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset Password' }} />
+      <Stack.Screen name="Register" component={RegisterScreen} options={{ title: t('screen.register') }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: t('screen.forgotPassword') }} />
+      <Stack.Screen name="OtpVerification" component={OtpVerificationScreen} options={{ title: t('screen.verifyOtp') }} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: t('screen.resetPassword') }} />
     </Stack.Navigator>
   );
 };

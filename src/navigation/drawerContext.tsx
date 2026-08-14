@@ -1,10 +1,10 @@
-import React, { memo } from 'react';
-import { createContext, useContext } from 'react';
+import React, { memo, createContext, useContext } from 'react';
 import { StyleSheet } from 'react-native';
 import { IconButton } from 'react-native-paper';
 import type { NavigationProp } from '@react-navigation/native';
 import type { MainTabParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { layout } from '@/theme';
 
 export type ActiveRoute = {
@@ -33,6 +33,7 @@ export const useDrawer = (): DrawerContextValue => {
 export const DrawerMenuButton = memo(() => {
   const { openDrawer } = useDrawer();
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
 
   return (
     <IconButton
@@ -40,7 +41,7 @@ export const DrawerMenuButton = memo(() => {
       iconColor={colors.text}
       size={22}
       onPress={openDrawer}
-      accessibilityLabel="Open navigation menu"
+      accessibilityLabel={t('nav.openMenu')}
       style={styles.menuButton}
     />
   );
@@ -53,7 +54,7 @@ export const renderDrawerHeaderLeft = () => <DrawerMenuButton />;
 
 const styles = StyleSheet.create({
   menuButton: {
-    marginLeft: -4,
+    marginStart: -4,
   },
 });
 

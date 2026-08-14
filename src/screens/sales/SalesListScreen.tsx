@@ -86,5 +86,5 @@ const styles = StyleSheet.create({
   list: { padding: spacing.md, paddingBottom: 80 },
   card: { padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, elevation: 1 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  fab: { position: 'absolute', right: spacing.md, bottom: spacing.md },
+  fab: { position: 'absolute', end: spacing.md, bottom: spacing.md },
 });

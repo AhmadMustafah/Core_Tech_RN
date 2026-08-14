@@ -5,24 +5,31 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { getInitials } from '@/utils/formatters';
 import type { ProfileStackParamList } from '@/types/navigation';
+import type { TranslationKey } from '@/localization';
 import { spacing, borderRadius } from '@/theme';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileHome'>;
 
-const menuItems = [
-  { label: 'Edit Profile', icon: 'account-edit', screen: 'EditProfile' as const },
-  { label: 'Change Password', icon: 'lock-reset', screen: 'ChangePassword' as const },
-  { label: 'Customers', icon: 'account-group', screen: 'CustomerList' as const },
-  { label: 'Suppliers', icon: 'truck', screen: 'SupplierList' as const },
-  { label: 'Notifications', icon: 'bell-outline', screen: 'Notifications' as const },
-  { label: 'Settings', icon: 'cog-outline', screen: 'Settings' as const },
+const menuItems: {
+  labelKey: TranslationKey;
+  icon: string;
+  screen: 'EditProfile' | 'ChangePassword' | 'CustomerList' | 'SupplierList' | 'Notifications' | 'Settings';
+}[] = [
+  { labelKey: 'profile.editProfile', icon: 'account-edit-outline', screen: 'EditProfile' },
+  { labelKey: 'profile.changePassword', icon: 'lock-reset', screen: 'ChangePassword' },
+  { labelKey: 'profile.customers', icon: 'account-group-outline', screen: 'CustomerList' },
+  { labelKey: 'profile.suppliers', icon: 'truck-outline', screen: 'SupplierList' },
+  { labelKey: 'profile.notifications', icon: 'bell-outline', screen: 'Notifications' },
+  { labelKey: 'profile.settings', icon: 'cog-outline', screen: 'Settings' },
 ];
 
 export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   const { user, logout } = useAuth();
   const { colors } = useAppTheme();
+  const { t, directionalIconStyle } = useLocalization();
 
   const handleLogout = async () => {
     await logout();
@@ -53,8 +60,12 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           <React.Fragment key={item.screen}>
             <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate(item.screen)}>
               <Icon source={item.icon} size={24} color={colors.primary} />
-              <Text variant="bodyLarge" style={{ color: colors.text, marginLeft: spacing.md, flex: 1 }}>{item.label}</Text>
-              <Icon source="chevron-right" size={24} color={colors.textSecondary} />
+              <Text variant="bodyLarge" style={{ color: colors.text, marginStart: spacing.md, flex: 1 }}>
+                {t(item.labelKey)}
+              </Text>
+              <View style={directionalIconStyle}>
+                <Icon source="chevron-right" size={24} color={colors.textSecondary} />
+              </View>
             </TouchableOpacity>
             {index < menuItems.length - 1 && <Divider />}
           </React.Fragment>
@@ -62,8 +73,12 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <TouchableOpacity style={[styles.logoutButton, { backgroundColor: colors.error + '15' }]} onPress={handleLogout}>
-        <Icon source="logout" size={24} color={colors.error} />
-        <Text variant="bodyLarge" style={{ color: colors.error, marginLeft: spacing.md, fontWeight: '600' }}>Logout</Text>
+        <View style={directionalIconStyle}>
+          <Icon source="logout" size={24} color={colors.error} />
+        </View>
+        <Text variant="bodyLarge" style={{ color: colors.error, marginStart: spacing.md, fontWeight: '600' }}>
+          {t('profile.logout')}
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );

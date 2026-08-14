@@ -23,8 +23,8 @@ export const PurchaseNavigator: React.FC = () => {
         component={PurchaseListScreen}
         options={{ title: t('screen.purchases'), headerLeft: renderDrawerHeaderLeft }}
       />
-      <Stack.Screen name="PurchaseDetails" component={PurchaseDetailsScreen} options={{ title: 'Purchase Details' }} />
-      <Stack.Screen name="CreatePurchase" component={CreatePurchaseScreen} options={{ title: 'Create Purchase' }} />
+      <Stack.Screen name="PurchaseDetails" component={PurchaseDetailsScreen} options={{ title: t('screen.purchaseDetails') }} />
+      <Stack.Screen name="CreatePurchase" component={CreatePurchaseScreen} options={{ title: t('screen.createPurchase') }} />
     </Stack.Navigator>
   );
 };

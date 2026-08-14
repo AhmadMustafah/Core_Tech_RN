@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { validateEmail } from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
@@ -14,6 +15,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
 export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,10 +41,10 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
       <View>
         <Text style={styles.icon}>🔐</Text>
         <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          Forgot Password
+          {t('auth.forgotPasswordTitle')}
         </Text>
         <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
-          Enter your email address and we'll send you an OTP to reset your password.
+          {t('auth.forgotPasswordHint')}
         </Text>
 
         {error && (
@@ -57,7 +59,7 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
           rules={{ validate: validateEmail }}
           render={({ field: { onChange, onBlur, value } }) => (
             <CustomInput
-              label="Email"
+              label={t('auth.email')}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -69,8 +71,8 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
           )}
         />
 
-        <CustomButton title="Send OTP" onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-        <CustomButton title="Back to Login" variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
+        <CustomButton title={t('auth.sendOtp')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
+        <CustomButton title={t('auth.backToLogin')} variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
       </View>
     </FormScrollView>
   );

@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   skipButton: {
     alignSelf: 'flex-end',
     marginTop: spacing.xl,
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
   },
   slide: {
     flex: 1,

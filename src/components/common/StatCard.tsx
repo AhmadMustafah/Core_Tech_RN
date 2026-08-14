@@ -28,7 +28,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderLeftColor: accentColor,
+          borderStartColor: accentColor,
         },
       ]}>
       <View style={[styles.iconContainer, { backgroundColor: accentColor + '15' }]}>
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    borderLeftWidth: 4,
+    borderStartWidth: 4,
     minWidth: '45%',
     marginBottom: spacing.sm,
     elevation: 1,
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
   },
   content: {
     flex: 1,

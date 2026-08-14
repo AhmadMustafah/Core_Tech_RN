@@ -1,223 +1,143 @@
-import React, { useCallback } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
-import { Text, Switch, List, Divider, SegmentedButtons, Icon } from 'react-native-paper';
+import React, { useCallback, useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setThemeMode, setThemePreset } from '@/redux/slices/themeSlice';
-import { setNotificationsEnabled, setLanguage } from '@/redux/slices/settingsSlice';
-import { storage } from '@/utils/storage';
-import { STORAGE_KEYS } from '@/constants';
+import { useAppSelector } from '@/redux/hooks';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { APP_NAME, APP_VERSION } from '@/constants';
 import type { ProfileStackParamList } from '@/types/navigation';
-import type { ThemeMode, Language } from '@/types';
-import { THEME_PRESET_OPTIONS, type ThemePreset, borderRadius, spacing } from '@/theme';
-import type { TranslationKey } from '@/localization';
+import { spacing, typography } from '@/theme';
+import { SettingsNavRow, SettingsSection } from './settingsUi';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Settings'>;
 
-const themeLabelKeys: Record<ThemePreset, TranslationKey> = {
+const THEME_MODE_KEYS = {
+  light: 'settings.light',
+  dark: 'settings.dark',
+  system: 'settings.system',
+} as const;
+
+const THEME_PRESET_KEYS = {
   default: 'theme.default',
   ocean: 'theme.ocean',
   emerald: 'theme.emerald',
   purple: 'theme.purple',
   sunset: 'theme.sunset',
-};
+} as const;
+
+type SettingsHubRoute =
+  | 'AccountSettings'
+  | 'ThemeSettings'
+  | 'LanguageSettings'
+  | 'NotificationSettings'
+  | 'SecuritySettings'
+  | 'PreferencesSettings'
+  | 'AboutSupport';
 
 export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
   const { t } = useLocalization();
-  const dispatch = useAppDispatch();
+  const { notificationsEnabled, language, preferences } = useAppSelector(state => state.settings);
   const themeMode = useAppSelector(state => state.theme.mode);
   const themePreset = useAppSelector(state => state.theme.preset);
-  const { notificationsEnabled, language } = useAppSelector(state => state.settings);
 
-  const handleThemeChange = useCallback(
-    async (mode: ThemeMode) => {
-      dispatch(setThemeMode(mode));
-      await storage.setItem(STORAGE_KEYS.THEME_MODE, mode);
-    },
-    [dispatch],
+  const themeValue = useMemo(
+    () => `${t(THEME_MODE_KEYS[themeMode])} · ${t(THEME_PRESET_KEYS[themePreset])}`,
+    [t, themeMode, themePreset],
   );
 
-  const handlePresetChange = useCallback(
-    async (preset: ThemePreset) => {
-      dispatch(setThemePreset(preset));
-      await storage.setItem(STORAGE_KEYS.THEME_PRESET, preset);
+  const go = useCallback(
+    (screen: SettingsHubRoute) => {
+      navigation.navigate(screen);
     },
-    [dispatch],
-  );
-
-  const handleNotifications = useCallback(
-    async (value: boolean) => {
-      dispatch(setNotificationsEnabled(value));
-      await storage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, value);
-    },
-    [dispatch],
-  );
-
-  const handleLanguage = useCallback(
-    async (lang: Language) => {
-      dispatch(setLanguage(lang));
-      await storage.setItem(STORAGE_KEYS.LANGUAGE, lang);
-    },
-    [dispatch],
+    [navigation],
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: colors.text }]}>
-          {t('settings.appearance')}
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}>
+      <View style={styles.intro}>
+        <Text style={[styles.introTitle, { color: colors.text }]}>{t('settings.centerTitle')}</Text>
+        <Text style={[styles.introSubtitle, { color: colors.textSecondary }]}>
+          {t('settings.centerSubtitle')}
         </Text>
-        <SegmentedButtons
-          value={themeMode}
-          onValueChange={v => handleThemeChange(v as ThemeMode)}
-          buttons={[
-            { value: 'light', label: t('settings.light'), icon: 'white-balance-sunny' },
-            { value: 'dark', label: t('settings.dark'), icon: 'moon-waning-crescent' },
-            { value: 'system', label: t('settings.system'), icon: 'theme-light-dark' },
-          ]}
-          style={styles.segmented}
+      </View>
+
+      <SettingsSection title={t('settings.section.workspace')}>
+        <SettingsNavRow
+          icon="account-circle-outline"
+          title={t('settings.account')}
+          description={t('settings.accountDesc')}
+          onPress={() => go('AccountSettings')}
         />
-      </View>
+        <SettingsNavRow
+          icon="palette-outline"
+          title={t('settings.theme')}
+          description={t('settings.themeDesc')}
+          value={themeValue}
+          onPress={() => go('ThemeSettings')}
+        />
+        <SettingsNavRow
+          icon="translate"
+          title={t('settings.language')}
+          description={t('settings.languageDesc')}
+          value={t(language === 'ur' ? 'settings.urdu' : 'settings.english')}
+          last
+          onPress={() => go('LanguageSettings')}
+        />
+      </SettingsSection>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: colors.text }]}>
-          {t('settings.themes')}
-        </Text>
-        <Text variant="bodySmall" style={[styles.sectionHint, { color: colors.textSecondary }]}>
-          {t('settings.themesHint')}
-        </Text>
-        <View style={styles.presetGrid}>
-          {THEME_PRESET_OPTIONS.map(option => {
-            const selected = themePreset === option.id;
-            return (
-              <TouchableOpacity
-                key={option.id}
-                activeOpacity={0.82}
-                onPress={() => handlePresetChange(option.id)}
-                style={[
-                  styles.presetChip,
-                  {
-                    backgroundColor: selected ? colors.primaryMuted : colors.surfaceVariant,
-                    borderColor: selected ? colors.primary : colors.border,
-                  },
-                ]}>
-                <View style={[styles.presetSwatch, { backgroundColor: option.swatch }]} />
-                <Text
-                  style={[
-                    styles.presetLabel,
-                    { color: selected ? colors.primary : colors.text },
-                    selected && styles.presetLabelSelected,
-                  ]}>
-                  {t(themeLabelKeys[option.id])}
-                </Text>
-                {selected ? (
-                  <Icon source="check-circle" size={16} color={colors.primary} />
-                ) : null}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: colors.text }]}>
-          {t('settings.preferences')}
-        </Text>
-        <List.Item
+      <SettingsSection title={t('settings.section.operations')}>
+        <SettingsNavRow
+          icon="bell-outline"
           title={t('settings.notifications')}
-          description={t('settings.notificationsDesc')}
-          left={props => <List.Icon {...props} icon="bell-outline" />}
-          right={() => <Switch value={notificationsEnabled} onValueChange={handleNotifications} />}
+          description={t('settings.notificationsHubDesc')}
+          value={t(notificationsEnabled ? 'settings.on' : 'settings.off')}
+          onPress={() => go('NotificationSettings')}
         />
-        <Divider />
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, padding: spacing.md }}>
-          {t('settings.language')}
-        </Text>
-        <SegmentedButtons
-          value={language}
-          onValueChange={v => handleLanguage(v as Language)}
-          buttons={[
-            { value: 'en', label: t('settings.english') },
-            { value: 'ur', label: t('settings.urdu') },
-          ]}
-          style={styles.segmented}
+        <SettingsNavRow
+          icon="shield-lock-outline"
+          title={t('settings.security')}
+          description={t('settings.securityDesc')}
+          value={t(preferences.biometricLock ? 'settings.securityProtected' : 'settings.securityStandard')}
+          onPress={() => go('SecuritySettings')}
         />
-      </View>
+        <SettingsNavRow
+          icon="tune"
+          title={t('settings.preferencesTitle')}
+          description={t('settings.preferencesDesc')}
+          last
+          onPress={() => go('PreferencesSettings')}
+        />
+      </SettingsSection>
 
-      <View style={[styles.section, { backgroundColor: colors.surface }]}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: colors.text }]}>
-          {t('settings.about')}
-        </Text>
-        <List.Item
-          title={t('settings.privacyPolicy')}
-          left={props => <List.Icon {...props} icon="shield-account" />}
-          onPress={() => navigation.navigate('PrivacyPolicy')}
-          right={props => <List.Icon {...props} icon="chevron-right" />}
+      <SettingsSection title={t('settings.section.help')}>
+        <SettingsNavRow
+          icon="help-circle-outline"
+          title={t('settings.aboutSupport')}
+          description={t('settings.aboutSupportDesc')}
+          last
+          onPress={() => go('AboutSupport')}
         />
-        <Divider />
-        <List.Item
-          title={t('settings.aboutApp')}
-          description={`${APP_NAME} v${APP_VERSION}`}
-          left={props => <List.Icon {...props} icon="information-outline" />}
-          onPress={() => navigation.navigate('AboutApp')}
-          right={props => <List.Icon {...props} icon="chevron-right" />}
-        />
-      </View>
+      </SettingsSection>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  section: {
-    margin: spacing.md,
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 1,
-  },
-  sectionTitle: {
-    padding: spacing.md,
-    fontWeight: '600',
-  },
-  sectionHint: {
-    paddingHorizontal: spacing.md,
-    marginTop: -spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  segmented: { margin: spacing.md, marginTop: 0 },
-  presetGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
+  content: { paddingBottom: spacing.xxl, paddingTop: spacing.sm },
+  intro: {
+    paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
+    paddingTop: spacing.sm,
   },
-  presetChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    gap: spacing.sm,
-    minWidth: '47%',
-    flexGrow: 1,
+  introTitle: {
+    ...(typography.h3 as object),
   },
-  presetSwatch: {
-    width: 14,
-    height: 14,
-    borderRadius: borderRadius.full,
-  },
-  presetLabel: {
-    fontSize: 13,
-    flex: 1,
-    fontWeight: '500',
-  },
-  presetLabelSelected: {
-    fontWeight: '600',
+  introSubtitle: {
+    ...(typography.bodySmall as object),
+    marginTop: spacing.xs,
   },
 });

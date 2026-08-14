@@ -7,7 +7,7 @@ export type ValidationResult = string | true;
 
 export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 export const phoneRegex = /^[+]?[\d\s-]{10,15}$/;
-export const nameRegex = /^[a-zA-Z\s.'-]{2,50}$/;
+export const nameRegex = /^[a-zA-Z\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s.'-]{2,50}$/;
 export const skuRegex = /^[a-zA-Z0-9_-]{2,30}$/;
 
 export const sanitizeText = (value: string): string => value.trim();

@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, PasswordInput, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import {
   validateSecurePassword,
   validateConfirmPassword,
@@ -19,6 +20,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const { email, otp } = route.params;
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -51,10 +53,10 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
       <View>
         <Text style={styles.icon}>🔑</Text>
         <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          Reset Password
+          {t('auth.resetPasswordTitle')}
         </Text>
         <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
-          Create a new password for your account
+          {t('auth.resetPasswordHint')}
         </Text>
 
         {error && (
@@ -69,7 +71,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
           rules={{ validate: validateSecurePassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput
-              label="New Password"
+              label={t('auth.newPassword')}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -86,7 +88,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
           rules={{ validate: v => validateConfirmPassword(password, v) }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput
-              label="Confirm Password"
+              label={t('auth.confirmPassword')}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -96,11 +98,11 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
           )}
         />
 
-        <CustomButton title="Reset Password" onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
+        <CustomButton title={t('auth.resetPassword')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
       </View>
 
       <Snackbar visible={success} onDismiss={() => setSuccess(false)}>
-        Password reset successfully! Redirecting to login...
+        {t('auth.resetSuccess')}
       </Snackbar>
     </FormScrollView>
   );

@@ -58,5 +58,5 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: spacing.md, paddingBottom: 80 },
   card: { padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, elevation: 1 },
-  fab: { position: 'absolute', right: spacing.md, bottom: spacing.md },
+  fab: { position: 'absolute', end: spacing.md, bottom: spacing.md },
 });

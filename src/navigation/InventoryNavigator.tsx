@@ -23,9 +23,9 @@ export const InventoryNavigator: React.FC = () => {
         component={ProductListScreen}
         options={{ title: t('screen.inventory'), headerLeft: renderDrawerHeaderLeft }}
       />
-      <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} options={{ title: 'Product Details' }} />
-      <Stack.Screen name="AddProduct" component={ProductFormScreen} options={{ title: 'Add Product' }} />
-      <Stack.Screen name="EditProduct" component={ProductFormScreen} options={{ title: 'Edit Product' }} />
+      <Stack.Screen name="ProductDetails" component={ProductDetailsScreen} options={{ title: t('screen.productDetails') }} />
+      <Stack.Screen name="AddProduct" component={ProductFormScreen} options={{ title: t('screen.addProduct') }} />
+      <Stack.Screen name="EditProduct" component={ProductFormScreen} options={{ title: t('screen.editProduct') }} />
     </Stack.Navigator>
   );
 };

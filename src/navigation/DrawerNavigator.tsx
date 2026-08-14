@@ -190,7 +190,7 @@ const DrawerPanel = memo<{
   tabNavigationRef: React.RefObject<NavigationProp<MainTabParamList> | null>;
 }>(({ visible, slideAnim, activeRoute, onClose, tabNavigationRef }) => {
   const { colors } = useAppTheme();
-  const { t } = useLocalization();
+  const { t, directionalIconStyle } = useLocalization();
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector(state => state.auth);
   const { logout } = useAuth();
@@ -246,7 +246,7 @@ const DrawerPanel = memo<{
       <Pressable
         style={[styles.backdrop, { backgroundColor: colors.overlay }]}
         onPress={() => onClose()}
-        accessibilityLabel="Close menu"
+        accessibilityLabel={t('drawer.closeMenu')}
         accessibilityRole="button"
       />
       <Animated.View
@@ -257,6 +257,7 @@ const DrawerPanel = memo<{
             width: layout.drawerWidth,
             backgroundColor: colors.drawerSurface,
             paddingTop: insets.top,
+            start: 0,
             transform: [{ translateX: slideAnim }],
           },
         ]}>
@@ -305,7 +306,7 @@ const DrawerPanel = memo<{
             rippleColor={colors.error + '18'}>
             <View style={styles.menuItemContent}>
               <View style={[styles.menuIconWrap, { backgroundColor: colors.error + '14' }]}>
-                <Icon name="logout" size={20} color={colors.error} />
+                <Icon name="logout" size={20} color={colors.error} style={directionalIconStyle} />
               </View>
               <Text style={[styles.menuLabel, { color: colors.error, fontWeight: '600' }]}>
                 {t('drawer.logout')}
@@ -321,10 +322,18 @@ const DrawerPanel = memo<{
 DrawerPanel.displayName = 'DrawerPanel';
 
 export const DrawerNavigator: React.FC = () => {
+  const { isRTL } = useLocalization();
+  const closedOffset = isRTL ? layout.drawerWidth : -layout.drawerWidth;
   const [visible, setVisible] = useState(false);
   const [activeRoute, setActiveRoute] = useState<ActiveRoute | null>(null);
-  const slideAnim = useRef(new Animated.Value(-layout.drawerWidth)).current;
+  const slideAnim = useRef(new Animated.Value(closedOffset)).current;
   const tabNavigationRef = useRef<NavigationProp<MainTabParamList> | null>(null);
+
+  useEffect(() => {
+    if (!visible) {
+      slideAnim.setValue(closedOffset);
+    }
+  }, [closedOffset, slideAnim, visible]);
 
   const setTabNavigation = useCallback(
     (navigation: NavigationProp<MainTabParamList> | null) => {
@@ -336,7 +345,7 @@ export const DrawerNavigator: React.FC = () => {
   const animateDrawer = useCallback(
     (open: boolean, onFinished?: () => void) => {
       Animated.timing(slideAnim, {
-        toValue: open ? 0 : -layout.drawerWidth,
+        toValue: open ? 0 : closedOffset,
         duration: open ? OPEN_DURATION : CLOSE_DURATION,
         easing: open ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
         useNativeDriver: true,
@@ -346,7 +355,7 @@ export const DrawerNavigator: React.FC = () => {
         }
       });
     },
-    [slideAnim],
+    [closedOffset, slideAnim],
   );
 
   const openDrawer = useCallback(() => {
@@ -407,7 +416,6 @@ const styles = StyleSheet.create({
   drawerPanel: {
     position: 'absolute',
     top: 0,
-    left: 0,
     bottom: 0,
     zIndex: 11,
   },

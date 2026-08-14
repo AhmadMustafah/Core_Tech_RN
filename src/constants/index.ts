@@ -16,6 +16,7 @@ export const STORAGE_KEYS = {
   THEME_PRESET: '@coretech/theme_preset',
   LANGUAGE: '@coretech/language',
   NOTIFICATIONS_ENABLED: '@coretech/notifications_enabled',
+  SETTINGS_PREFERENCES: '@coretech/settings_preferences',
 };
 
 export const PAYMENT_STATUS = {

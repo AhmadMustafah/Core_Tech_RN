@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Searchbar } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { borderRadius, spacing } from '@/theme';
 
 interface SearchBarProps {
@@ -16,6 +17,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = 'Search...',
 }) => {
   const { colors } = useAppTheme();
+  const { isRTL } = useLocalization();
 
   return (
     <View style={styles.container}>
@@ -24,7 +26,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         onChangeText={onChangeText}
         value={value}
         style={[styles.searchbar, { backgroundColor: colors.surface }]}
-        inputStyle={{ color: colors.text }}
+        inputStyle={{
+          color: colors.text,
+          textAlign: isRTL ? 'right' : 'left',
+          writingDirection: isRTL ? 'rtl' : 'ltr',
+        }}
         iconColor={colors.textSecondary}
         placeholderTextColor={colors.textSecondary}
       />

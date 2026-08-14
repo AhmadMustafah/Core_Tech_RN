@@ -1,8 +1,9 @@
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
-import { StyleSheet, ViewStyle, TextInput as RNTextInput, type ReturnKeyTypeOptions } from 'react-native';
+import { StyleSheet, View, ViewStyle, type ReturnKeyTypeOptions } from 'react-native';
 import { TextInput, TextInputProps, HelperText } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { useFormInputFocus } from './FormScrollView';
+import { useLocalization } from '@/hooks/useLocalization';
+import { useFormInputFocus, type FormFieldHandle } from './FormScrollView';
 import { borderRadius, spacing } from '@/theme';
 
 interface CustomInputProps extends Omit<TextInputProps, 'error'> {
@@ -12,15 +13,46 @@ interface CustomInputProps extends Omit<TextInputProps, 'error'> {
 
 type PaperTextInputRef = React.ElementRef<typeof TextInput>;
 
+const isLatinKeyboard = (keyboardType: TextInputProps['keyboardType']) =>
+  keyboardType === 'email-address' ||
+  keyboardType === 'phone-pad' ||
+  keyboardType === 'numeric' ||
+  keyboardType === 'number-pad' ||
+  keyboardType === 'decimal-pad';
+
 export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
-  ({ error, containerStyle, style, mode = 'outlined', returnKeyType, onSubmitEditing, onFocus, blurOnSubmit, ...props }, forwardedRef) => {
+  (
+    {
+      error,
+      containerStyle,
+      style,
+      mode = 'outlined',
+      returnKeyType,
+      onSubmitEditing,
+      onFocus,
+      blurOnSubmit,
+      keyboardType,
+      secureTextEntry,
+      ...props
+    },
+    forwardedRef,
+  ) => {
     const { colors } = useAppTheme();
+    const { isRTL } = useLocalization();
+    const wrapperRef = useRef<View>(null);
     const innerRef = useRef<PaperTextInputRef>(null);
-    const nativeRef = useRef<RNTextInput>(null);
+    const formFieldRef = useRef<FormFieldHandle>({
+      focus: () => {
+        innerRef.current?.focus();
+      },
+      measureInWindow: callback => {
+        wrapperRef.current?.measureInWindow(callback);
+      },
+    });
 
     useImperativeHandle(forwardedRef, () => innerRef.current as PaperTextInputRef);
 
-    const focusProps = useFormInputFocus(nativeRef);
+    const focusProps = useFormInputFocus(formFieldRef);
 
     const handleFocus: TextInputProps['onFocus'] = event => {
       onFocus?.(event);
@@ -32,12 +64,15 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
       focusProps.onSubmitEditing();
     };
 
+    const keepLatinDirection = Boolean(secureTextEntry) || isLatinKeyboard(keyboardType);
+    const textAlign = keepLatinDirection || !isRTL ? 'left' : 'right';
+    const writingDirection = keepLatinDirection || !isRTL ? 'ltr' : 'rtl';
+
     return (
-      <>
+      <View ref={wrapperRef} collapsable={false} style={containerStyle}>
         <TextInput
           ref={(instance: PaperTextInputRef | null) => {
             innerRef.current = instance;
-            nativeRef.current = instance as unknown as RNTextInput;
           }}
           mode={mode}
           error={!!error}
@@ -45,20 +80,25 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
           activeOutlineColor={colors.primary}
           textColor={colors.text}
           placeholderTextColor={colors.textSecondary}
+          keyboardType={keyboardType}
+          secureTextEntry={secureTextEntry}
+          {...props}
           style={[styles.input, { backgroundColor: colors.surface }, style]}
-          contentStyle={styles.content}
+          contentStyle={[styles.content, { textAlign, writingDirection }]}
           returnKeyType={(returnKeyType ?? focusProps.returnKeyType) as ReturnKeyTypeOptions | undefined}
           blurOnSubmit={blurOnSubmit ?? focusProps.blurOnSubmit}
           onFocus={handleFocus}
           onSubmitEditing={handleSubmitEditing}
-          {...props}
         />
         {error ? (
-          <HelperText type="error" visible={!!error} style={styles.helper}>
+          <HelperText
+            type="error"
+            visible={!!error}
+            style={[styles.helper, { textAlign, writingDirection }]}>
             {error}
           </HelperText>
         ) : null}
-      </>
+      </View>
     );
   },
 ) as React.ForwardRefExoticComponent<CustomInputProps & React.RefAttributes<PaperTextInputRef>> & {

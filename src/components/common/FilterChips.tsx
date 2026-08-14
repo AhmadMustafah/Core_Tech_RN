@@ -55,9 +55,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   content: {
-    paddingRight: spacing.md,
+    paddingEnd: spacing.md,
   },
   chip: {
-    marginRight: spacing.sm,
+    marginEnd: spacing.sm,
   },
 });

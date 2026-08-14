@@ -36,6 +36,13 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   ChangePassword: undefined;
   Settings: undefined;
+  ThemeSettings: undefined;
+  AccountSettings: undefined;
+  LanguageSettings: undefined;
+  NotificationSettings: undefined;
+  SecuritySettings: undefined;
+  PreferencesSettings: undefined;
+  AboutSupport: undefined;
   Notifications: undefined;
   CustomerList: undefined;
   CustomerDetails: { customerId: string };

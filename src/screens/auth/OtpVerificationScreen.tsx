@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { validateOtp } from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'OtpVerification'>;
 export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const { email } = route.params;
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,10 +42,10 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
       <View>
         <Text style={styles.icon}>📱</Text>
         <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          Verify OTP
+          {t('auth.verifyOtpTitle')}
         </Text>
         <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
-          Enter the 6-digit OTP sent to {email}. Demo OTP: 123456
+          {t('auth.verifyOtpHint', { email })}
         </Text>
 
         {error && (
@@ -58,7 +60,7 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
           rules={{ validate: validateOtp }}
           render={({ field: { onChange, onBlur, value } }) => (
             <CustomInput
-              label="OTP Code"
+              label={t('auth.otpCode')}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -70,8 +72,8 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
           )}
         />
 
-        <CustomButton title="Verify OTP" onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-        <CustomButton title="Back" variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
+        <CustomButton title={t('auth.verifyOtp')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
+        <CustomButton title={t('auth.back')} variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
       </View>
     </FormScrollView>
   );

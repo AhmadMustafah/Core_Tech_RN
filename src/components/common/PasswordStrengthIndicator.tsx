@@ -2,27 +2,37 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { getPasswordStrength } from '@/utils/passwordSecurity';
+import type { TranslationKey } from '@/localization';
 import { spacing } from '@/theme';
 
 interface PasswordStrengthIndicatorProps {
   password: string;
 }
 
-const CHECK_LABELS: Record<string, string> = {
-  minLength: 'At least 8 characters',
-  hasUppercase: 'One uppercase letter',
-  hasLowercase: 'One lowercase letter',
-  hasNumber: 'One number',
-  hasSpecialChar: 'One special character',
-  notCommon: 'Not a common password',
-  noSpaces: 'No spaces',
+const CHECK_KEYS: Record<string, TranslationKey> = {
+  minLength: 'password.minLength',
+  hasUppercase: 'password.hasUppercase',
+  hasLowercase: 'password.hasLowercase',
+  hasNumber: 'password.hasNumber',
+  hasSpecialChar: 'password.hasSpecialChar',
+  notCommon: 'password.notCommon',
+  noSpaces: 'password.noSpaces',
 };
+
+const STRENGTH_KEYS = {
+  Weak: 'password.weak',
+  Fair: 'password.fair',
+  Good: 'password.good',
+  Strong: 'password.strong',
+} as const;
 
 export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({
   password,
 }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
 
   if (!password) return null;
 
@@ -36,8 +46,8 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
   return (
     <View style={styles.container}>
       <Text variant="labelSmall" style={{ color: colors.textSecondary, marginBottom: spacing.xs }}>
-        Password strength:{' '}
-        <Text style={{ color: strengthColor, fontWeight: '600' }}>{label}</Text>
+        {t('password.strength')}:{' '}
+        <Text style={{ color: strengthColor, fontWeight: '600' }}>{t(STRENGTH_KEYS[label])}</Text>
       </Text>
       {Object.entries(checks).map(([key, passed]) => (
         <Text
@@ -47,7 +57,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
             color: passed ? colors.success : colors.textSecondary,
             marginBottom: 2,
           }}>
-          {passed ? '✓' : '○'} {CHECK_LABELS[key]}
+          {passed ? '✓' : '○'} {t(CHECK_KEYS[key])}
         </Text>
       ))}
     </View>

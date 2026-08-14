@@ -9,6 +9,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import {
   validateEmail,
   validateSecurePassword,
@@ -34,6 +35,7 @@ const defaultValues: RegisterRequest = {
 
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -50,31 +52,29 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
   const password = watch('password') ?? '';
 
   const onInvalid = () => {
-    setFormError('Please fill in all required fields correctly.');
+    setFormError(t('auth.formError'));
   };
 
   const onSubmit = (_data: RegisterRequest) => {
     setFormError(null);
-    Alert.alert(
-      'Registration Unavailable',
-      'Backend APIs are not connected yet, so signup is not available at this time.\n\nPlease use the demo login account:\nEmail: ahmed@coretech.com\nPassword: password123',
-      [{ text: 'OK' }],
-    );
+    Alert.alert(t('auth.registrationUnavailable'), t('auth.registrationUnavailableBody'), [
+      { text: t('auth.ok') },
+    ]);
   };
 
   const fields = [
     {
       name: 'name' as const,
-      label: 'Full Name',
+      label: t('auth.fullName'),
       icon: 'account-outline',
-      validate: (v: string) => validateName(v ?? '', 'Full name'),
+      validate: (v: string) => validateName(v ?? '', t('auth.fullName')),
       keyboard: 'default' as const,
       secure: false,
       showStrength: false,
     },
     {
       name: 'email' as const,
-      label: 'Email',
+      label: t('auth.email'),
       icon: 'email-outline',
       validate: (v: string) => validateEmail(v ?? ''),
       keyboard: 'email-address' as const,
@@ -83,7 +83,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       name: 'phone' as const,
-      label: 'Phone',
+      label: t('auth.phone'),
       icon: 'phone-outline',
       validate: (v: string) => validatePhone(v ?? ''),
       keyboard: 'phone-pad' as const,
@@ -92,7 +92,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       name: 'company' as const,
-      label: 'Company',
+      label: t('auth.company'),
       icon: 'office-building-outline',
       validate: (v: string) => validateCompany(v ?? ''),
       keyboard: 'default' as const,
@@ -101,7 +101,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       name: 'password' as const,
-      label: 'Password',
+      label: t('auth.password'),
       icon: 'lock-outline',
       validate: (v: string) => validateSecurePassword(v ?? ''),
       keyboard: 'default' as const,
@@ -110,7 +110,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     },
     {
       name: 'confirmPassword' as const,
-      label: 'Confirm Password',
+      label: t('auth.confirmPassword'),
       icon: 'lock-check-outline',
       validate: (v: string) => validateConfirmPassword(password, v ?? ''),
       keyboard: 'default' as const,
@@ -124,10 +124,10 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.scroll}>
         <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
-          Create Account
+          {t('auth.createAccount')}
         </Text>
         <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>
-          Register your business account
+          {t('auth.registerSubtitle')}
         </Text>
 
         {formError && (
@@ -176,14 +176,14 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         ))}
 
         <CustomButton
-          title="Create Account"
+          title={t('auth.createAccount')}
           onPress={handleSubmit(onSubmit, onInvalid)}
           fullWidth
           style={{ marginTop: spacing.md }}
         />
 
         <CustomButton
-          title="Already have an account? Sign In"
+          title={t('auth.alreadyHaveAccount')}
           variant="text"
           onPress={() => navigation.navigate('Login')}
           style={{ marginTop: spacing.md }}

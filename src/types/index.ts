@@ -153,3 +153,6 @@ export interface PaginatedResponse<T> {
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type { ThemePreset } from '@/theme';
 export type Language = 'en' | 'ur';
+export type DateFormat = 'dmy' | 'mdy' | 'ymd';
+export type CurrencyDisplay = 'symbol' | 'code';
+export type SessionTimeout = '15' | '30' | '60';

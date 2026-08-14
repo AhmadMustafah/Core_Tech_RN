@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
 import { Button as PaperButton, ButtonProps } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { borderRadius, spacing } from '@/theme';
 
 interface CustomButtonProps extends Omit<ButtonProps, 'children'> {
@@ -21,6 +22,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   ...props
 }) => {
   const { colors } = useAppTheme();
+  const { isRTL } = useLocalization();
 
   const getMode = (): ButtonProps['mode'] => {
     switch (variant) {
@@ -55,7 +57,7 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
         style,
       ]}
       contentStyle={styles.content}
-      labelStyle={styles.label}
+      labelStyle={[styles.label, { writingDirection: isRTL ? 'rtl' : 'ltr' }]}
       {...props}>
       {title}
     </PaperButton>

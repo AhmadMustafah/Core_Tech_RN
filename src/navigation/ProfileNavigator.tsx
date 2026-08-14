@@ -4,6 +4,13 @@ import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 import { EditProfileScreen } from '@/screens/profile/EditProfileScreen';
 import { ChangePasswordScreen } from '@/screens/profile/ChangePasswordScreen';
 import { SettingsScreen } from '@/screens/settings/SettingsScreen';
+import { ThemeSettingsScreen } from '@/screens/settings/ThemeSettingsScreen';
+import { AccountSettingsScreen } from '@/screens/settings/AccountSettingsScreen';
+import { LanguageSettingsScreen } from '@/screens/settings/LanguageSettingsScreen';
+import { NotificationSettingsScreen } from '@/screens/settings/NotificationSettingsScreen';
+import { SecuritySettingsScreen } from '@/screens/settings/SecuritySettingsScreen';
+import { PreferencesSettingsScreen } from '@/screens/settings/PreferencesSettingsScreen';
+import { AboutSupportScreen } from '@/screens/settings/AboutSupportScreen';
 import { NotificationsScreen } from '@/screens/notifications/NotificationsScreen';
 import { CustomerListScreen } from '@/screens/customers/CustomerListScreen';
 import { CustomerDetailsScreen } from '@/screens/customers/CustomerDetailsScreen';
@@ -33,23 +40,38 @@ export const ProfileNavigator: React.FC = () => {
         component={ProfileScreen}
         options={{ title: t('screen.profile'), headerLeft: renderDrawerHeaderLeft }}
       />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Edit Profile' }} />
-      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change Password' }} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: t('screen.editProfile') }} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: t('screen.changePassword') }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: t('screen.settings') }} />
+      <Stack.Screen name="ThemeSettings" component={ThemeSettingsScreen} options={{ title: t('screen.theme') }} />
+      <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} options={{ title: t('screen.account') }} />
+      <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} options={{ title: t('screen.language') }} />
+      <Stack.Screen
+        name="NotificationSettings"
+        component={NotificationSettingsScreen}
+        options={{ title: t('screen.notificationSettings') }}
+      />
+      <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} options={{ title: t('screen.security') }} />
+      <Stack.Screen
+        name="PreferencesSettings"
+        component={PreferencesSettingsScreen}
+        options={{ title: t('screen.preferences') }}
+      />
+      <Stack.Screen name="AboutSupport" component={AboutSupportScreen} options={{ title: t('screen.aboutSupport') }} />
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
         options={{ title: t('screen.notifications') }}
       />
-      <Stack.Screen name="CustomerList" component={CustomerListScreen} options={{ title: 'Customers' }} />
-      <Stack.Screen name="CustomerDetails" component={CustomerDetailsScreen} options={{ title: 'Customer Details' }} />
-      <Stack.Screen name="AddCustomer" component={CustomerFormScreen} options={{ title: 'Add Customer' }} />
-      <Stack.Screen name="EditCustomer" component={CustomerFormScreen} options={{ title: 'Edit Customer' }} />
-      <Stack.Screen name="SupplierList" component={SupplierListScreen} options={{ title: 'Suppliers' }} />
-      <Stack.Screen name="SupplierDetails" component={SupplierDetailsScreen} options={{ title: 'Supplier Details' }} />
-      <Stack.Screen name="AddSupplier" component={SupplierFormScreen} options={{ title: 'Add Supplier' }} />
-      <Stack.Screen name="EditSupplier" component={SupplierFormScreen} options={{ title: 'Edit Supplier' }} />
-      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
+      <Stack.Screen name="CustomerList" component={CustomerListScreen} options={{ title: t('screen.customers') }} />
+      <Stack.Screen name="CustomerDetails" component={CustomerDetailsScreen} options={{ title: t('screen.customerDetails') }} />
+      <Stack.Screen name="AddCustomer" component={CustomerFormScreen} options={{ title: t('screen.addCustomer') }} />
+      <Stack.Screen name="EditCustomer" component={CustomerFormScreen} options={{ title: t('screen.editCustomer') }} />
+      <Stack.Screen name="SupplierList" component={SupplierListScreen} options={{ title: t('screen.suppliers') }} />
+      <Stack.Screen name="SupplierDetails" component={SupplierDetailsScreen} options={{ title: t('screen.supplierDetails') }} />
+      <Stack.Screen name="AddSupplier" component={SupplierFormScreen} options={{ title: t('screen.addSupplier') }} />
+      <Stack.Screen name="EditSupplier" component={SupplierFormScreen} options={{ title: t('screen.editSupplier') }} />
+      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: t('screen.privacyPolicy') }} />
       <Stack.Screen name="AboutApp" component={AboutAppScreen} options={{ title: t('screen.helpAbout') }} />
     </Stack.Navigator>
   );
