@@ -67,37 +67,37 @@ type ExtendedBaseColors = SemanticColors &
   >;
 
 const lightSemantic: SemanticColors = {
-  secondary: '#00897B',
-  accent: '#FF6F00',
-  background: '#F5F7FA',
+  secondary: '#0F766E',
+  accent: '#92400E',
+  background: '#F3F5F8',
   surface: '#FFFFFF',
-  surfaceVariant: '#E8EDF2',
-  text: '#1A1D21',
-  textSecondary: '#5F6B7A',
-  border: '#DDE3EA',
-  error: '#D32F2F',
-  success: '#2E7D32',
-  warning: '#ED6C02',
-  info: '#0288D1',
-  lowStock: '#E65100',
-  cardShadow: 'rgba(21, 101, 192, 0.08)',
+  surfaceVariant: '#E9EEF3',
+  text: '#0F172A',
+  textSecondary: '#475569',
+  border: '#D5DCE5',
+  error: '#B42318',
+  success: '#176C45',
+  warning: '#B45309',
+  info: '#0369A1',
+  lowStock: '#C2410C',
+  cardShadow: 'rgba(15, 23, 42, 0.07)',
 };
 
 const darkSemantic: SemanticColors = {
-  secondary: '#26A69A',
-  accent: '#FFB74D',
-  background: '#121212',
-  surface: '#1E1E1E',
-  surfaceVariant: '#2C2C2C',
-  text: '#F5F5F5',
-  textSecondary: '#B0BEC5',
-  border: '#3A3A3A',
-  error: '#EF5350',
-  success: '#66BB6A',
-  warning: '#FFA726',
-  info: '#29B6F6',
-  lowStock: '#FF8A65',
-  cardShadow: 'rgba(0, 0, 0, 0.3)',
+  secondary: '#3DABA0',
+  accent: '#D4A373',
+  background: '#0F1419',
+  surface: '#171D24',
+  surfaceVariant: '#24303C',
+  text: '#F1F5F9',
+  textSecondary: '#94A3B8',
+  border: '#2D3946',
+  error: '#E86A64',
+  success: '#5EC98A',
+  warning: '#E0A454',
+  info: '#5BA8D4',
+  lowStock: '#E8956A',
+  cardShadow: 'rgba(0, 0, 0, 0.4)',
 };
 
 const lightExtended: ExtendedBaseColors = {
@@ -105,17 +105,17 @@ const lightExtended: ExtendedBaseColors = {
   surfaceElevated: '#FFFFFF',
   drawerSurface: '#FFFFFF',
   textMuted: '#64748B',
-  borderLight: '#EEF2F6',
-  overlay: 'rgba(26, 29, 33, 0.52)',
+  borderLight: '#E8EDF3',
+  overlay: 'rgba(15, 23, 42, 0.48)',
 };
 
 const darkExtended: ExtendedBaseColors = {
   ...darkSemantic,
-  surfaceElevated: '#252525',
-  drawerSurface: '#1E1E1E',
-  textMuted: '#94A3B8',
-  borderLight: '#2C2C2C',
-  overlay: 'rgba(0, 0, 0, 0.62)',
+  surfaceElevated: '#1E2630',
+  drawerSurface: '#171D24',
+  textMuted: '#7D8B9C',
+  borderLight: '#24303C',
+  overlay: 'rgba(2, 6, 12, 0.62)',
 };
 
 const primaryPalettes: Record<
@@ -126,70 +126,70 @@ const primaryPalettes: Record<
     light: {
       primary: '#1565C0',
       primaryDark: '#0D47A1',
-      primaryMuted: '#E3F2FD',
-      drawerHeader: '#1565C0',
+      primaryMuted: '#E8F1FA',
+      drawerHeader: '#0D47A1',
     },
     dark: {
-      primary: '#42A5F5',
+      primary: '#4D9DE0',
       primaryDark: '#1565C0',
-      primaryMuted: '#0D2137',
+      primaryMuted: '#13283C',
       drawerHeader: '#0D47A1',
     },
   },
   ocean: {
     light: {
-      primary: '#0284C7',
+      primary: '#0274B3',
       primaryDark: '#0369A1',
-      primaryMuted: '#E0F2FE',
-      drawerHeader: '#0284C7',
+      primaryMuted: '#E4F3FB',
+      drawerHeader: '#0369A1',
     },
     dark: {
-      primary: '#38BDF8',
-      primaryDark: '#0EA5E9',
-      primaryMuted: '#0C4A6E',
+      primary: '#4DB5E0',
+      primaryDark: '#0284C7',
+      primaryMuted: '#0C3A54',
       drawerHeader: '#0369A1',
     },
   },
   emerald: {
     light: {
-      primary: '#059669',
-      primaryDark: '#047857',
-      primaryMuted: '#D1FAE5',
-      drawerHeader: '#059669',
+      primary: '#047857',
+      primaryDark: '#065F46',
+      primaryMuted: '#DDF4EA',
+      drawerHeader: '#047857',
     },
     dark: {
-      primary: '#34D399',
-      primaryDark: '#10B981',
-      primaryMuted: '#064E3B',
-      drawerHeader: '#047857',
+      primary: '#4BC49A',
+      primaryDark: '#059669',
+      primaryMuted: '#0B3D30',
+      drawerHeader: '#065F46',
     },
   },
   purple: {
     light: {
-      primary: '#7C3AED',
+      primary: '#6D28D9',
       primaryDark: '#5B21B6',
-      primaryMuted: '#EDE9FE',
-      drawerHeader: '#7C3AED',
+      primaryMuted: '#EDE7FB',
+      drawerHeader: '#5B21B6',
     },
     dark: {
-      primary: '#A78BFA',
-      primaryDark: '#8B5CF6',
-      primaryMuted: '#2E1065',
+      primary: '#9D86E8',
+      primaryDark: '#7C3AED',
+      primaryMuted: '#2A1658',
       drawerHeader: '#5B21B6',
     },
   },
   sunset: {
     light: {
-      primary: '#EA580C',
-      primaryDark: '#C2410C',
-      primaryMuted: '#FFEDD5',
-      drawerHeader: '#EA580C',
+      primary: '#C2410C',
+      primaryDark: '#9A3412',
+      primaryMuted: '#F8E6D8',
+      drawerHeader: '#9A3412',
     },
     dark: {
-      primary: '#FB923C',
-      primaryDark: '#F97316',
-      primaryMuted: '#431407',
-      drawerHeader: '#C2410C',
+      primary: '#E8A05A',
+      primaryDark: '#C2410C',
+      primaryMuted: '#3A1C0C',
+      drawerHeader: '#9A3412',
     },
   },
 };
@@ -200,10 +200,10 @@ export const THEME_PRESET_OPTIONS: {
   swatch: string;
 }[] = [
   { id: 'default', label: 'Default', swatch: '#1565C0' },
-  { id: 'ocean', label: 'Ocean', swatch: '#0284C7' },
-  { id: 'emerald', label: 'Emerald', swatch: '#059669' },
-  { id: 'purple', label: 'Purple', swatch: '#7C3AED' },
-  { id: 'sunset', label: 'Sunset', swatch: '#EA580C' },
+  { id: 'ocean', label: 'Ocean', swatch: '#0274B3' },
+  { id: 'emerald', label: 'Emerald', swatch: '#047857' },
+  { id: 'purple', label: 'Purple', swatch: '#6D28D9' },
+  { id: 'sunset', label: 'Sunset', swatch: '#C2410C' },
 ];
 
 export const isThemePreset = (value: unknown): value is ThemePreset =>
@@ -247,6 +247,8 @@ export const getThemeColors = (preset: ThemePreset, isDark: boolean): AppColors 
 
 export const lightColors: AppColors = getThemeColors('default', false);
 export const darkColors: AppColors = getThemeColors('default', true);
+export const AppLightTheme = lightColors;
+export const AppDarkTheme = darkColors;
 
 export const spacing = {
   xs: 4,

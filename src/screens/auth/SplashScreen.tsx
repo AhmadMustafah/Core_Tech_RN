@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text, ActivityIndicator } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { initializeAuth } from '@/redux/slices/authSlice';
 import { storage } from '@/utils/storage';
@@ -10,7 +11,7 @@ import { STORAGE_KEYS, APP_NAME } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import type { RootStackParamList } from '@/types/navigation';
-import { spacing } from '@/theme';
+import { spacing, typography } from '@/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
 
@@ -18,7 +19,8 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { isInitialized, isAuthenticated } = useAppSelector(state => state.auth);
   const { colors } = useAppTheme();
-  const { t } = useLocalization();
+  const { t, directionStyle } = useLocalization();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     dispatch(initializeAuth());
@@ -66,6 +68,18 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.subtitle}>{t('common.appTagline')}</Text>
       </View>
       <ActivityIndicator size="large" color="#FFFFFF" style={styles.loader} />
+      <Text
+        style={[
+          styles.credit,
+          typography.caption,
+          directionStyle,
+          {
+            color: colors.onPrimary,
+            bottom: Math.max(insets.bottom, spacing.md) + spacing.sm,
+          },
+        ]}>
+        Developed By Ahmad Mustafah
+      </Text>
     </View>
   );
 };
@@ -98,5 +112,12 @@ const styles = StyleSheet.create({
   loader: {
     position: 'absolute',
     bottom: 80,
+  },
+  credit: {
+    position: 'absolute',
+    start: spacing.lg,
+    end: spacing.lg,
+    textAlign: 'center',
+    opacity: 0.78,
   },
 });

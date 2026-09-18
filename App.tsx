@@ -47,6 +47,7 @@ const AppContent: React.FC = () => {
       colors: {
         ...(isDark ? MD3DarkTheme.colors : MD3LightTheme.colors),
         primary: colors.primary,
+        onPrimary: colors.onPrimary,
         secondary: colors.secondary,
         background: colors.background,
         surface: colors.surface,
@@ -55,6 +56,8 @@ const AppContent: React.FC = () => {
         onSurface: colors.text,
         onSurfaceVariant: colors.textSecondary,
         outline: colors.border,
+        outlineVariant: colors.borderLight,
+        backdrop: colors.overlay,
       },
     }),
     [isDark, colors],
