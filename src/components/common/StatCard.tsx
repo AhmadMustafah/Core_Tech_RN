@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { borderRadius, spacing } from '@/theme';
@@ -47,9 +47,12 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <Pressable
+        onPress={onPress}
+        android_ripple={{ color: colors.primaryMuted }}
+        style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
         {content}
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 
@@ -78,5 +81,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  pressable: {
+    flex: 1,
+    minWidth: '45%',
+  },
+  pressed: {
+    opacity: 0.82,
   },
 });

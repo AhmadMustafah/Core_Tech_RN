@@ -8,6 +8,7 @@ import { initializeAuth } from '@/redux/slices/authSlice';
 import { storage } from '@/utils/storage';
 import { STORAGE_KEYS, APP_NAME } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import type { RootStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 
@@ -17,6 +18,7 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { isInitialized, isAuthenticated } = useAppSelector(state => state.auth);
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
 
   useEffect(() => {
     dispatch(initializeAuth());
@@ -61,7 +63,7 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.logoContainer}>
         <Text style={styles.logoIcon}>🏢</Text>
         <Text style={styles.title}>{APP_NAME}</Text>
-        <Text style={styles.subtitle}>Business Management System</Text>
+        <Text style={styles.subtitle}>{t('common.appTagline')}</Text>
       </View>
       <ActivityIndicator size="large" color="#FFFFFF" style={styles.loader} />
     </View>

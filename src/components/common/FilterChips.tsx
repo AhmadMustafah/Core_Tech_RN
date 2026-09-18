@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, ScrollView } from 'react-native';
 import { Chip } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { spacing } from '@/theme';
 
 interface FilterChipsProps {
@@ -18,6 +19,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
   showAll = true,
 }) => {
   const { colors } = useAppTheme();
+  const { t, catalogLabel } = useLocalization();
 
   return (
     <ScrollView
@@ -32,7 +34,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
           style={styles.chip}
           selectedColor={colors.primary}
           showSelectedOverlay>
-          All
+          {t('common.all')}
         </Chip>
       )}
       {options.map(option => (
@@ -43,7 +45,7 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
           style={styles.chip}
           selectedColor={colors.primary}
           showSelectedOverlay>
-          {option}
+          {catalogLabel(option)}
         </Chip>
       ))}
     </ScrollView>

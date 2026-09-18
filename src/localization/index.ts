@@ -23,6 +23,49 @@ export const translate = (
 ): string =>
   interpolate(translations[language][key] ?? translations.en[key] ?? key, vars);
 
+export const isTranslationKey = (value: string): value is TranslationKey =>
+  Object.prototype.hasOwnProperty.call(translations.en, value);
+
+export const CATALOG_LABEL_KEYS: Record<string, TranslationKey> = {
+  Electronics: 'catalog.electronics',
+  Clothing: 'catalog.clothing',
+  'Food & Beverages': 'catalog.food',
+  'Office Supplies': 'catalog.office',
+  Hardware: 'catalog.hardware',
+  Other: 'catalog.other',
+  Piece: 'unit.piece',
+  Kg: 'unit.kg',
+  Liter: 'unit.liter',
+  Box: 'unit.box',
+  Pack: 'unit.pack',
+  Dozen: 'unit.dozen',
+};
+
+export const PAYMENT_STATUS_KEYS = {
+  paid: 'status.paid',
+  pending: 'status.pending',
+  partial: 'status.partial',
+} as const;
+
+export const NOTIFICATION_TITLE_KEYS = {
+  sale_completed: 'notify.saleCompleted',
+  purchase_completed: 'notify.purchaseCompleted',
+  low_stock: 'notify.lowStock',
+  order_created: 'notify.orderCreated',
+} as const;
+
+export const NOTIFICATION_BODY_KEYS = {
+  sale_completed: 'notify.body.saleCompleted',
+  purchase_completed: 'notify.body.purchaseCompleted',
+  low_stock: 'notify.body.lowStock',
+  order_created: 'notify.body.orderCreated',
+} as const;
+
+export const getCatalogLabel = (language: Language, value: string): string => {
+  const key = CATALOG_LABEL_KEYS[value];
+  return key ? translate(language, key) : value;
+};
+
 export const isRtlLanguage = (language: Language): boolean => language === 'ur';
 
 export const getDirectionalIconStyle = (isRTL: boolean): TextStyle | undefined =>

@@ -18,6 +18,7 @@ import {
 } from '@/components/common';
 import { productService } from '@/services/productService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, isLowStock } from '@/utils/formatters';
 import { PRODUCT_CATEGORIES } from '@/constants';
 import type { Product } from '@/types';
@@ -28,6 +29,7 @@ type Props = NativeStackScreenProps<InventoryStackParamList, 'ProductList'>;
 
 export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t, catalogLabel } = useLocalization();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +43,7 @@ export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
       const data = await productService.getAll({ search, category: category || undefined });
       setProducts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products');
+        setError(err instanceof Error ? err.message : 'product.failedLoad');
     } finally {
       setLoading(false);
     }
@@ -66,12 +68,12 @@ export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
               {item.name}
             </Text>
             <Text variant="bodySmall" style={{ color: colors.textSecondary }}>
-              SKU: {item.sku} • {item.category}
+              {t('product.sku')}: {item.sku} • {catalogLabel(item.category)}
             </Text>
           </View>
           {lowStock && (
             <Chip compact textStyle={{ fontSize: 10 }} style={{ backgroundColor: colors.lowStock + '20' }}>
-              Low Stock
+              {t('product.lowStock')}
             </Chip>
           )}
         </View>
@@ -80,7 +82,7 @@ export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
             {formatCurrency(item.price)}
           </Text>
           <Text variant="bodySmall" style={{ color: lowStock ? colors.lowStock : colors.textSecondary }}>
-            Stock: {item.stockQuantity} {item.unit}
+            {t('product.stock')}: {item.stockQuantity} {catalogLabel(item.unit)}
           </Text>
         </View>
       </TouchableOpacity>
@@ -88,13 +90,13 @@ export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   if (loading && products.length === 0) {
-    return <LoadingState message="Loading products..." />;
+    return <LoadingState message="product.loading" />;
   }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search products..." />
+        <SearchBar value={search} onChangeText={setSearch} placeholder={t('product.search')} />
         <FilterChips options={PRODUCT_CATEGORIES} selected={category} onSelect={setCategory} />
       </View>
 
@@ -110,8 +112,8 @@ export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
           ListEmptyComponent={
             <EmptyState
               icon="package-variant"
-              title="No Products Found"
-              message="Add your first product to get started"
+              title={t('product.empty')}
+              message={t('product.emptyMsg')}
             />
           }
         />

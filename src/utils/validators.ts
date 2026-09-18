@@ -17,26 +17,26 @@ export const sanitizeEmail = (value: string): string =>
 
 export const validateEmail = (email: string): ValidationResult => {
   const value = sanitizeEmail(email);
-  if (!value) return 'Email is required';
-  if (value.length > 100) return 'Email must not exceed 100 characters';
-  if (!emailRegex.test(value)) return 'Enter a valid email address';
+  if (!value) return 'validation.emailRequired';
+  if (value.length > 100) return 'validation.emailTooLong';
+  if (!emailRegex.test(value)) return 'validation.emailInvalid';
   return true;
 };
 
 /** Used on login — checks presence and basic format only */
 export const validateLoginPassword = (password: string): ValidationResult => {
-  if (!password) return 'Password is required';
-  if (/\s/.test(password)) return 'Password must not contain spaces';
-  if (password.length < 6) return 'Password must be at least 6 characters';
+  if (!password) return 'validation.passwordRequired';
+  if (/\s/.test(password)) return 'validation.passwordNoSpaces';
+  if (password.length < 6) return 'validation.passwordMinLogin';
   if (password.length > PASSWORD_RULES.maxLength) {
-    return `Password must not exceed ${PASSWORD_RULES.maxLength} characters`;
+    return 'validation.passwordTooLong';
   }
   return true;
 };
 
 /** Used when creating or changing passwords — full security rules */
 export const validateSecurePassword = (password: string): ValidationResult => {
-  if (!password) return 'Password is required';
+  if (!password) return 'validation.passwordRequired';
   const errors = getPasswordSecurityErrors(password);
   return errors.length > 0 ? errors[0] : true;
 };
@@ -48,111 +48,123 @@ export const validateConfirmPassword = (
   password: string,
   confirmPassword: string,
 ): ValidationResult => {
-  if (!confirmPassword) return 'Please confirm your password';
-  if (password !== confirmPassword) return 'Passwords do not match';
+  if (!confirmPassword) return 'validation.confirmRequired';
+  if (password !== confirmPassword) return 'validation.passwordMismatch';
   return true;
 };
 
 export const validatePhone = (phone: string): ValidationResult => {
   const value = sanitizeText(phone);
-  if (!value) return 'Phone number is required';
-  if (!phoneRegex.test(value)) return 'Enter a valid phone number (10-15 digits)';
+  if (!value) return 'validation.phoneRequired';
+  if (!phoneRegex.test(value)) return 'validation.phoneInvalid';
   return true;
 };
 
 export const validateRequired = (
   value: string,
-  field: string,
+  _field: string,
   min = 1,
   max = 100,
 ): ValidationResult => {
   const trimmed = sanitizeText(value);
-  if (!trimmed) return `${field} is required`;
+  if (!trimmed) return 'validation.numberRequired';
   if (trimmed.length < min) {
-    return `${field} must be at least ${min} characters`;
+    return 'validation.nameMin';
   }
   if (trimmed.length > max) {
-    return `${field} must not exceed ${max} characters`;
+    return 'validation.nameMax';
   }
   return true;
 };
 
-export const validateName = (name: string, field = 'Name'): ValidationResult => {
-  const required = validateRequired(name, field, 2, 50);
-  if (required !== true) return required;
-  if (!nameRegex.test(sanitizeText(name))) {
-    return `${field} can only contain letters, spaces, and .'-`;
+export const validateName = (name: string, _field = 'Name'): ValidationResult => {
+  const trimmed = sanitizeText(name);
+  if (!trimmed) return 'validation.nameRequired';
+  if (trimmed.length < 2) return 'validation.nameMin';
+  if (trimmed.length > 50) return 'validation.nameMax';
+  if (!nameRegex.test(trimmed)) {
+    return 'validation.nameInvalid';
   }
   return true;
 };
 
 export const validateCompany = (company: string): ValidationResult => {
-  return validateRequired(company, 'Company', 2, 100);
+  const trimmed = sanitizeText(company);
+  if (!trimmed) return 'validation.companyRequired';
+  if (trimmed.length < 2) return 'validation.companyMin';
+  if (trimmed.length > 100) return 'validation.companyMax';
+  return true;
 };
 
 export const validateOptionalText = (
   value: string,
-  field: string,
+  _field: string,
   max = 200,
 ): ValidationResult => {
   const trimmed = sanitizeText(value);
   if (!trimmed) return true;
   if (trimmed.length > max) {
-    return `${field} must not exceed ${max} characters`;
+    return 'validation.textTooLong';
   }
   return true;
 };
 
 export const validateSku = (sku: string): ValidationResult => {
-  const required = validateRequired(sku, 'SKU', 2, 30);
-  if (required !== true) return required;
-  if (!skuRegex.test(sanitizeText(sku))) {
-    return 'SKU can only contain letters, numbers, hyphens, and underscores';
+  const trimmed = sanitizeText(sku);
+  if (!trimmed) return 'validation.skuRequired';
+  if (trimmed.length < 2) return 'validation.skuMin';
+  if (trimmed.length > 30) return 'validation.skuMax';
+  if (!skuRegex.test(trimmed)) {
+    return 'validation.skuInvalid';
   }
   return true;
 };
 
 export const validateProductName = (name: string): ValidationResult => {
-  return validateRequired(name, 'Product name', 2, 100);
+  const trimmed = sanitizeText(name);
+  if (!trimmed) return 'validation.productNameRequired';
+  if (trimmed.length < 2) return 'validation.productNameMin';
+  if (trimmed.length > 100) return 'validation.productNameMax';
+  return true;
 };
 
 export const validatePositiveNumber = (
   value: string,
-  field: string,
+  _field: string,
   allowZero = false,
 ): ValidationResult => {
   const trimmed = sanitizeText(value);
-  if (!trimmed) return `${field} is required`;
+  if (!trimmed) return 'validation.numberRequired';
   if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) {
-    return `${field} must be a valid number`;
+    return 'validation.numberInvalid';
   }
   const num = parseFloat(trimmed);
-  if (Number.isNaN(num)) return `${field} must be a valid number`;
-  if (!allowZero && num <= 0) return `${field} must be greater than 0`;
-  if (allowZero && num < 0) return `${field} must not be negative`;
-  if (num > 999999999) return `${field} is too large`;
+  if (Number.isNaN(num)) return 'validation.numberInvalid';
+  if (!allowZero && num <= 0) return 'validation.numberPositive';
+  if (allowZero && num < 0) return 'validation.numberNegative';
+  if (num > 999999999) return 'validation.numberTooLarge';
   return true;
 };
 
 export const validateInteger = (
   value: string,
-  field: string,
+  _field: string,
   min = 0,
   max = 999999,
 ): ValidationResult => {
   const trimmed = sanitizeText(value);
-  if (!trimmed) return `${field} is required`;
-  if (!/^\d+$/.test(trimmed)) return `${field} must be a whole number`;
+  if (!trimmed) return 'validation.integerRequired';
+  if (!/^\d+$/.test(trimmed)) return 'validation.integerInvalid';
   const num = parseInt(trimmed, 10);
-  if (num < min) return `${field} must be at least ${min}`;
-  if (num > max) return `${field} must not exceed ${max}`;
+  if (num < min) return 'validation.integerMin';
+  if (num > max) return 'validation.integerMax';
   return true;
 };
 
 export const validateOtp = (otp: string): ValidationResult => {
   const value = sanitizeText(otp);
-  if (!value) return 'OTP is required';
-  if (!/^\d{6}$/.test(value)) return 'OTP must be exactly 6 digits';
+  if (!value) return 'validation.otpRequired';
+  if (!/^\d{6}$/.test(value)) return 'validation.otpInvalid';
   return true;
 };
 

@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
+import { isTranslationKey } from '@/localization';
 import { spacing } from '@/theme';
 
 interface LoadingStateProps {
@@ -10,18 +12,24 @@ interface LoadingStateProps {
 }
 
 export const LoadingState: React.FC<LoadingStateProps> = ({
-  message = 'Loading...',
+  message,
   fullScreen = true,
 }) => {
   const { colors } = useAppTheme();
+  const { t, directionStyle } = useLocalization();
+  const text = message
+    ? isTranslationKey(message)
+      ? t(message)
+      : message
+    : t('common.loading');
 
   return (
     <View style={[styles.container, fullScreen && styles.fullScreen]}>
       <ActivityIndicator size="large" color={colors.primary} />
       <Text
         variant="bodyMedium"
-        style={[styles.message, { color: colors.textSecondary }]}>
-        {message}
+        style={[styles.message, { color: colors.textSecondary }, directionStyle]}>
+        {text}
       </Text>
     </View>
   );
@@ -38,5 +46,6 @@ const styles = StyleSheet.create({
   },
   message: {
     marginTop: spacing.md,
+    textAlign: 'center',
   },
 });

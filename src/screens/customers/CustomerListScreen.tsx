@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SearchBar, EmptyState, LoadingState, ErrorState } from '@/components/common';
 import { customerService } from '@/services/customerService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { getInitials } from '@/utils/formatters';
 import type { Customer } from '@/types';
 import type { ProfileStackParamList } from '@/types/navigation';
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'CustomerList'>;
 
 export const CustomerListScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export const CustomerListScreen: React.FC<Props> = ({ navigation }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try { setCustomers(await customerService.getAll(search)); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Failed to load'); }
+    catch (err) { setError(err instanceof Error ? err.message : 'common.failedLoad'); }
     finally { setLoading(false); }
   }, [search]);
 
@@ -31,7 +33,7 @@ export const CustomerListScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}><SearchBar value={search} onChangeText={setSearch} placeholder="Search customers..." /></View>
+      <View style={styles.header}><SearchBar value={search} onChangeText={setSearch} placeholder={t('customer.search')} /></View>
       {error ? <ErrorState message={error} onRetry={load} /> : (
         <FlatList data={customers} keyExtractor={i => i.id} contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
@@ -46,7 +48,7 @@ export const CustomerListScreen: React.FC<Props> = ({ navigation }) => {
               </View>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={<EmptyState icon="account-group-outline" title="No Customers" message="Add your first customer" />}
+          ListEmptyComponent={<EmptyState icon="account-group-outline" title={t('customer.empty')} message={t('customer.emptyMsg')} />}
         />
       )}
       <FAB icon="plus" style={[styles.fab, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate('AddCustomer')} />

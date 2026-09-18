@@ -8,6 +8,7 @@ import { purchaseService } from '@/services/purchaseService';
 import { productService } from '@/services/productService';
 import { supplierService } from '@/services/supplierService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency } from '@/utils/formatters';
 import type { Product, PurchaseItem, Supplier } from '@/types';
 import type { PurchaseStackParamList } from '@/types/navigation';
@@ -17,6 +18,7 @@ type Props = NativeStackScreenProps<PurchaseStackParamList, 'CreatePurchase'>;
 
 export const CreatePurchaseScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -56,18 +58,18 @@ export const CreatePurchaseScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>Create Purchase</Text>
+      <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>{t('purchase.create')}</Text>
 
       <Menu visible={supplierMenu} onDismiss={() => setSupplierMenu(false)} anchor={
         <Button mode="outlined" onPress={() => setSupplierMenu(true)} icon="truck" style={styles.menuBtn}>
-          {selectedSupplier ? selectedSupplier.name : 'Select Supplier'}
+          {selectedSupplier ? selectedSupplier.name : t('purchase.selectSupplier')}
         </Button>
       }>
         {suppliers.map(s => <Menu.Item key={s.id} onPress={() => { setSelectedSupplier(s); setSupplierMenu(false); }} title={s.name} />)}
       </Menu>
 
       <Menu visible={productMenu} onDismiss={() => setProductMenu(false)} anchor={
-        <Button mode="outlined" onPress={() => setProductMenu(true)} icon="plus" style={styles.menuBtn}>Add Product</Button>
+        <Button mode="outlined" onPress={() => setProductMenu(true)} icon="plus" style={styles.menuBtn}>{t('sale.addProduct')}</Button>
       }>
         {products.map(p => <Menu.Item key={p.id} onPress={() => addProduct(p)} title={`${p.name} - ${formatCurrency(p.costPrice)}`} />)}
       </Menu>
@@ -75,15 +77,15 @@ export const CreatePurchaseScreen: React.FC<Props> = ({ navigation }) => {
       {items.map((item, i) => (
         <View key={i} style={[styles.itemCard, { backgroundColor: colors.surface }]}>
           <Text style={{ color: colors.text, fontWeight: '600' }}>{item.productName}</Text>
-          <Text style={{ color: colors.textSecondary }}>Qty: {item.quantity} • {formatCurrency(item.purchasePrice)}</Text>
+          <Text style={{ color: colors.textSecondary }}>{t('common.qty')}: {item.quantity} • {formatCurrency(item.purchasePrice)}</Text>
         </View>
       ))}
 
       <Text variant="titleMedium" style={{ color: colors.secondary, fontWeight: '700', marginTop: spacing.md }}>
-        Total: {formatCurrency(totalAmount)}
+        {t('common.total')}: {formatCurrency(totalAmount)}
       </Text>
 
-      <CustomButton title="Create Purchase" onPress={handleSubmit} loading={loading} fullWidth
+      <CustomButton title={t('purchase.create')} onPress={handleSubmit} loading={loading} fullWidth
         disabled={!selectedSupplier || items.length === 0} style={{ marginTop: spacing.lg }} />
     </FormScrollView>
   );

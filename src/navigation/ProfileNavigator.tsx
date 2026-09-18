@@ -8,7 +8,6 @@ import { ThemeSettingsScreen } from '@/screens/settings/ThemeSettingsScreen';
 import { AccountSettingsScreen } from '@/screens/settings/AccountSettingsScreen';
 import { LanguageSettingsScreen } from '@/screens/settings/LanguageSettingsScreen';
 import { NotificationSettingsScreen } from '@/screens/settings/NotificationSettingsScreen';
-import { SecuritySettingsScreen } from '@/screens/settings/SecuritySettingsScreen';
 import { PreferencesSettingsScreen } from '@/screens/settings/PreferencesSettingsScreen';
 import { AboutSupportScreen } from '@/screens/settings/AboutSupportScreen';
 import { NotificationsScreen } from '@/screens/notifications/NotificationsScreen';
@@ -30,8 +29,8 @@ const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
 export const ProfileNavigator: React.FC = () => {
   const { colors } = useAppTheme();
-  const { t } = useLocalization();
-  const screenOptions = useMemo(() => getStackScreenOptions(colors), [colors]);
+  const { t, isRTL } = useLocalization();
+  const screenOptions = useMemo(() => getStackScreenOptions(colors, isRTL), [colors, isRTL]);
 
   return (
     <Stack.Navigator screenOptions={screenOptions}>
@@ -51,7 +50,6 @@ export const ProfileNavigator: React.FC = () => {
         component={NotificationSettingsScreen}
         options={{ title: t('screen.notificationSettings') }}
       />
-      <Stack.Screen name="SecuritySettings" component={SecuritySettingsScreen} options={{ title: t('screen.security') }} />
       <Stack.Screen
         name="PreferencesSettings"
         component={PreferencesSettingsScreen}

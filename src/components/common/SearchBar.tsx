@@ -14,15 +14,15 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({
   value,
   onChangeText,
-  placeholder = 'Search...',
+  placeholder,
 }) => {
   const { colors } = useAppTheme();
-  const { isRTL } = useLocalization();
+  const { t, isRTL } = useLocalization();
 
   return (
     <View style={styles.container}>
       <Searchbar
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('common.search')}
         onChangeText={onChangeText}
         value={value}
         style={[styles.searchbar, { backgroundColor: colors.surface }]}

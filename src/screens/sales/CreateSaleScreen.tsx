@@ -8,9 +8,11 @@ import { saleService } from '@/services/saleService';
 import { productService } from '@/services/productService';
 import { customerService } from '@/services/customerService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency } from '@/utils/formatters';
 import type { Customer, Product, SaleItem } from '@/types';
 import type { SalesStackParamList } from '@/types/navigation';
+import { PAYMENT_STATUS_KEYS } from '@/localization';
 import { spacing } from '@/theme';
 import { validatePositiveNumber } from '@/utils/validators';
 
@@ -18,6 +20,7 @@ type Props = NativeStackScreenProps<SalesStackParamList, 'CreateSale'>;
 
 export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -61,16 +64,16 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
     setTaxError(taxValidation === true ? undefined : taxValidation);
 
     if (!selectedCustomer) {
-      setFormError('Please select a customer');
+      setFormError(t('sale.pleaseCustomer'));
       return;
     }
     if (items.length === 0) {
-      setFormError('Please add at least one product');
+      setFormError(t('sale.pleaseProduct'));
       return;
     }
     if (discountValidation !== true || taxValidation !== true) return;
     if (totalAmount < 0) {
-      setFormError('Total amount cannot be negative');
+      setFormError(t('sale.totalNegative'));
       return;
     }
 
@@ -94,14 +97,14 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>Create Sale</Text>
+      <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>{t('sale.create')}</Text>
       {formError && (
         <Text style={{ color: colors.error, marginBottom: spacing.sm }}>{formError}</Text>
       )}
 
       <Menu visible={customerMenu} onDismiss={() => setCustomerMenu(false)} anchor={
         <Button mode="outlined" onPress={() => setCustomerMenu(true)} icon="account" style={styles.menuBtn}>
-          {selectedCustomer ? selectedCustomer.name : 'Select Customer'}
+          {selectedCustomer ? selectedCustomer.name : t('sale.selectCustomer')}
         </Button>
       }>
         {customers.map(c => (
@@ -110,7 +113,7 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
       </Menu>
 
       <Menu visible={productMenu} onDismiss={() => setProductMenu(false)} anchor={
-        <Button mode="outlined" onPress={() => setProductMenu(true)} icon="plus" style={styles.menuBtn}>Add Product</Button>
+        <Button mode="outlined" onPress={() => setProductMenu(true)} icon="plus" style={styles.menuBtn}>{t('sale.addProduct')}</Button>
       }>
         {products.map(p => (
           <Menu.Item key={p.id} onPress={() => addProduct(p)} title={`${p.name} - ${formatCurrency(p.price)}`} />
@@ -120,12 +123,12 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
       {items.map((item, index) => (
         <View key={index} style={[styles.itemCard, { backgroundColor: colors.surface }]}>
           <Text style={{ color: colors.text, fontWeight: '600' }}>{item.productName}</Text>
-          <Text style={{ color: colors.textSecondary }}>Qty: {item.quantity} • {formatCurrency(item.price)}</Text>
+          <Text style={{ color: colors.textSecondary }}>{t('common.qty')}: {item.quantity} • {formatCurrency(item.price)}</Text>
         </View>
       ))}
 
-      <CustomInput label="Discount" value={discount} onChangeText={setDiscount} keyboardType="numeric" error={discountError} />
-      <CustomInput label="Tax" value={tax} onChangeText={setTax} keyboardType="numeric" error={taxError} />
+      <CustomInput label={t('common.discount')} value={discount} onChangeText={setDiscount} keyboardType="numeric" error={discountError} />
+      <CustomInput label={t('common.tax')} value={tax} onChangeText={setTax} keyboardType="numeric" error={taxError} />
 
       <View style={styles.paymentRow}>
         {(['paid', 'pending', 'partial'] as const).map(status => (
@@ -140,16 +143,16 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
               },
             ]}>
             <Text style={{ color: paymentStatus === status ? '#FFF' : colors.text }}>
-              {status}
+              {t(PAYMENT_STATUS_KEYS[status])}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <Divider style={{ marginVertical: spacing.md }} />
-      <View style={styles.totalRow}><Text variant="titleMedium" style={{ color: colors.text }}>Total</Text><Text variant="titleLarge" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(totalAmount)}</Text></View>
+      <View style={styles.totalRow}><Text variant="titleMedium" style={{ color: colors.text }}>{t('common.total')}</Text><Text variant="titleLarge" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(totalAmount)}</Text></View>
 
-      <CustomButton title="Create Sale" onPress={handleSubmit} loading={loading} fullWidth disabled={!selectedCustomer || items.length === 0} style={{ marginTop: spacing.lg }} />
+      <CustomButton title={t('sale.create')} onPress={handleSubmit} loading={loading} fullWidth disabled={!selectedCustomer || items.length === 0} style={{ marginTop: spacing.lg }} />
     </FormScrollView>
   );
 };

@@ -5,10 +5,12 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomCard, LoadingState, ErrorState } from '@/components/common';
 import { saleService } from '@/services/saleService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { APP_NAME } from '@/constants';
 import type { Sale } from '@/types';
 import type { SalesStackParamList } from '@/types/navigation';
+import { PAYMENT_STATUS_KEYS } from '@/localization';
 import { spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<SalesStackParamList, 'InvoicePreview'>;
@@ -16,6 +18,7 @@ type Props = NativeStackScreenProps<SalesStackParamList, 'InvoicePreview'>;
 export const InvoicePreviewScreen: React.FC<Props> = ({ route }) => {
   const { saleId } = route.params;
   const { colors } = useAppTheme();
+  const { t, language } = useLocalization();
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -24,35 +27,35 @@ export const InvoicePreviewScreen: React.FC<Props> = ({ route }) => {
   }, [saleId]);
 
   if (loading) return <LoadingState />;
-  if (!sale) return <ErrorState message="Invoice not found" />;
+  if (!sale) return <ErrorState message="invoice.notFound" />;
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <CustomCard style={styles.invoice}>
         <View style={styles.invoiceHeader}>
           <Text variant="headlineSmall" style={{ color: colors.primary, fontWeight: '700' }}>{APP_NAME}</Text>
-          <Text variant="bodySmall" style={{ color: colors.textSecondary }}>Business Management System</Text>
+          <Text variant="bodySmall" style={{ color: colors.textSecondary }}>{t('common.appTagline')}</Text>
         </View>
         <Divider style={{ marginVertical: spacing.md }} />
         <View style={styles.invoiceMeta}>
-          <View><Text style={{ color: colors.textSecondary }}>Invoice</Text><Text style={{ color: colors.text, fontWeight: '600' }}>{sale.invoiceNumber}</Text></View>
-          <View style={{ alignItems: 'flex-end' }}><Text style={{ color: colors.textSecondary }}>Date</Text><Text style={{ color: colors.text }}>{formatDate(sale.createdAt)}</Text></View>
+          <View><Text style={{ color: colors.textSecondary }}>{t('invoice.title')}</Text><Text style={{ color: colors.text, fontWeight: '600' }}>{sale.invoiceNumber}</Text></View>
+          <View style={{ alignItems: 'flex-end' }}><Text style={{ color: colors.textSecondary }}>{t('invoice.date')}</Text><Text style={{ color: colors.text }}>{formatDate(sale.createdAt, language)}</Text></View>
         </View>
-        <Text variant="titleSmall" style={{ color: colors.text, marginTop: spacing.md }}>Bill To: {sale.customerName}</Text>
+        <Text variant="titleSmall" style={{ color: colors.text, marginTop: spacing.md }}>{t('invoice.billTo')}: {sale.customerName}</Text>
         <Divider style={{ marginVertical: spacing.md }} />
         {sale.items.map((item, i) => (
           <View key={i} style={styles.lineItem}>
             <Text style={{ color: colors.text, flex: 1 }}>{item.productName}</Text>
             <Text style={{ color: colors.textSecondary }}>{item.quantity}</Text>
-            <Text style={{ color: colors.text, width: 80, textAlign: 'right' }}>{formatCurrency(item.total)}</Text>
+            <Text style={{ color: colors.text, width: 80, textAlign: 'right', writingDirection: 'ltr' }}>{formatCurrency(item.total)}</Text>
           </View>
         ))}
         <Divider style={{ marginVertical: spacing.md }} />
-        <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>Subtotal</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.subtotal)}</Text></View>
-        <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>Discount</Text><Text style={{ color: colors.text }}>-{formatCurrency(sale.discount)}</Text></View>
-        <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>Tax</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.tax)}</Text></View>
-        <View style={[styles.totalLine, styles.grandTotal]}><Text variant="titleMedium" style={{ color: colors.text, fontWeight: '700' }}>Total</Text><Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(sale.totalAmount)}</Text></View>
-        <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg }}>Payment Status: {sale.paymentStatus}</Text>
+        <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>{t('common.subtotal')}</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.subtotal)}</Text></View>
+        <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>{t('common.discount')}</Text><Text style={{ color: colors.text }}>-{formatCurrency(sale.discount)}</Text></View>
+        <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>{t('common.tax')}</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.tax)}</Text></View>
+        <View style={[styles.totalLine, styles.grandTotal]}><Text variant="titleMedium" style={{ color: colors.text, fontWeight: '700' }}>{t('common.total')}</Text><Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(sale.totalAmount)}</Text></View>
+        <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg }}>{t('invoice.paymentStatus')}: {t(PAYMENT_STATUS_KEYS[sale.paymentStatus])}</Text>
       </CustomCard>
     </ScrollView>
   );

@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, Icon, Button } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
+import { isTranslationKey } from '@/localization';
 import { spacing } from '@/theme';
 
 interface ErrorStateProps {
@@ -10,27 +12,33 @@ interface ErrorStateProps {
 }
 
 export const ErrorState: React.FC<ErrorStateProps> = ({
-  message = 'Something went wrong',
+  message,
   onRetry,
 }) => {
   const { colors } = useAppTheme();
+  const { t, directionStyle } = useLocalization();
+  const text = message
+    ? isTranslationKey(message)
+      ? t(message)
+      : message
+    : t('common.somethingWrong');
 
   return (
     <View style={styles.container}>
       <Icon source="alert-circle-outline" size={64} color={colors.error} />
       <Text
         variant="titleMedium"
-        style={[styles.title, { color: colors.text }]}>
-        Error
+        style={[styles.title, { color: colors.text }, directionStyle]}>
+        {t('common.error')}
       </Text>
       <Text
         variant="bodyMedium"
-        style={[styles.message, { color: colors.textSecondary }]}>
-        {message}
+        style={[styles.message, { color: colors.textSecondary }, directionStyle]}>
+        {text}
       </Text>
       {onRetry && (
         <Button mode="contained" onPress={onRetry} style={styles.button}>
-          Try Again
+          {t('common.tryAgain')}
         </Button>
       )}
     </View>
@@ -46,6 +54,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginTop: spacing.md,
+    textAlign: 'center',
   },
   message: {
     marginTop: spacing.sm,

@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { borderRadius, spacing } from '@/theme';
 
 interface CustomCardProps {
@@ -22,6 +23,7 @@ export const CustomCard: React.FC<CustomCardProps> = ({
   headerRight,
 }) => {
   const { colors } = useAppTheme();
+  const { directionStyle } = useLocalization();
 
   const content = (
     <Card
@@ -39,14 +41,14 @@ export const CustomCard: React.FC<CustomCardProps> = ({
         <View style={styles.header}>
           <View style={styles.headerText}>
             {title && (
-              <Text variant="titleMedium" style={{ color: colors.text }}>
+              <Text variant="titleMedium" style={[{ color: colors.text }, directionStyle]}>
                 {title}
               </Text>
             )}
             {subtitle && (
               <Text
                 variant="bodySmall"
-                style={{ color: colors.textSecondary, marginTop: 2 }}>
+                style={[{ color: colors.textSecondary, marginTop: 2 }, directionStyle]}>
                 {subtitle}
               </Text>
             )}

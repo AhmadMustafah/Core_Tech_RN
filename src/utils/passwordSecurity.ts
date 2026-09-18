@@ -64,18 +64,18 @@ export const getPasswordSecurityErrors = (password: string): string[] => {
   const checks = getPasswordChecks(password);
   const errors: string[] = [];
 
-  if (!checks.noSpaces) errors.push('Password must not contain spaces');
+  if (!checks.noSpaces) errors.push('validation.passwordNoSpaces');
   if (!checks.minLength) {
-    errors.push(`Password must be at least ${PASSWORD_RULES.minLength} characters`);
+    errors.push('validation.passwordMinSecure');
   }
   if (password.length > PASSWORD_RULES.maxLength) {
-    errors.push(`Password must not exceed ${PASSWORD_RULES.maxLength} characters`);
+    errors.push('validation.passwordTooLong');
   }
-  if (!checks.hasUppercase) errors.push('Include at least one uppercase letter');
-  if (!checks.hasLowercase) errors.push('Include at least one lowercase letter');
-  if (!checks.hasNumber) errors.push('Include at least one number');
-  if (!checks.hasSpecialChar) errors.push('Include at least one special character');
-  if (!checks.notCommon) errors.push('This password is too common. Choose a stronger one');
+  if (!checks.hasUppercase) errors.push('validation.passwordUppercase');
+  if (!checks.hasLowercase) errors.push('validation.passwordLowercase');
+  if (!checks.hasNumber) errors.push('validation.passwordNumber');
+  if (!checks.hasSpecialChar) errors.push('validation.passwordSpecial');
+  if (!checks.notCommon) errors.push('validation.passwordCommon');
 
   return errors;
 };

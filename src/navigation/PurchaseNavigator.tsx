@@ -13,8 +13,8 @@ const Stack = createNativeStackNavigator<PurchaseStackParamList>();
 
 export const PurchaseNavigator: React.FC = () => {
   const { colors } = useAppTheme();
-  const { t } = useLocalization();
-  const screenOptions = useMemo(() => getStackScreenOptions(colors), [colors]);
+  const { t, isRTL } = useLocalization();
+  const screenOptions = useMemo(() => getStackScreenOptions(colors, isRTL), [colors, isRTL]);
 
   return (
     <Stack.Navigator screenOptions={screenOptions}>

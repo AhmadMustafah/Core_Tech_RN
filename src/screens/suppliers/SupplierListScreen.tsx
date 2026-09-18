@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { EmptyState, LoadingState, ErrorState } from '@/components/common';
 import { supplierService } from '@/services/supplierService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { getInitials } from '@/utils/formatters';
 import type { Supplier } from '@/types';
 import type { ProfileStackParamList } from '@/types/navigation';
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'SupplierList'>;
 
 export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
   const load = useCallback(async () => {
     setLoading(true);
     try { setSuppliers(await supplierService.getAll()); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Failed to load'); }
+    catch (err) { setError(err instanceof Error ? err.message : 'common.failedLoad'); }
     finally { setLoading(false); }
   }, []);
 
@@ -43,7 +45,7 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
               </View>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={<EmptyState icon="truck-outline" title="No Suppliers" message="Add your first supplier" />}
+          ListEmptyComponent={<EmptyState icon="truck-outline" title={t('supplier.empty')} message={t('supplier.emptyMsg')} />}
         />
       )}
       <FAB icon="plus" style={[styles.fab, { backgroundColor: colors.secondary }]} onPress={() => navigation.navigate('AddSupplier')} />

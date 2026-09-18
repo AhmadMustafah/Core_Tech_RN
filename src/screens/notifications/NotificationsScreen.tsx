@@ -5,8 +5,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { EmptyState, LoadingState } from '@/components/common';
 import { notificationService } from '@/services/notificationService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { AppNotification } from '@/types';
+import { NOTIFICATION_BODY_KEYS, NOTIFICATION_TITLE_KEYS } from '@/localization';
 import { spacing, borderRadius } from '@/theme';
 
 const getNotificationIcon = (type: AppNotification['type']) => {
@@ -20,6 +22,7 @@ const getNotificationIcon = (type: AppNotification['type']) => {
 
 export const NotificationsScreen: React.FC = () => {
   const { colors } = useAppTheme();
+  const { t, language } = useLocalization();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,13 +44,13 @@ export const NotificationsScreen: React.FC = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  if (loading && notifications.length === 0) return <LoadingState message="Loading notifications..." />;
+  if (loading && notifications.length === 0) return <LoadingState message="notify.loading" />;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {notifications.some(n => !n.read) && (
         <TouchableOpacity style={styles.markAll} onPress={markAllRead}>
-          <Text style={{ color: colors.primary, fontWeight: '600' }}>Mark all as read</Text>
+          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('notify.markAll')}</Text>
         </TouchableOpacity>
       )}
       <FlatList
@@ -62,15 +65,15 @@ export const NotificationsScreen: React.FC = () => {
             <View style={styles.cardContent}>
               <IconButton icon={getNotificationIcon(item.type)} iconColor={colors.primary} size={24} style={styles.icon} />
               <View style={styles.textContent}>
-                <Text variant="titleSmall" style={{ color: colors.text, fontWeight: item.read ? '400' : '700' }}>{item.title}</Text>
-                <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>{item.message}</Text>
-                <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 4 }}>{formatRelativeTime(item.createdAt)}</Text>
+                <Text variant="titleSmall" style={{ color: colors.text, fontWeight: item.read ? '400' : '700' }}>{t(NOTIFICATION_TITLE_KEYS[item.type])}</Text>
+                <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>{t(NOTIFICATION_BODY_KEYS[item.type])}</Text>
+                <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 4 }}>{formatRelativeTime(item.createdAt, language)}</Text>
               </View>
               {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
             </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<EmptyState icon="bell-off-outline" title="No Notifications" message="You're all caught up!" />}
+        ListEmptyComponent={<EmptyState icon="bell-off-outline" title={t('notify.empty')} message={t('notify.emptyMsg')} />}
       />
     </View>
   );

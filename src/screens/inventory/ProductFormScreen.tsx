@@ -6,6 +6,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { productService } from '@/services/productService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import {
   validateProductName,
   validateSku,
@@ -35,6 +36,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
   const isEdit = route.name === 'EditProduct';
   const productId = isEdit ? (route.params as { productId: string }).productId : null;
   const { colors } = useAppTheme();
+  const { t, catalogLabel } = useLocalization();
   const [loading, setLoading] = useState(false);
   const [categoryMenu, setCategoryMenu] = useState(false);
   const [unitMenu, setUnitMenu] = useState(false);
@@ -98,7 +100,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.scroll}>
         <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>
-          {isEdit ? 'Edit Product' : 'Add Product'}
+          {isEdit ? t('product.edit') : t('product.add')}
         </Text>
 
         {(['name', 'sku'] as const).map(field => (
@@ -111,7 +113,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
             }}
             render={({ field: { onChange, value } }) => (
               <CustomInput
-                label={field === 'name' ? 'Product Name' : 'SKU'}
+                label={field === 'name' ? t('product.name') : t('product.sku')}
                 value={value}
                 onChangeText={onChange}
                 maxLength={field === 'name' ? 100 : 30}
@@ -123,21 +125,21 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <Menu visible={categoryMenu} onDismiss={() => setCategoryMenu(false)} anchor={
           <Button mode="outlined" onPress={() => setCategoryMenu(true)} style={styles.menuButton}>
-            Category: {category}
+            {t('product.categoryLabel', { value: catalogLabel(category) })}
           </Button>
         }>
           {PRODUCT_CATEGORIES.map(c => (
-            <Menu.Item key={c} onPress={() => { setValue('category', c); setCategoryMenu(false); }} title={c} />
+            <Menu.Item key={c} onPress={() => { setValue('category', c); setCategoryMenu(false); }} title={catalogLabel(c)} />
           ))}
         </Menu>
 
         <Menu visible={unitMenu} onDismiss={() => setUnitMenu(false)} anchor={
           <Button mode="outlined" onPress={() => setUnitMenu(true)} style={styles.menuButton}>
-            Unit: {unit}
+            {t('product.unitLabel', { value: catalogLabel(unit) })}
           </Button>
         }>
           {PRODUCT_UNITS.map(u => (
-            <Menu.Item key={u} onPress={() => { setValue('unit', u); setUnitMenu(false); }} title={u} />
+            <Menu.Item key={u} onPress={() => { setValue('unit', u); setUnitMenu(false); }} title={catalogLabel(u)} />
           ))}
         </Menu>
 
@@ -146,7 +148,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="price"
           rules={{ validate: v => validatePositiveNumber(v, 'Selling price') }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label="Selling Price" value={value} onChangeText={onChange} keyboardType="numeric" error={errors.price?.message as string} />
+            <CustomInput label={t('product.sellingPrice')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.price?.message as string} />
           )}
         />
         <Controller
@@ -154,7 +156,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="costPrice"
           rules={{ validate: v => validatePositiveNumber(v, 'Cost price') }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label="Cost Price" value={value} onChangeText={onChange} keyboardType="numeric" error={errors.costPrice?.message as string} />
+            <CustomInput label={t('product.costPrice')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.costPrice?.message as string} />
           )}
         />
         <Controller
@@ -162,7 +164,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="stockQuantity"
           rules={{ validate: v => validateInteger(v, 'Stock quantity', 0) }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label="Stock Quantity" value={value} onChangeText={onChange} keyboardType="numeric" error={errors.stockQuantity?.message as string} />
+            <CustomInput label={t('product.stockQty')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.stockQuantity?.message as string} />
           )}
         />
         <Controller
@@ -170,7 +172,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="lowStockThreshold"
           rules={{ validate: v => validateInteger(v, 'Low stock threshold', 0) }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label="Low Stock Threshold" value={value} onChangeText={onChange} keyboardType="numeric" error={errors.lowStockThreshold?.message as string} />
+            <CustomInput label={t('product.lowStockThreshold')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.lowStockThreshold?.message as string} />
           )}
         />
 
@@ -179,12 +181,12 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="description"
           rules={{ validate: validateDescription }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label="Description" value={value} onChangeText={onChange} multiline numberOfLines={3} maxLength={500} error={errors.description?.message as string} />
+            <CustomInput label={t('product.description')} value={value} onChangeText={onChange} multiline numberOfLines={3} maxLength={500} error={errors.description?.message as string} />
           )}
         />
 
         <CustomButton
-          title={isEdit ? 'Update Product' : 'Add Product'}
+          title={isEdit ? t('product.update') : t('product.add')}
           onPress={handleSubmit(onSubmit)}
           loading={loading}
           fullWidth

@@ -23,8 +23,9 @@ export const SettingsSection: React.FC<{
 
 export const SettingsHint: React.FC<{ children: string }> = ({ children }) => {
   const { colors } = useAppTheme();
+  const { directionStyle } = useLocalization();
   return (
-    <Text style={[styles.hint, { color: colors.textSecondary }]}>{children}</Text>
+    <Text style={[styles.hint, { color: colors.textSecondary }, directionStyle]}>{children}</Text>
   );
 };
 
@@ -91,7 +92,16 @@ export const SettingsToggleRow: React.FC<
 
   return (
     <>
-      <View style={[styles.row, disabled && styles.disabled]}>
+      <Pressable
+        disabled={disabled}
+        onPress={() => onValueChange(!value)}
+        style={({ pressed }) => [
+          styles.row,
+          disabled && styles.disabled,
+          pressed && !disabled && { backgroundColor: colors.primaryMuted },
+        ]}
+        accessibilityRole="switch"
+        accessibilityState={{ checked: value, disabled }}>
         <View style={[styles.iconWrap, { backgroundColor: colors.surfaceVariant }]}>
           <Icon source={icon} size={20} color={disabled ? colors.textMuted : colors.primary} />
         </View>
@@ -108,7 +118,7 @@ export const SettingsToggleRow: React.FC<
           ) : null}
         </View>
         <Switch value={value} onValueChange={onValueChange} disabled={disabled} />
-      </View>
+      </Pressable>
       {last ? null : <Divider />}
     </>
   );

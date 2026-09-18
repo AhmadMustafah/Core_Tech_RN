@@ -8,21 +8,17 @@ import { ResetPasswordScreen } from '@/screens/auth/ResetPasswordScreen';
 import type { AuthStackParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
+import { getStackScreenOptions } from '@/theme';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export const AuthNavigator: React.FC = () => {
   const { colors } = useAppTheme();
-  const { t } = useLocalization();
+  const { t, isRTL } = useLocalization();
+  const screenOptions = getStackScreenOptions(colors, isRTL);
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
-        headerShadowVisible: false,
-        contentStyle: { backgroundColor: colors.background },
-      }}>
+    <Stack.Navigator screenOptions={screenOptions}>
       <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ title: t('screen.register') }} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: t('screen.forgotPassword') }} />

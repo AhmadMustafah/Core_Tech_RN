@@ -4,6 +4,7 @@ import { Text, Avatar } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { getInitials } from '@/utils/formatters';
 import { spacing } from '@/theme';
+import { useLocalization } from '@/hooks/useLocalization';
 
 interface ScreenHeaderProps {
   title: string;
@@ -19,15 +20,16 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   userName,
 }) => {
   const { colors } = useAppTheme();
+  const { directionStyle } = useLocalization();
 
   return (
     <View style={styles.container}>
       <View style={styles.textContainer}>
-        <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
+        <Text variant="headlineSmall" style={[{ color: colors.text, fontWeight: '700' }, directionStyle]}>
           {title}
         </Text>
         {subtitle && (
-          <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: 4 }}>
+          <Text variant="bodyMedium" style={[{ color: colors.textSecondary, marginTop: 4 }, directionStyle]}>
             {subtitle}
           </Text>
         )}

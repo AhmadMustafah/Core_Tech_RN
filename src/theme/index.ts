@@ -34,6 +34,7 @@ export type AppColors = {
   lowStock: string;
   cardShadow: string;
   overlay: string;
+  onPrimary: string;
 };
 
 type SemanticColors = Pick<
@@ -103,7 +104,7 @@ const lightExtended: ExtendedBaseColors = {
   ...lightSemantic,
   surfaceElevated: '#FFFFFF',
   drawerSurface: '#FFFFFF',
-  textMuted: '#8A96A3',
+  textMuted: '#64748B',
   borderLight: '#EEF2F6',
   overlay: 'rgba(26, 29, 33, 0.52)',
 };
@@ -112,7 +113,7 @@ const darkExtended: ExtendedBaseColors = {
   ...darkSemantic,
   surfaceElevated: '#252525',
   drawerSurface: '#1E1E1E',
-  textMuted: '#78909C',
+  textMuted: '#94A3B8',
   borderLight: '#2C2C2C',
   overlay: 'rgba(0, 0, 0, 0.62)',
 };
@@ -212,11 +213,36 @@ export const isThemePreset = (value: unknown): value is ThemePreset =>
 export const normalizeThemePreset = (value: unknown): ThemePreset =>
   isThemePreset(value) ? value : 'default';
 
+const hexToChannel = (value: string, start: number) =>
+  parseInt(value.slice(start, start + 2), 16) / 255;
+
+const linearize = (channel: number) =>
+  channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+
+const relativeLuminance = (hex: string) => {
+  const value = hex.replace('#', '');
+  if (value.length < 6) {
+    return 0;
+  }
+  return (
+    0.2126 * linearize(hexToChannel(value, 0)) +
+    0.7152 * linearize(hexToChannel(value, 2)) +
+    0.0722 * linearize(hexToChannel(value, 4))
+  );
+};
+
+export const contrastText = (background: string) =>
+  relativeLuminance(background) > 0.54 ? '#102027' : '#FFFFFF';
+
 export const getThemeColors = (preset: ThemePreset, isDark: boolean): AppColors => {
   const safePreset = normalizeThemePreset(preset);
   const base = isDark ? darkExtended : lightExtended;
   const primary = primaryPalettes[safePreset][isDark ? 'dark' : 'light'];
-  return { ...base, ...primary };
+  return {
+    ...base,
+    ...primary,
+    onPrimary: contrastText(primary.primary),
+  };
 };
 
 export const lightColors: AppColors = getThemeColors('default', false);
@@ -293,26 +319,34 @@ export const shadows: Record<'sm' | 'md' | 'lg' | 'drawer', ShadowStyle> = {
   },
 };
 
+export const getDrawerShadow = (isRTL: boolean): ShadowStyle => ({
+  ...shadows.drawer,
+  shadowOffset: { width: isRTL ? -4 : 4, height: 0 },
+});
+
 export const layout = {
   drawerWidth: 300,
   maxContentWidth: 760,
   headerHeight: 56,
-  tabBarHeight: 62,
+  tabBarHeight: 58,
 };
 
 export const stackAnimationOptions = {
-  animation: 'simple_push' as const,
-  animationDuration: 200,
+  animation: 'slide_from_right' as const,
+  animationDuration: 220,
   freezeOnBlur: true,
+  fullScreenGestureEnabled: true,
 };
 
 export const tabPerformanceOptions = {
   lazy: true,
   freezeOnBlur: true,
+  animation: 'fade' as const,
 };
 
-export const getStackScreenOptions = (colors: AppColors) => ({
+export const getStackScreenOptions = (colors: AppColors, isRTL = false) => ({
   ...stackAnimationOptions,
+  animation: (isRTL ? 'slide_from_left' : 'slide_from_right') as 'slide_from_left' | 'slide_from_right',
   headerStyle: {
     backgroundColor: colors.surface,
     elevation: 0,
@@ -325,6 +359,8 @@ export const getStackScreenOptions = (colors: AppColors) => ({
     color: colors.text,
   },
   headerTintColor: colors.text,
+  headerTitleAlign: 'center' as const,
+  headerBackButtonDisplayMode: 'minimal' as const,
   headerShadowVisible: false,
   contentStyle: { backgroundColor: colors.background },
 });

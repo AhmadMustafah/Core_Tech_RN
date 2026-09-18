@@ -6,15 +6,18 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { EmptyState, LoadingState, ErrorState } from '@/components/common';
 import { saleService } from '@/services/saleService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import type { Sale } from '@/types';
 import type { SalesStackParamList } from '@/types/navigation';
+import { PAYMENT_STATUS_KEYS } from '@/localization';
 import { spacing, borderRadius } from '@/theme';
 
 type Props = NativeStackScreenProps<SalesStackParamList, 'SalesList'>;
 
 export const SalesListScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t, language } = useLocalization();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +28,7 @@ export const SalesListScreen: React.FC<Props> = ({ navigation }) => {
       const data = await saleService.getAll();
       setSales(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sales');
+      setError(err instanceof Error ? err.message : 'sale.failedLoad');
     } finally {
       setLoading(false);
     }
@@ -41,7 +44,7 @@ export const SalesListScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  if (loading && sales.length === 0) return <LoadingState message="Loading sales..." />;
+  if (loading && sales.length === 0) return <LoadingState message="sale.loading" />;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -62,18 +65,18 @@ export const SalesListScreen: React.FC<Props> = ({ navigation }) => {
                   {item.invoiceNumber}
                 </Text>
                 <Chip compact style={{ backgroundColor: getStatusColor(item.paymentStatus) + '20' }}>
-                  {item.paymentStatus}
+                  {t(PAYMENT_STATUS_KEYS[item.paymentStatus])}
                 </Chip>
               </View>
               <Text variant="bodySmall" style={{ color: colors.textSecondary }}>
-                {item.customerName} • {formatDate(item.createdAt)}
+                {item.customerName} • {formatDate(item.createdAt, language)}
               </Text>
               <Text variant="titleMedium" style={{ color: colors.primary, marginTop: spacing.sm, fontWeight: '700' }}>
                 {formatCurrency(item.totalAmount)}
               </Text>
             </TouchableOpacity>
           )}
-          ListEmptyComponent={<EmptyState icon="cart-outline" title="No Sales Yet" message="Create your first sale" />}
+          ListEmptyComponent={<EmptyState icon="cart-outline" title={t('sale.empty')} message={t('sale.emptyMsg')} />}
         />
       )}
       <FAB icon="plus" style={[styles.fab, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate('CreateSale')} />

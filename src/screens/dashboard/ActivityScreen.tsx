@@ -17,12 +17,21 @@ import {
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { fetchDashboard } from '@/redux/slices/dashboardSlice';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { Activity } from '@/types';
 import type { DashboardStackParamList } from '@/types/navigation';
+import type { TranslationKey } from '@/localization';
 import { borderRadius, spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<DashboardStackParamList, 'Activity'>;
+
+const activityTypeKeys: Record<Activity['type'], TranslationKey> = {
+  sale: 'activity.type.sale',
+  purchase: 'activity.type.purchase',
+  product: 'activity.type.product',
+  customer: 'activity.type.customer',
+};
 
 const activityIcons: Record<Activity['type'], string> = {
   sale: 'cart-check',
@@ -34,6 +43,7 @@ const activityIcons: Record<Activity['type'], string> = {
 export const ActivityScreen: React.FC<Props> = () => {
   const dispatch = useAppDispatch();
   const { colors } = useAppTheme();
+  const { t, language } = useLocalization();
   const { activities, isLoading, error } = useAppSelector(state => state.dashboard);
 
   const loadData = useCallback(() => {
@@ -70,7 +80,7 @@ export const ActivityScreen: React.FC<Props> = () => {
   };
 
   if (isLoading && activities.length === 0) {
-    return <LoadingState message="Loading activity history..." />;
+    return <LoadingState message="activity.loading" />;
   }
 
   if (error && activities.length === 0) {
@@ -90,18 +100,18 @@ export const ActivityScreen: React.FC<Props> = () => {
       ListHeaderComponent={
         <CustomCard
           style={styles.summaryCard}
-          title="Activity History"
-          subtitle="All ERP events sorted by most recent">
+          title={t('activity.history')}
+          subtitle={t('activity.subtitle')}>
           <Text variant="bodySmall" style={{ color: colors.textSecondary, paddingHorizontal: spacing.md, paddingBottom: spacing.md }}>
-            {sortedActivities.length} recorded {sortedActivities.length === 1 ? 'event' : 'events'}
+            {t(sortedActivities.length === 1 ? 'activity.event' : 'activity.events', { count: sortedActivities.length })}
           </Text>
         </CustomCard>
       }
       ListEmptyComponent={
         <EmptyState
           icon="history"
-          title="No activity yet"
-          message="Business events will appear here as you use the app."
+          title={t('activity.empty')}
+          message={t('activity.emptyMsg')}
         />
       }
       renderItem={({ item, index }) => (
@@ -127,13 +137,13 @@ export const ActivityScreen: React.FC<Props> = () => {
           </View>
           <View style={styles.activityContent}>
             <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '600' }}>
-              {item.title}
+              {t(activityTypeKeys[item.type])}
             </Text>
             <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
               {item.description}
             </Text>
             <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 4 }}>
-              {formatRelativeTime(item.timestamp)}
+              {formatRelativeTime(item.timestamp, language)}
             </Text>
           </View>
         </View>
@@ -164,7 +174,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
   },
   activityContent: { flex: 1 },
 });

@@ -32,7 +32,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
   password,
 }) => {
   const { colors } = useAppTheme();
-  const { t } = useLocalization();
+  const { t, directionStyle } = useLocalization();
 
   if (!password) return null;
 
@@ -45,7 +45,7 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
 
   return (
     <View style={styles.container}>
-      <Text variant="labelSmall" style={{ color: colors.textSecondary, marginBottom: spacing.xs }}>
+      <Text variant="labelSmall" style={[{ color: colors.textSecondary, marginBottom: spacing.xs }, directionStyle]}>
         {t('password.strength')}:{' '}
         <Text style={{ color: strengthColor, fontWeight: '600' }}>{t(STRENGTH_KEYS[label])}</Text>
       </Text>
@@ -53,10 +53,13 @@ export const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps>
         <Text
           key={key}
           variant="bodySmall"
-          style={{
-            color: passed ? colors.success : colors.textSecondary,
-            marginBottom: 2,
-          }}>
+          style={[
+            {
+              color: passed ? colors.success : colors.textSecondary,
+              marginBottom: 2,
+            },
+            directionStyle,
+          ]}>
           {passed ? '✓' : '○'} {t(CHECK_KEYS[key])}
         </Text>
       ))}

@@ -30,14 +30,13 @@ type SettingsHubRoute =
   | 'ThemeSettings'
   | 'LanguageSettings'
   | 'NotificationSettings'
-  | 'SecuritySettings'
   | 'PreferencesSettings'
   | 'AboutSupport';
 
 export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
   const { t } = useLocalization();
-  const { notificationsEnabled, language, preferences } = useAppSelector(state => state.settings);
+  const { notificationsEnabled, language } = useAppSelector(state => state.settings);
   const themeMode = useAppSelector(state => state.theme.mode);
   const themePreset = useAppSelector(state => state.theme.preset);
 
@@ -95,13 +94,6 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
           description={t('settings.notificationsHubDesc')}
           value={t(notificationsEnabled ? 'settings.on' : 'settings.off')}
           onPress={() => go('NotificationSettings')}
-        />
-        <SettingsNavRow
-          icon="shield-lock-outline"
-          title={t('settings.security')}
-          description={t('settings.securityDesc')}
-          value={t(preferences.biometricLock ? 'settings.securityProtected' : 'settings.securityStandard')}
-          onPress={() => go('SecuritySettings')}
         />
         <SettingsNavRow
           icon="tune"

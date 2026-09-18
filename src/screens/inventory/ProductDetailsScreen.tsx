@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomCard, LoadingState, ErrorState } from '@/components/common';
 import { productService } from '@/services/productService';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, formatDate, isLowStock } from '@/utils/formatters';
 import type { Product } from '@/types';
 import type { InventoryStackParamList } from '@/types/navigation';
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<InventoryStackParamList, 'ProductDetails'>;
 export const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
   const { productId } = route.params;
   const { colors } = useAppTheme();
+  const { t, catalogLabel, language } = useLocalization();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => 
         const data = await productService.getById(productId);
         setProduct(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load product');
+        setError(err instanceof Error ? err.message : 'product.failedLoad');
       } finally {
         setLoading(false);
       }
@@ -40,19 +42,19 @@ export const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => 
   }, [navigation]);
 
   if (loading) return <LoadingState />;
-  if (error || !product) return <ErrorState message={error || 'Product not found'} />;
+  if (error || !product) return <ErrorState message={error || 'product.notFound'} />;
 
   const lowStock = isLowStock(product.stockQuantity, product.lowStockThreshold);
 
   const details = [
-    { label: 'SKU', value: product.sku },
-    { label: 'Category', value: product.category },
-    { label: 'Unit', value: product.unit },
-    { label: 'Selling Price', value: formatCurrency(product.price) },
-    { label: 'Cost Price', value: formatCurrency(product.costPrice) },
-    { label: 'Stock Quantity', value: `${product.stockQuantity} ${product.unit}` },
-    { label: 'Low Stock Threshold', value: String(product.lowStockThreshold) },
-    { label: 'Created', value: formatDate(product.createdAt) },
+    { label: t('product.sku'), value: product.sku },
+    { label: t('product.category'), value: catalogLabel(product.category) },
+    { label: t('product.unit'), value: catalogLabel(product.unit) },
+    { label: t('product.sellingPrice'), value: formatCurrency(product.price) },
+    { label: t('product.costPrice'), value: formatCurrency(product.costPrice) },
+    { label: t('product.stockQty'), value: `${product.stockQuantity} ${catalogLabel(product.unit)}` },
+    { label: t('product.lowStockThreshold'), value: String(product.lowStockThreshold) },
+    { label: t('product.created'), value: formatDate(product.createdAt, language) },
   ];
 
   return (
@@ -64,7 +66,7 @@ export const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => 
           </Text>
           {lowStock && (
             <Chip style={{ backgroundColor: colors.lowStock + '20', marginTop: spacing.sm }}>
-              Low Stock Alert
+              {t('product.lowStockAlert')}
             </Chip>
           )}
           {product.description && (
@@ -75,7 +77,7 @@ export const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => 
         </View>
       </CustomCard>
 
-      <CustomCard title="Product Details">
+      <CustomCard title={t('product.details')}>
         {details.map(item => (
           <View key={item.label} style={[styles.row, { borderBottomColor: colors.border }]}>
             <Text variant="bodyMedium" style={{ color: colors.textSecondary }}>

@@ -24,6 +24,7 @@ import {
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { fetchDashboard } from '@/redux/slices/dashboardSlice';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, formatRelativeTime } from '@/utils/formatters';
 import type { Activity } from '@/types';
 import type {
@@ -31,6 +32,7 @@ import type {
   MainTabParamList,
   RootStackParamList,
 } from '@/types/navigation';
+import type { TranslationKey } from '@/localization';
 import { borderRadius, layout, shadows, spacing, typography } from '@/theme';
 
 type Props = CompositeScreenProps<
@@ -78,20 +80,20 @@ const MOCK_ALERTS = [
   {
     id: 'alert-1',
     severity: 'warning' as const,
-    title: 'Low stock alert',
-    message: '3 products are below minimum stock level.',
+    titleKey: 'dash.alert.lowStock' as const,
+    messageKey: 'dash.alert.lowStockMsg' as const,
   },
   {
     id: 'alert-2',
     severity: 'info' as const,
-    title: 'Pending purchase order',
-    message: 'PO-0891 is awaiting supplier confirmation.',
+    titleKey: 'dash.alert.pendingPo' as const,
+    messageKey: 'dash.alert.pendingPoMsg' as const,
   },
   {
     id: 'alert-3',
     severity: 'error' as const,
-    title: 'Payment overdue',
-    message: '1 customer invoice is past due by 5 days.',
+    titleKey: 'dash.alert.overdue' as const,
+    messageKey: 'dash.alert.overdueMsg' as const,
   },
 ];
 
@@ -107,11 +109,11 @@ const activityIcons: Record<Activity['type'], string> = {
   customer: 'account-plus',
 };
 
-const activityTypeLabels: Record<Activity['type'], string> = {
-  sale: 'Sale',
-  purchase: 'Purchase',
-  product: 'Inventory',
-  customer: 'Customer',
+const activityTypeKeys: Record<Activity['type'], TranslationKey> = {
+  sale: 'activity.type.sale',
+  purchase: 'activity.type.purchase',
+  product: 'activity.type.product',
+  customer: 'activity.type.customer',
 };
 
 const sortActivitiesByLatest = (items: Activity[]) =>
@@ -152,7 +154,9 @@ const KpiStatCard: React.FC<KpiStatCardProps> = ({
   compactValue = false,
 }) => {
   const { colors } = useAppTheme();
+  const { isRTL, directionStyle } = useLocalization();
   const accentColor = color || colors.primary;
+  const textAlign = isRTL ? 'right' : 'left';
 
   const content = (
     <View
@@ -170,15 +174,25 @@ const KpiStatCard: React.FC<KpiStatCardProps> = ({
       <View style={kpiStyles.content}>
         <Text
           numberOfLines={1}
+          ellipsizeMode="tail"
           adjustsFontSizeToFit
-          minimumFontScale={0.65}
+          minimumFontScale={compactValue ? 0.58 : 0.72}
           style={[
-            compactValue ? typography.kpiValueCompact : typography.kpiValue,
-            { color: colors.text },
+            typography.kpiValue,
+            kpiStyles.value,
+            { color: colors.text, textAlign, writingDirection: 'ltr' },
           ]}>
           {value}
         </Text>
-        <Text style={[typography.bodySmall, { color: colors.textSecondary, marginTop: 2 }]}>
+        <Text
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={[
+            typography.bodySmall,
+            kpiStyles.label,
+            directionStyle,
+            { color: colors.textSecondary, textAlign },
+          ]}>
           {title}
         </Text>
       </View>
@@ -216,19 +230,35 @@ const kpiStyles = StyleSheet.create({
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
     flexShrink: 0,
   },
   content: {
     flex: 1,
     minWidth: 0,
     justifyContent: 'center',
+    alignItems: 'stretch',
+  },
+  value: {
+    lineHeight: 28,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    width: '100%',
+  },
+  label: {
+    marginTop: spacing.xs,
+    lineHeight: 16,
+    fontWeight: '500',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    width: '100%',
   },
 });
 
 export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
   const { colors } = useAppTheme();
+  const { t, language, isRTL } = useLocalization();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector(state => state.auth);
@@ -291,21 +321,21 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     () => [
       {
         key: 'products',
-        title: 'Products',
+        title: t('dash.products'),
         value: summary?.totalProducts ?? 0,
         icon: 'package-variant',
         color: colors.primary,
       },
       {
         key: 'customers',
-        title: 'Customers',
+        title: t('dash.customers'),
         value: summary?.totalCustomers ?? 0,
         icon: 'account-group-outline',
         color: colors.info,
       },
       {
         key: 'purchases',
-        title: 'Purchases',
+        title: t('dash.purchases'),
         value: formatCurrency(summary?.purchasesAmount ?? 0),
         icon: 'cart-outline',
         color: colors.secondary,
@@ -313,7 +343,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       },
       {
         key: 'low-stock',
-        title: 'Low Stock',
+        title: t('dash.lowStock'),
         value: summary?.lowStockCount ?? 0,
         icon: 'alert-circle-outline',
         color: colors.lowStock,
@@ -321,11 +351,11 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
           navigation.navigate('Inventory', { screen: 'ProductList' }),
       },
     ],
-    [colors, navigation, summary],
+    [colors, navigation, summary, t],
   );
 
   if (isLoading && !summary) {
-    return <LoadingState message="Loading dashboard..." />;
+    return <LoadingState message="dash.loading" />;
   }
 
   if (error && !summary) {
@@ -351,10 +381,10 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       }
       showsVerticalScrollIndicator={false}>
       <ScreenHeader
-        title={`Hello, ${user?.name?.split(' ')[0] || 'User'}!`}
-        subtitle="Your ERP command center"
+        title={t('dash.hello', { name: user?.name?.split(' ')[0] || t('common.user') })}
+        subtitle={t('dash.subtitle')}
         showAvatar
-        userName={user?.name || 'User'}
+        userName={user?.name || t('common.user')}
       />
 
       <View
@@ -366,7 +396,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         ]}>
         <View style={[styles.heroContent, isCompact && styles.heroContentCompact]}>
           <View style={styles.heroText}>
-            <Text style={styles.heroLabel}>Total Revenue</Text>
+            <Text style={styles.heroLabel}>{t('dash.totalRevenue')}</Text>
             <Text
               style={[styles.heroValue, isCompact && styles.heroValueCompact]}
               numberOfLines={1}
@@ -375,7 +405,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
               {formatCurrency(summary?.salesAmount ?? 0)}
             </Text>
             <Text style={styles.heroMeta} numberOfLines={2}>
-              {user?.company || 'CoreTech Enterprise'} · {summary?.totalSales ?? 0} sales
+              {user?.company || t('common.appName')} · {t('dash.salesCount', { count: summary?.totalSales ?? 0 })}
             </Text>
           </View>
           <View style={styles.heroBadge}>
@@ -385,8 +415,13 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, typography.label, { color: colors.textMuted }]}>
-          Key Metrics
+        <Text
+          style={[
+            styles.sectionTitle,
+            typography.label,
+            { color: colors.textMuted, textAlign: isRTL ? 'right' : 'left' },
+          ]}>
+          {t('dash.keyMetrics')}
         </Text>
         <View style={styles.kpiGrid}>
           {kpiItems.map((item, index) => (
@@ -411,7 +446,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <View style={styles.section}>
-        <CustomCard title="Alerts" subtitle="Items that need your attention">
+        <CustomCard title={t('dash.alerts')} subtitle={t('dash.alertsSubtitle')}>
           <View style={styles.cardBody}>
             {MOCK_ALERTS.map(alert => (
               <View
@@ -420,7 +455,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                   styles.alertItem,
                   {
                     backgroundColor: colors.surfaceVariant,
-                    borderLeftColor: getAlertColor(alert.severity),
+                    borderStartColor: getAlertColor(alert.severity),
                   },
                 ]}>
                 <Icon
@@ -436,10 +471,10 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                 />
                 <View style={styles.alertContent}>
                   <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '600' }}>
-                    {alert.title}
+                    {t(alert.titleKey)}
                   </Text>
                   <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-                    {alert.message}
+                    {t(alert.messageKey)}
                   </Text>
                 </View>
               </View>
@@ -450,11 +485,11 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
       <View style={styles.section}>
         <CustomCard
-          title="Recent Transactions"
-          subtitle="Latest sales and purchases"
+          title={t('dash.recentTransactions')}
+          subtitle={t('dash.recentTransactionsSubtitle')}
           headerRight={
             <Text variant="labelMedium" style={{ color: colors.primary }}>
-              View all
+              {t('common.viewAll')}
             </Text>
           }>
           <View style={styles.cardBody}>
@@ -499,7 +534,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                       variant="bodySmall"
                       style={[styles.listMetaText, { color: colors.textSecondary }]}
                       numberOfLines={1}>
-                      {transaction.type} · {transaction.party}
+                      {t(transaction.type === 'Sale' ? 'dash.type.sale' : 'dash.type.purchase')} · {transaction.party}
                     </Text>
                     <View
                       style={[
@@ -509,12 +544,12 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                       <Text
                         variant="labelSmall"
                         style={{ color: getStatusColor(transaction.status) }}>
-                        {transaction.status}
+                        {t(transaction.status === 'Completed' ? 'dash.status.completed' : 'dash.status.pending')}
                       </Text>
                     </View>
                   </View>
                   <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-                    {formatRelativeTime(transaction.timestamp)}
+                    {formatRelativeTime(transaction.timestamp, language)}
                   </Text>
                 </View>
               </View>
@@ -525,12 +560,12 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
       <View style={styles.section}>
         <CustomCard
-          title="Recent Activity"
-          subtitle="Latest ERP and application events"
+          title={t('dash.recentActivity')}
+          subtitle={t('dash.recentActivitySubtitle')}
           headerRight={
             <TouchableOpacity onPress={openActivityHistory} hitSlop={8}>
               <Text variant="labelMedium" style={{ color: colors.primary }}>
-                View all
+                {t('common.viewAll')}
               </Text>
             </TouchableOpacity>
           }>
@@ -539,8 +574,8 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
               <View style={styles.emptyActivity}>
                 <EmptyState
                   icon="history"
-                  title="No recent activity"
-                  message="Sales, purchases, and inventory events will appear here."
+                  title={t('dash.noRecentActivity')}
+                  message={t('dash.noRecentActivityMsg')}
                 />
               </View>
             ) : (
@@ -574,7 +609,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                         variant="bodyMedium"
                         style={{ color: colors.text, fontWeight: '600', flex: 1 }}
                         numberOfLines={1}>
-                        {activity.title}
+                        {t(activityTypeKeys[activity.type])}
                       </Text>
                       <View
                         style={[
@@ -584,7 +619,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                         <Text
                           variant="labelSmall"
                           style={{ color: getActivityColor(activity.type) }}>
-                          {activityTypeLabels[activity.type]}
+                          {t(activityTypeKeys[activity.type])}
                         </Text>
                       </View>
                     </View>
@@ -597,7 +632,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                     <Text
                       variant="labelSmall"
                       style={{ color: colors.textSecondary, marginTop: 4 }}>
-                      {formatRelativeTime(activity.timestamp)}
+                      {formatRelativeTime(activity.timestamp, language)}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -635,7 +670,7 @@ const styles = StyleSheet.create({
   },
   heroText: {
     flex: 1,
-    paddingRight: spacing.md,
+    paddingEnd: spacing.md,
     minWidth: 0,
   },
   heroLabel: {
@@ -688,13 +723,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: spacing.md,
     borderRadius: borderRadius.md,
-    borderLeftWidth: 4,
+    borderStartWidth: 4,
     marginHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
   alertContent: {
     flex: 1,
-    marginLeft: spacing.md,
+    marginStart: spacing.md,
     minWidth: 0,
   },
   listItem: {
@@ -708,7 +743,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
     flexShrink: 0,
   },
   activityIcon: {

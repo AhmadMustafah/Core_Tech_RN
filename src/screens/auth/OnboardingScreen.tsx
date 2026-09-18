@@ -14,6 +14,7 @@ import { CustomButton } from '@/components/common';
 import { storage } from '@/utils/storage';
 import { STORAGE_KEYS } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import type { RootStackParamList } from '@/types/navigation';
 import { spacing, borderRadius } from '@/theme';
 
@@ -21,32 +22,15 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
 const { width } = Dimensions.get('window');
 
-const slides = [
-  {
-    id: '1',
-    icon: '📊',
-    title: 'Manage Your Business',
-    description:
-      'Track sales, purchases, inventory, and customers all in one powerful mobile app.',
-  },
-  {
-    id: '2',
-    icon: '📦',
-    title: 'Inventory Control',
-    description:
-      'Monitor stock levels, get low stock alerts, and manage products with ease.',
-  },
-  {
-    id: '3',
-    icon: '💼',
-    title: 'Grow Your Business',
-    description:
-      'Generate invoices, manage suppliers, and make data-driven business decisions.',
-  },
-];
+const SLIDE_KEYS = [
+  { id: '1', icon: '📊', titleKey: 'onboarding.slide1Title', bodyKey: 'onboarding.slide1Body' },
+  { id: '2', icon: '📦', titleKey: 'onboarding.slide2Title', bodyKey: 'onboarding.slide2Body' },
+  { id: '3', icon: '💼', titleKey: 'onboarding.slide3Title', bodyKey: 'onboarding.slide3Body' },
+] as const;
 
 export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
+  const { t } = useLocalization();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
@@ -56,7 +40,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleNext = () => {
-    if (currentIndex < slides.length - 1) {
+    if (currentIndex < SLIDE_KEYS.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
       handleGetStarted();
@@ -86,7 +70,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <CustomButton
-        title="Skip"
+        title={t('onboarding.skip')}
         variant="text"
         onPress={handleSkip}
         style={styles.skipButton}
@@ -94,7 +78,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
 
       <FlatList
         ref={flatListRef}
-        data={slides}
+        data={SLIDE_KEYS}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -104,12 +88,12 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
           <View style={[styles.slide, { width }]}>
             <Text style={styles.icon}>{item.icon}</Text>
             <Text variant="headlineMedium" style={[styles.title, { color: colors.text }]}>
-              {item.title}
+              {t(item.titleKey)}
             </Text>
             <Text
               variant="bodyLarge"
               style={[styles.description, { color: colors.textSecondary }]}>
-              {item.description}
+              {t(item.bodyKey)}
             </Text>
           </View>
         )}
@@ -117,7 +101,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
 
       <View style={styles.footer}>
         <View style={styles.dots}>
-          {slides.map((_, index) => (
+          {SLIDE_KEYS.map((_, index) => (
             <View
               key={index}
               style={[
@@ -133,7 +117,7 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <CustomButton
-          title={currentIndex === slides.length - 1 ? 'Get Started' : 'Next'}
+          title={currentIndex === SLIDE_KEYS.length - 1 ? t('onboarding.getStarted') : t('onboarding.next')}
           onPress={handleNext}
           fullWidth
         />

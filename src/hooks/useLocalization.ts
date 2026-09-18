@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { loadSettingsPreferences } from '@/redux/slices/settingsSlice';
 import {
   getDirectionalIconStyle,
+  getCatalogLabel,
   isRtlLanguage,
   translate,
   type TranslationKey,
@@ -27,5 +28,15 @@ export const useLocalization = () => {
     [language],
   );
 
-  return { t, language, isRTL, directionalIconStyle };
+  const catalogLabel = useCallback(
+    (value: string) => getCatalogLabel(language, value),
+    [language],
+  );
+
+  const directionStyle = useMemo(
+    () => ({ writingDirection: isRTL ? ('rtl' as const) : ('ltr' as const) }),
+    [isRTL],
+  );
+
+  return { t, language, isRTL, directionalIconStyle, catalogLabel, directionStyle };
 };

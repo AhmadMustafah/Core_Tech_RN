@@ -23,7 +23,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppSelector } from '@/redux/hooks';
 import { getInitials } from '@/utils/formatters';
-import { borderRadius, layout, shadows, spacing, typography } from '@/theme';
+import { borderRadius, getDrawerShadow, layout, spacing, typography } from '@/theme';
 import { useLocalization } from '@/hooks/useLocalization';
 import type { TranslationKey } from '@/localization';
 
@@ -183,12 +183,14 @@ const DrawerMenuRow = memo<{
 DrawerMenuRow.displayName = 'DrawerMenuRow';
 
 const DrawerPanel = memo<{
-  visible: boolean;
+  open: boolean;
   slideAnim: Animated.Value;
+  backdropAnim: Animated.Value;
   activeRoute: ActiveRoute | null;
   onClose: (onClosed?: () => void) => void;
   tabNavigationRef: React.RefObject<NavigationProp<MainTabParamList> | null>;
-}>(({ visible, slideAnim, activeRoute, onClose, tabNavigationRef }) => {
+  isRTL: boolean;
+}>(({ open, slideAnim, backdropAnim, activeRoute, onClose, tabNavigationRef, isRTL }) => {
   const { colors } = useAppTheme();
   const { t, directionalIconStyle } = useLocalization();
   const insets = useSafeAreaInsets();
@@ -197,7 +199,7 @@ const DrawerPanel = memo<{
   const rootNavigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
-    if (!visible) {
+    if (!open) {
       return undefined;
     }
 
@@ -207,7 +209,7 @@ const DrawerPanel = memo<{
     });
 
     return () => subscription.remove();
-  }, [visible, onClose]);
+  }, [open, onClose]);
 
   const navigateTo = useCallback(
     (item: DrawerMenuItem) => {
@@ -237,39 +239,50 @@ const DrawerPanel = memo<{
     });
   }, [logout, onClose, rootNavigation]);
 
-  if (!visible) {
-    return null;
-  }
-
   return (
-    <>
-      <Pressable
-        style={[styles.backdrop, { backgroundColor: colors.overlay }]}
-        onPress={() => onClose()}
-        accessibilityLabel={t('drawer.closeMenu')}
-        accessibilityRole="button"
-      />
+    <View
+      pointerEvents={open ? 'auto' : 'none'}
+      importantForAccessibility={open ? 'yes' : 'no-hide-descendants'}
+      accessibilityViewIsModal={open}
+      style={[StyleSheet.absoluteFill, styles.overlayHost]}
+      collapsable={false}>
       <Animated.View
         style={[
+          styles.backdrop,
+          {
+            backgroundColor: colors.overlay,
+            opacity: backdropAnim,
+          },
+        ]}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => onClose()}
+          accessibilityLabel={t('drawer.closeMenu')}
+          accessibilityRole="button"
+        />
+      </Animated.View>
+      <Animated.View
+        collapsable={false}
+        style={[
           styles.drawerPanel,
-          shadows.drawer,
+          getDrawerShadow(isRTL),
+          isRTL ? styles.drawerEnd : styles.drawerStart,
           {
             width: layout.drawerWidth,
             backgroundColor: colors.drawerSurface,
             paddingTop: insets.top,
-            start: 0,
             transform: [{ translateX: slideAnim }],
           },
         ]}>
         <View style={[styles.drawerHeader, { backgroundColor: colors.drawerHeader }]}>
           <Avatar.Text
             size={52}
-            label={getInitials(user?.name || 'User')}
+            label={getInitials(user?.name || t('common.user'))}
             style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}
             color="#FFFFFF"
           />
-          <Text style={styles.drawerName}>{user?.name || 'User'}</Text>
-          <Text style={styles.drawerCompany}>{user?.company || 'CoreTech ERP'}</Text>
+          <Text style={styles.drawerName}>{user?.name || t('common.user')}</Text>
+          <Text style={styles.drawerCompany}>{user?.company || t('common.appName')}</Text>
         </View>
 
         <ScrollView
@@ -315,7 +328,7 @@ const DrawerPanel = memo<{
           </TouchableRipple>
         </ScrollView>
       </Animated.View>
-    </>
+    </View>
   );
 });
 
@@ -324,16 +337,19 @@ DrawerPanel.displayName = 'DrawerPanel';
 export const DrawerNavigator: React.FC = () => {
   const { isRTL } = useLocalization();
   const closedOffset = isRTL ? layout.drawerWidth : -layout.drawerWidth;
-  const [visible, setVisible] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [activeRoute, setActiveRoute] = useState<ActiveRoute | null>(null);
   const slideAnim = useRef(new Animated.Value(closedOffset)).current;
+  const backdropAnim = useRef(new Animated.Value(0)).current;
   const tabNavigationRef = useRef<NavigationProp<MainTabParamList> | null>(null);
 
   useEffect(() => {
-    if (!visible) {
+    if (!open) {
       slideAnim.setValue(closedOffset);
+      backdropAnim.setValue(0);
     }
-  }, [closedOffset, slideAnim, visible]);
+  }, [backdropAnim, closedOffset, open, slideAnim]);
 
   const setTabNavigation = useCallback(
     (navigation: NavigationProp<MainTabParamList> | null) => {
@@ -343,39 +359,56 @@ export const DrawerNavigator: React.FC = () => {
   );
 
   const animateDrawer = useCallback(
-    (open: boolean, onFinished?: () => void) => {
-      Animated.timing(slideAnim, {
-        toValue: open ? 0 : closedOffset,
-        duration: open ? OPEN_DURATION : CLOSE_DURATION,
-        easing: open ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start(({ finished }) => {
+    (shouldOpen: boolean, onFinished?: () => void) => {
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: shouldOpen ? 0 : closedOffset,
+          duration: shouldOpen ? OPEN_DURATION : CLOSE_DURATION,
+          easing: shouldOpen ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdropAnim, {
+          toValue: shouldOpen ? 1 : 0,
+          duration: shouldOpen ? OPEN_DURATION : CLOSE_DURATION,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
         if (finished) {
           onFinished?.();
         }
       });
     },
-    [closedOffset, slideAnim],
+    [backdropAnim, closedOffset, slideAnim],
   );
 
   const openDrawer = useCallback(() => {
-    setVisible(true);
+    if (open) {
+      return;
+    }
+
+    slideAnim.setValue(closedOffset);
+    backdropAnim.setValue(0);
+    setMounted(true);
+    setOpen(true);
     requestAnimationFrame(() => animateDrawer(true));
-  }, [animateDrawer]);
+  }, [animateDrawer, backdropAnim, closedOffset, open, slideAnim]);
 
   const closeDrawer = useCallback(
     (onClosed?: () => void) => {
-      if (!visible) {
+      if (!open) {
+        setMounted(false);
         onClosed?.();
         return;
       }
 
       animateDrawer(false, () => {
-        setVisible(false);
+        setOpen(false);
+        setMounted(false);
         onClosed?.();
       });
     },
-    [animateDrawer, visible],
+    [animateDrawer, open],
   );
 
   const contextValue = useMemo(
@@ -393,13 +426,17 @@ export const DrawerNavigator: React.FC = () => {
     <DrawerContext.Provider value={contextValue}>
       <View style={styles.container}>
         <MainTabNavigator />
-        <DrawerPanel
-          visible={visible}
-          slideAnim={slideAnim}
-          activeRoute={activeRoute}
-          onClose={closeDrawer}
-          tabNavigationRef={tabNavigationRef}
-        />
+        {mounted ? (
+          <DrawerPanel
+            open={open}
+            slideAnim={slideAnim}
+            backdropAnim={backdropAnim}
+            activeRoute={activeRoute}
+            onClose={closeDrawer}
+            tabNavigationRef={tabNavigationRef}
+            isRTL={isRTL}
+          />
+        ) : null}
       </View>
     </DrawerContext.Provider>
   );
@@ -408,6 +445,9 @@ export const DrawerNavigator: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  overlayHost: {
+    zIndex: 10,
   },
   backdrop: {
     ...StyleSheet.absoluteFill,
@@ -418,6 +458,13 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     zIndex: 11,
+    overflow: 'hidden',
+  },
+  drawerStart: {
+    left: 0,
+  },
+  drawerEnd: {
+    right: 0,
   },
   drawerHeader: {
     paddingHorizontal: spacing.lg,

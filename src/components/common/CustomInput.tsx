@@ -3,6 +3,7 @@ import { StyleSheet, View, ViewStyle, type ReturnKeyTypeOptions } from 'react-na
 import { TextInput, TextInputProps, HelperText } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
+import { isTranslationKey } from '@/localization';
 import { useFormInputFocus, type FormFieldHandle } from './FormScrollView';
 import { borderRadius, spacing } from '@/theme';
 
@@ -38,7 +39,7 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
     forwardedRef,
   ) => {
     const { colors } = useAppTheme();
-    const { isRTL } = useLocalization();
+    const { t, isRTL } = useLocalization();
     const wrapperRef = useRef<View>(null);
     const innerRef = useRef<PaperTextInputRef>(null);
     const formFieldRef = useRef<FormFieldHandle>({
@@ -67,6 +68,8 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
     const keepLatinDirection = Boolean(secureTextEntry) || isLatinKeyboard(keyboardType);
     const textAlign = keepLatinDirection || !isRTL ? 'left' : 'right';
     const writingDirection = keepLatinDirection || !isRTL ? 'ltr' : 'rtl';
+    const errorText =
+      error && isTranslationKey(error) ? t(error) : error;
 
     return (
       <View ref={wrapperRef} collapsable={false} style={containerStyle}>
@@ -90,12 +93,12 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
           onFocus={handleFocus}
           onSubmitEditing={handleSubmitEditing}
         />
-        {error ? (
+        {errorText ? (
           <HelperText
             type="error"
-            visible={!!error}
+            visible={!!errorText}
             style={[styles.helper, { textAlign, writingDirection }]}>
-            {error}
+            {errorText}
           </HelperText>
         ) : null}
       </View>

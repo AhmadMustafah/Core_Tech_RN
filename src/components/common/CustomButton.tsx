@@ -48,8 +48,9 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
           ? colors.primary
           : variant === 'secondary'
             ? colors.secondary
-            : '#FFFFFF'
+            : colors.onPrimary
       }
+      rippleColor={colors.primaryMuted}
       style={[
         styles.button,
         fullWidth && styles.fullWidth,

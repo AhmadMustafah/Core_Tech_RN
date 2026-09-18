@@ -1,3 +1,6 @@
+import type { Language } from '@/types';
+import { translate } from '@/localization';
+
 export const formatCurrency = (amount: number, currency = 'PKR'): string => {
   return `${currency} ${amount.toLocaleString('en-PK', {
     minimumFractionDigits: 0,
@@ -5,18 +8,20 @@ export const formatCurrency = (amount: number, currency = 'PKR'): string => {
   })}`;
 };
 
-export const formatDate = (date: string | Date): string => {
+const dateLocale = (language: Language = 'en') => (language === 'ur' ? 'ur-PK' : 'en-PK');
+
+export const formatDate = (date: string | Date, language: Language = 'en'): string => {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-PK', {
+  return d.toLocaleDateString(dateLocale(language), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
   });
 };
 
-export const formatDateTime = (date: string | Date): string => {
+export const formatDateTime = (date: string | Date, language: Language = 'en'): string => {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleString('en-PK', {
+  return d.toLocaleString(dateLocale(language), {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -25,7 +30,7 @@ export const formatDateTime = (date: string | Date): string => {
   });
 };
 
-export const formatRelativeTime = (date: string): string => {
+export const formatRelativeTime = (date: string, language: Language = 'en'): string => {
   const now = new Date();
   const then = new Date(date);
   const diffMs = now.getTime() - then.getTime();
@@ -33,11 +38,11 @@ export const formatRelativeTime = (date: string): string => {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
-  return formatDate(date);
+  if (diffMins < 1) return translate(language, 'time.justNow');
+  if (diffMins < 60) return translate(language, 'time.minutesAgo', { count: diffMins });
+  if (diffHours < 24) return translate(language, 'time.hoursAgo', { count: diffHours });
+  if (diffDays < 7) return translate(language, 'time.daysAgo', { count: diffDays });
+  return formatDate(date, language);
 };
 
 export const generateId = (): string => {

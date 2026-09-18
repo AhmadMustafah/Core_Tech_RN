@@ -40,7 +40,6 @@ export type ProfileStackParamList = {
   AccountSettings: undefined;
   LanguageSettings: undefined;
   NotificationSettings: undefined;
-  SecuritySettings: undefined;
   PreferencesSettings: undefined;
   AboutSupport: undefined;
   Notifications: undefined;

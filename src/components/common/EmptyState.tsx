@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text, Icon } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
+import { useLocalization } from '@/hooks/useLocalization';
 import { spacing } from '@/theme';
 
 interface EmptyStateProps {
@@ -18,19 +19,20 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   action,
 }) => {
   const { colors } = useAppTheme();
+  const { directionStyle } = useLocalization();
 
   return (
     <View style={styles.container}>
       <Icon source={icon} size={64} color={colors.textSecondary} />
       <Text
         variant="titleMedium"
-        style={[styles.title, { color: colors.text }]}>
+        style={[styles.title, { color: colors.text }, directionStyle]}>
         {title}
       </Text>
       {message && (
         <Text
           variant="bodyMedium"
-          style={[styles.message, { color: colors.textSecondary }]}>
+          style={[styles.message, { color: colors.textSecondary }, directionStyle]}>
           {message}
         </Text>
       )}
