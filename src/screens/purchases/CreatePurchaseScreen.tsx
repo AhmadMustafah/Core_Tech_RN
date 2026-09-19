@@ -58,8 +58,6 @@ export const CreatePurchaseScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>{t('purchase.create')}</Text>
-
       <Menu visible={supplierMenu} onDismiss={() => setSupplierMenu(false)} anchor={
         <Button mode="outlined" onPress={() => setSupplierMenu(true)} icon="truck" style={styles.menuBtn}>
           {selectedSupplier ? selectedSupplier.name : t('purchase.selectSupplier')}

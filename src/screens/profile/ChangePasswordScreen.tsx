@@ -39,28 +39,39 @@ export const ChangePasswordScreen: React.FC<Props> = () => {
   };
 
   return (
-    <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
-        <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>{t('profile.changePassword')}</Text>
+    <FormScrollView
+      centerContent
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={styles.scroll}>
         {error && <Text style={{ color: colors.error, marginBottom: spacing.md }}>{error}</Text>}
         <Controller control={control} name="currentPassword" rules={{ validate: validateLoginPassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput label={t('profile.currentPassword')} value={value} onChangeText={onChange} onBlur={onBlur}
-              autoComplete="current-password" error={errors.currentPassword?.message as string} />
+              autoComplete="current-password" required error={errors.currentPassword?.message as string} />
           )} />
         <Controller control={control} name="newPassword" rules={{ validate: validateSecurePassword }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput label={t('auth.newPassword')} value={value} onChangeText={onChange} onBlur={onBlur}
-              showStrength autoComplete="password-new" error={errors.newPassword?.message as string} />
+              showStrength autoComplete="password-new" required error={errors.newPassword?.message as string} />
           )} />
         <Controller control={control} name="confirmPassword" rules={{ validate: v => validateConfirmPassword(newPassword, v) }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput label={t('auth.confirmPassword')} value={value} onChangeText={onChange} onBlur={onBlur}
-              autoComplete="password-new" error={errors.confirmPassword?.message as string} />
+              autoComplete="password-new" required error={errors.confirmPassword?.message as string} />
           )} />
-        <CustomButton title={t('profile.changePassword')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
+        <CustomButton
+          title={t('profile.changePassword')}
+          onPress={handleSubmit(onSubmit)}
+          loading={loading}
+          fullWidth
+          style={styles.submit}
+        />
       <Snackbar visible={success} onDismiss={() => setSuccess(false)}>{t('profile.passwordChanged')}</Snackbar>
     </FormScrollView>
   );
 };
 
-const styles = StyleSheet.create({ scroll: { padding: spacing.md, paddingBottom: spacing.xxl } });
+const styles = StyleSheet.create({
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  submit: { marginTop: spacing.sm },
+});

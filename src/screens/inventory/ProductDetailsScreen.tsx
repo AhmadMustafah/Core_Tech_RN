@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { Text, Chip } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomCard, LoadingState, ErrorState } from '@/components/common';
+import { CustomCard, DetailRow, LoadingState, ErrorState } from '@/components/common';
 import { productService } from '@/services/productService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
@@ -78,15 +78,13 @@ export const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => 
       </CustomCard>
 
       <CustomCard title={t('product.details')}>
-        {details.map(item => (
-          <View key={item.label} style={[styles.row, { borderBottomColor: colors.border }]}>
-            <Text variant="bodyMedium" style={{ color: colors.textSecondary }}>
-              {item.label}
-            </Text>
-            <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '500' }}>
-              {item.value}
-            </Text>
-          </View>
+        {details.map((item, index) => (
+          <DetailRow
+            key={item.label}
+            label={item.label}
+            value={item.value}
+            last={index === details.length - 1}
+          />
         ))}
       </CustomCard>
     </ScrollView>
@@ -96,11 +94,4 @@ export const ProductDetailsScreen: React.FC<Props> = ({ navigation, route }) => 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.md },
   header: { padding: spacing.md },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderBottomWidth: 1,
-  },
 });

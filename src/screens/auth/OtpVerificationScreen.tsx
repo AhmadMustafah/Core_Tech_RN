@@ -41,10 +41,7 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
       contentContainerStyle={styles.content}>
       <View>
         <Text style={styles.icon}>📱</Text>
-        <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          {t('auth.verifyOtpTitle')}
-        </Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
+        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.xl }}>
           {t('auth.verifyOtpHint', { email })}
         </Text>
 
@@ -67,6 +64,7 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
               keyboardType="number-pad"
               maxLength={6}
               left={<CustomInput.Icon icon="shield-check-outline" />}
+              required
               error={errors.otp?.message as string}
             />
           )}

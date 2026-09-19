@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
@@ -42,26 +41,44 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const fields = [
-    { name: 'name' as const, label: t('customer.name'), validate: (v: string) => validateName(v) },
-    { name: 'email' as const, label: t('customer.email'), validate: validateEmail },
-    { name: 'phone' as const, label: t('customer.phone'), validate: validatePhone },
-    { name: 'company' as const, label: t('customer.company'), validate: (v: string) => validateOptionalText(v, 'Company', 100) },
-    { name: 'address' as const, label: t('customer.address'), validate: (v: string) => validateOptionalText(v, 'Address', 200) },
+    { name: 'name' as const, label: t('customer.name'), validate: (v: string) => validateName(v), required: true },
+    { name: 'email' as const, label: t('customer.email'), validate: validateEmail, required: true },
+    { name: 'phone' as const, label: t('customer.phone'), validate: validatePhone, required: true },
+    { name: 'company' as const, label: t('customer.company'), validate: (v: string) => validateOptionalText(v, 'Company', 100), required: false },
+    { name: 'address' as const, label: t('customer.address'), validate: (v: string) => validateOptionalText(v, 'Address', 200), required: false },
   ];
 
   return (
-    <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
-        <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>{isEdit ? t('customer.edit') : t('customer.add')}</Text>
+    <FormScrollView
+      centerContent
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={styles.scroll}>
         {fields.map(f => (
           <Controller key={f.name} control={control} name={f.name} rules={{ validate: f.validate }}
             render={({ field: { onChange, value } }) => (
-              <CustomInput label={f.label} value={value} onChangeText={onChange} error={errors[f.name]?.message as string}
-                keyboardType={f.name === 'email' ? 'email-address' : f.name === 'phone' ? 'phone-pad' : 'default'} />
+              <CustomInput
+                label={f.label}
+                value={value}
+                onChangeText={onChange}
+                required={f.required}
+                keyboardType={f.name === 'email' ? 'email-address' : f.name === 'phone' ? 'phone-pad' : 'default'}
+                autoCapitalize={f.name === 'email' ? 'none' : 'sentences'}
+                error={errors[f.name]?.message as string}
+              />
             )} />
         ))}
-        <CustomButton title={isEdit ? t('common.update') : t('customer.add')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
+        <CustomButton
+          title={isEdit ? t('common.update') : t('customer.add')}
+          onPress={handleSubmit(onSubmit)}
+          loading={loading}
+          fullWidth
+          style={styles.submit}
+        />
     </FormScrollView>
   );
 };
 
-const styles = StyleSheet.create({ scroll: { padding: spacing.md, paddingBottom: spacing.xxl } });
+const styles = StyleSheet.create({
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  submit: { marginTop: spacing.sm },
+});

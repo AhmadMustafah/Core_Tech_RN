@@ -11,16 +11,14 @@ import {
 import { Text, Avatar, TouchableRipple } from 'react-native-paper';
 import {
   CommonActions,
-  useNavigation,
   type NavigationProp,
 } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { MainTabNavigator } from './MainTabNavigator';
 import { DrawerContext, type ActiveRoute } from './drawerContext';
-import type { MainTabParamList, RootStackParamList } from '@/types/navigation';
+import type { MainTabParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { useAuth } from '@/hooks/useAuth';
 import { useAppSelector } from '@/redux/hooks';
 import { getInitials } from '@/utils/formatters';
 import { borderRadius, getDrawerShadow, layout, spacing, typography } from '@/theme';
@@ -47,44 +45,12 @@ const MENU_SECTIONS: { key: DrawerMenuItem['section']; titleKey: TranslationKey 
 
 const DRAWER_MENU_ITEMS: DrawerMenuItem[] = [
   {
-    id: 'profile',
-    labelKey: 'drawer.profile',
-    icon: 'account-circle-outline',
-    tab: 'Profile',
-    screen: 'ProfileHome',
-    section: 'overview',
-  },
-  {
     id: 'dashboard',
     labelKey: 'drawer.dashboard',
     icon: 'view-dashboard-outline',
     tab: 'Dashboard',
     screen: 'DashboardHome',
     section: 'overview',
-  },
-  {
-    id: 'sales',
-    labelKey: 'drawer.sales',
-    icon: 'cart-outline',
-    tab: 'Sales',
-    screen: 'SalesList',
-    section: 'operations',
-  },
-  {
-    id: 'purchases',
-    labelKey: 'drawer.purchases',
-    icon: 'truck-outline',
-    tab: 'Purchases',
-    screen: 'PurchaseList',
-    section: 'operations',
-  },
-  {
-    id: 'inventory',
-    labelKey: 'drawer.inventory',
-    icon: 'warehouse',
-    tab: 'Inventory',
-    screen: 'ProductList',
-    section: 'operations',
   },
   {
     id: 'products',
@@ -100,30 +66,6 @@ const DRAWER_MENU_ITEMS: DrawerMenuItem[] = [
     icon: 'chart-line',
     tab: 'Dashboard',
     screen: 'Activity',
-    section: 'insights',
-  },
-  {
-    id: 'notifications',
-    labelKey: 'drawer.notifications',
-    icon: 'bell-outline',
-    tab: 'Profile',
-    screen: 'Notifications',
-    section: 'insights',
-  },
-  {
-    id: 'settings',
-    labelKey: 'drawer.settings',
-    icon: 'cog-outline',
-    tab: 'Profile',
-    screen: 'Settings',
-    section: 'insights',
-  },
-  {
-    id: 'help',
-    labelKey: 'drawer.help',
-    icon: 'help-circle-outline',
-    tab: 'Profile',
-    screen: 'AboutApp',
     section: 'insights',
   },
 ];
@@ -192,11 +134,9 @@ const DrawerPanel = memo<{
   isRTL: boolean;
 }>(({ open, slideAnim, backdropAnim, activeRoute, onClose, tabNavigationRef, isRTL }) => {
   const { colors } = useAppTheme();
-  const { t, directionalIconStyle } = useLocalization();
+  const { t } = useLocalization();
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector(state => state.auth);
-  const { logout } = useAuth();
-  const rootNavigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
     if (!open) {
@@ -227,17 +167,18 @@ const DrawerPanel = memo<{
     [onClose, tabNavigationRef],
   );
 
-  const handleLogout = useCallback(() => {
-    onClose(() => {
-      logout();
-      rootNavigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Auth', params: { screen: 'Login' } }],
+  const goToProfile = useCallback(() => {
+    const tabNavigation = tabNavigationRef.current;
+    if (tabNavigation) {
+      tabNavigation.dispatch(
+        CommonActions.navigate({
+          name: 'Profile',
+          params: { screen: 'ProfileHome' },
         }),
       );
-    });
-  }, [logout, onClose, rootNavigation]);
+    }
+    onClose();
+  }, [onClose, tabNavigationRef]);
 
   return (
     <View
@@ -274,7 +215,15 @@ const DrawerPanel = memo<{
             transform: [{ translateX: slideAnim }],
           },
         ]}>
-        <View style={[styles.drawerHeader, { backgroundColor: colors.drawerHeader }]}>
+        <Pressable
+          onPress={goToProfile}
+          accessibilityRole="button"
+          accessibilityLabel={t('drawer.openProfile')}
+          style={({ pressed }) => [
+            styles.drawerHeader,
+            { backgroundColor: colors.drawerHeader },
+            pressed && styles.drawerHeaderPressed,
+          ]}>
           <Avatar.Text
             size={52}
             label={getInitials(user?.name || t('common.user'))}
@@ -283,7 +232,7 @@ const DrawerPanel = memo<{
           />
           <Text style={styles.drawerName}>{user?.name || t('common.user')}</Text>
           <Text style={styles.drawerCompany}>{user?.company || t('common.appName')}</Text>
-        </View>
+        </Pressable>
 
         <ScrollView
           contentContainerStyle={[
@@ -310,22 +259,6 @@ const DrawerPanel = memo<{
               ))}
             </View>
           ))}
-
-          <View style={[styles.sectionDivider, { backgroundColor: colors.borderLight }]} />
-          <TouchableRipple
-            onPress={handleLogout}
-            style={styles.logoutItem}
-            borderless
-            rippleColor={colors.error + '18'}>
-            <View style={styles.menuItemContent}>
-              <View style={[styles.menuIconWrap, { backgroundColor: colors.error + '14' }]}>
-                <Icon name="logout" size={20} color={colors.error} style={directionalIconStyle} />
-              </View>
-              <Text style={[styles.menuLabel, { color: colors.error, fontWeight: '600' }]}>
-                {t('drawer.logout')}
-              </Text>
-            </View>
-          </TouchableRipple>
         </ScrollView>
       </Animated.View>
     </View>
@@ -471,6 +404,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
+  drawerHeaderPressed: {
+    opacity: 0.86,
+  },
   drawerName: {
     ...(typography.h3 as object),
     color: '#FFFFFF',
@@ -521,10 +457,5 @@ const styles = StyleSheet.create({
   },
   menuLabelActive: {
     fontWeight: '600',
-  },
-  logoutItem: {
-    marginHorizontal: spacing.sm,
-    marginTop: spacing.xs,
-    borderRadius: borderRadius.md,
   },
 });

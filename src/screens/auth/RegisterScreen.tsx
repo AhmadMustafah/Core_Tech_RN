@@ -154,6 +154,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   onBlur={onBlur}
                   showStrength={field.showStrength}
                   autoComplete={field.name === 'password' ? 'password-new' : 'password'}
+                  required
                   error={errors[field.name]?.message as string}
                 />
               ) : (
@@ -168,6 +169,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                   keyboardType={field.keyboard}
                   autoCapitalize={field.name === 'email' ? 'none' : 'sentences'}
                   left={<CustomInput.Icon icon={field.icon} />}
+                  required
                   error={errors[field.name]?.message as string}
                 />
               )

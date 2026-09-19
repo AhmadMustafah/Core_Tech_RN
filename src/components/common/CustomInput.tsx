@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle, useRef } from 'react';
 import { StyleSheet, View, ViewStyle, type ReturnKeyTypeOptions } from 'react-native';
-import { TextInput, TextInputProps, HelperText } from 'react-native-paper';
+import { Text, TextInput, TextInputProps, HelperText } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { isTranslationKey } from '@/localization';
@@ -10,6 +10,7 @@ import { borderRadius, spacing } from '@/theme';
 interface CustomInputProps extends Omit<TextInputProps, 'error'> {
   error?: string;
   containerStyle?: ViewStyle;
+  required?: boolean;
 }
 
 type PaperTextInputRef = React.ElementRef<typeof TextInput>;
@@ -34,6 +35,8 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
       blurOnSubmit,
       keyboardType,
       secureTextEntry,
+      required,
+      label,
       ...props
     },
     forwardedRef,
@@ -71,14 +74,25 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
     const errorText =
       error && isTranslationKey(error) ? t(error) : error;
 
+    const renderedLabel =
+      required && label ? (
+        <Text>
+          {label}
+          <Text style={{ color: colors.error }}> *</Text>
+        </Text>
+      ) : (
+        label
+      );
+
     return (
-      <View ref={wrapperRef} collapsable={false} style={containerStyle}>
+      <View ref={wrapperRef} collapsable={false} style={[styles.field, containerStyle]}>
         <TextInput
           ref={(instance: PaperTextInputRef | null) => {
             innerRef.current = instance;
           }}
           mode={mode}
           error={!!error}
+          label={renderedLabel}
           outlineColor={colors.border}
           activeOutlineColor={colors.primary}
           textColor={colors.text}
@@ -112,15 +126,17 @@ CustomInput.displayName = 'CustomInput';
 CustomInput.Icon = TextInput.Icon;
 
 const styles = StyleSheet.create({
+  field: {
+    marginBottom: spacing.md,
+  },
   input: {
     borderRadius: borderRadius.md,
-    marginBottom: spacing.xs,
   },
   content: {
     paddingHorizontal: spacing.sm,
   },
   helper: {
-    marginTop: -spacing.xs,
-    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+    marginBottom: 0,
   },
 });

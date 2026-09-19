@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { Text, Snackbar } from 'react-native-paper';
+import { Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
@@ -37,8 +37,10 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
-        <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>{t('profile.editProfile')}</Text>
+    <FormScrollView
+      centerContent
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={styles.scroll}>
         {(['name', 'email', 'phone', 'company'] as const).map(field => (
           <Controller key={field} control={control} name={field}
             rules={{ validate: field === 'name' ? (v: string) => validateName(v, t('auth.fullName')) : field === 'email' ? validateEmail : field === 'phone' ? validatePhone : validateCompany }}
@@ -49,14 +51,24 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
                 onChangeText={onChange}
                 keyboardType={field === 'email' ? 'email-address' : field === 'phone' ? 'phone-pad' : 'default'}
                 autoCapitalize={field === 'email' ? 'none' : 'sentences'}
+                required
                 error={errors[field]?.message as string}
               />
             )} />
         ))}
-        <CustomButton title={t('profile.saveChanges')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
+        <CustomButton
+          title={t('profile.saveChanges')}
+          onPress={handleSubmit(onSubmit)}
+          loading={loading}
+          fullWidth
+          style={styles.submit}
+        />
       <Snackbar visible={success} onDismiss={() => setSuccess(false)}>{t('profile.updated')}</Snackbar>
     </FormScrollView>
   );
 };
 
-const styles = StyleSheet.create({ scroll: { padding: spacing.md, paddingBottom: spacing.xxl } });
+const styles = StyleSheet.create({
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  submit: { marginTop: spacing.sm },
+});

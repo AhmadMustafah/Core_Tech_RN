@@ -40,10 +40,7 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
       contentContainerStyle={styles.content}>
       <View>
         <Text style={styles.icon}>🔐</Text>
-        <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          {t('auth.forgotPasswordTitle')}
-        </Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
+        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.xl }}>
           {t('auth.forgotPasswordHint')}
         </Text>
 
@@ -66,6 +63,7 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
               keyboardType="email-address"
               autoCapitalize="none"
               left={<CustomInput.Icon icon="email-outline" />}
+              required
               error={errors.email?.message as string}
             />
           )}

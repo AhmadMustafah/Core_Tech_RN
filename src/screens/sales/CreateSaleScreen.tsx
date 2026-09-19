@@ -97,7 +97,6 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>{t('sale.create')}</Text>
       {formError && (
         <Text style={{ color: colors.error, marginBottom: spacing.sm }}>{formError}</Text>
       )}
@@ -127,8 +126,8 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
         </View>
       ))}
 
-      <CustomInput label={t('common.discount')} value={discount} onChangeText={setDiscount} keyboardType="numeric" error={discountError} />
-      <CustomInput label={t('common.tax')} value={tax} onChangeText={setTax} keyboardType="numeric" error={taxError} />
+      <CustomInput label={t('common.discount')} value={discount} onChangeText={setDiscount} keyboardType="numeric" required error={discountError} />
+      <CustomInput label={t('common.tax')} value={tax} onChangeText={setTax} keyboardType="numeric" required error={taxError} />
 
       <View style={styles.paymentRow}>
         {(['paid', 'pending', 'partial'] as const).map(status => (

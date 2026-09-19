@@ -84,6 +84,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               autoCapitalize="none"
               maxLength={100}
               left={<CustomInput.Icon icon="email-outline" />}
+              required
               error={errors.email?.message as string}
             />
           )}
@@ -100,6 +101,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
               onChangeText={onChange}
               onBlur={onBlur}
               autoComplete="current-password"
+              required
               error={errors.password?.message as string}
             />
           )}

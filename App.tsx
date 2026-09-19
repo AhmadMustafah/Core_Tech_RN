@@ -19,7 +19,9 @@ const AppContent: React.FC = () => {
   const themePreset = useAppSelector(state => state.theme.preset);
   const language = useAppSelector(state => state.settings.language);
   const settingsHydrated = useAppSelector(state => state.settings.hydrated);
+  const themeHydrated = useAppSelector(state => state.theme.hydrated);
   const isRTL = isRtlLanguage(language);
+  const preferencesReady = themeHydrated && settingsHydrated;
 
   useEffect(() => {
     dispatch(loadThemePreferences());
@@ -77,6 +79,17 @@ const AppContent: React.FC = () => {
     }),
     [isDark, colors],
   );
+
+  if (!preferencesReady) {
+    return (
+      <View
+        style={[
+          styles.root,
+          { backgroundColor: systemScheme === 'dark' ? '#121212' : '#FFFFFF' },
+        ]}
+      />
+    );
+  }
 
   return (
     <View style={[styles.root, { direction: isRTL ? 'rtl' : 'ltr' }]}>

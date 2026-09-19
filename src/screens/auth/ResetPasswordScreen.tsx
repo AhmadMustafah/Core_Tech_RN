@@ -10,7 +10,6 @@ import { useLocalization } from '@/hooks/useLocalization';
 import {
   validateSecurePassword,
   validateConfirmPassword,
-  validateLoginPassword,
 } from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
@@ -52,10 +51,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
       contentContainerStyle={styles.content}>
       <View>
         <Text style={styles.icon}>🔑</Text>
-        <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          {t('auth.resetPasswordTitle')}
-        </Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
+        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.xl }}>
           {t('auth.resetPasswordHint')}
         </Text>
 
@@ -77,6 +73,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
               onBlur={onBlur}
               showStrength
               autoComplete="password-new"
+              required
               error={errors.password?.message as string}
             />
           )}
@@ -93,6 +90,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
               onChangeText={onChange}
               onBlur={onBlur}
               autoComplete="password-new"
+              required
               error={errors.confirmPassword?.message as string}
             />
           )}

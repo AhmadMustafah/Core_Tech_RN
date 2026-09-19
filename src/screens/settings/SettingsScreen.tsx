@@ -57,7 +57,6 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}>
       <View style={styles.intro}>
-        <Text style={[styles.introTitle, { color: colors.text }]}>{t('settings.centerTitle')}</Text>
         <Text style={[styles.introSubtitle, { color: colors.textSecondary }]}>
           {t('settings.centerSubtitle')}
         </Text>
@@ -125,11 +124,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     paddingTop: spacing.sm,
   },
-  introTitle: {
-    ...(typography.h3 as object),
-  },
   introSubtitle: {
     ...(typography.bodySmall as object),
-    marginTop: spacing.xs,
   },
 });

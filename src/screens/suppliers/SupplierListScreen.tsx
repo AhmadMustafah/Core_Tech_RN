@@ -7,7 +7,7 @@ import { EmptyState, LoadingState, ErrorState } from '@/components/common';
 import { supplierService } from '@/services/supplierService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { getInitials } from '@/utils/formatters';
+import { formatCurrency, getInitials } from '@/utils/formatters';
 import type { Supplier } from '@/types';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { spacing, borderRadius } from '@/theme';
@@ -30,18 +30,32 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  if (loading && suppliers.length === 0 && !error) {
+    return <LoadingState />;
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {error ? <ErrorState message={error} onRetry={load} /> : (
         <FlatList data={suppliers} keyExtractor={i => i.id} contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.card, { backgroundColor: colors.surface }]}
+            <TouchableOpacity
+              activeOpacity={0.82}
+              style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
               onPress={() => navigation.navigate('SupplierDetails', { supplierId: item.id })}>
-              <Avatar.Text size={44} label={getInitials(item.name)} style={{ backgroundColor: colors.secondary }} />
+              <Avatar.Text size={48} label={getInitials(item.name)} style={{ backgroundColor: colors.secondary }} />
               <View style={styles.info}>
-                <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '600' }}>{item.name}</Text>
-                <Text variant="bodySmall" style={{ color: colors.textSecondary }}>{item.email} • {item.phone}</Text>
+                <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '700' }}>{item.name}</Text>
+                <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
+                  {item.company || t('common.na')}
+                </Text>
+                <Text variant="bodySmall" style={{ color: colors.textMuted, marginTop: 2 }}>
+                  {item.email} · {item.phone}
+                </Text>
+                <Text variant="labelSmall" style={{ color: colors.primary, marginTop: spacing.xs, fontWeight: '600' }}>
+                  {t('supplier.totalPurchases')}: {formatCurrency(item.totalPurchases || 0)}
+                </Text>
               </View>
             </TouchableOpacity>
           )}
@@ -56,7 +70,15 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: spacing.md, paddingBottom: 80 },
-  card: { flexDirection: 'row', padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, alignItems: 'center', elevation: 1 },
-  info: { marginStart: spacing.md, flex: 1 },
+  card: {
+    flexDirection: 'row',
+    padding: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.sm,
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    elevation: 1,
+  },
+  info: { marginStart: spacing.md, flex: 1, minWidth: 0 },
   fab: { position: 'absolute', end: spacing.md, bottom: spacing.md },
 });

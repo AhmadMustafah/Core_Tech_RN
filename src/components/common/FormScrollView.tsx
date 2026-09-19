@@ -44,6 +44,7 @@ export const useFormFocus = () => useContext(FormFocusContext);
 
 type FormScrollViewProps = ScrollViewProps & {
   keyboardVerticalOffset?: number;
+  centerContent?: boolean;
 };
 
 const FOCUS_GAP = 24;
@@ -61,6 +62,7 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
   children,
   contentContainerStyle,
   keyboardVerticalOffset = Platform.OS === 'ios' ? 88 : 0,
+  centerContent = false,
   onScroll,
   style,
   ...scrollProps
@@ -235,6 +237,7 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
         scrollEventThrottle={16}
         contentContainerStyle={[
           styles.content,
+          centerContent && styles.centeredContent,
           contentContainerStyle,
           keyboardOpen && styles.keyboardContent,
         ]}>
@@ -293,6 +296,10 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: spacing.xxl,
+  },
+  centeredContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   keyboardContent: {
     paddingBottom: spacing.xxl + KEYBOARD_CONTENT_PADDING,

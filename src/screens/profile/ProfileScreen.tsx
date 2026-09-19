@@ -58,7 +58,7 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       <View style={[styles.menuCard, { backgroundColor: colors.surface }]}>
         {menuItems.map((item, index) => (
           <React.Fragment key={item.screen}>
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate(item.screen)}>
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.75} onPress={() => navigation.navigate(item.screen)}>
               <Icon source={item.icon} size={24} color={colors.primary} />
               <Text variant="bodyLarge" style={{ color: colors.text, marginStart: spacing.md, flex: 1 }}>
                 {t(item.labelKey)}

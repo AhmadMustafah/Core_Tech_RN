@@ -58,6 +58,7 @@ export type ProfileStackParamList = {
 export type DashboardStackParamList = {
   DashboardHome: undefined;
   Activity: undefined;
+  Notifications: undefined;
 };
 
 export type MainTabParamList = {

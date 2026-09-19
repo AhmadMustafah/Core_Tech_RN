@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Text, Menu, Button } from 'react-native-paper';
+import { StyleSheet } from 'react-native';
+import { Menu, Button } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
@@ -99,10 +99,6 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
     <FormScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.scroll}>
-        <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>
-          {isEdit ? t('product.edit') : t('product.add')}
-        </Text>
-
         {(['name', 'sku'] as const).map(field => (
           <Controller
             key={field}
@@ -117,6 +113,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={value}
                 onChangeText={onChange}
                 maxLength={field === 'name' ? 100 : 30}
+                required
                 error={errors[field]?.message as string}
               />
             )}
@@ -148,7 +145,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="price"
           rules={{ validate: v => validatePositiveNumber(v, 'Selling price') }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label={t('product.sellingPrice')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.price?.message as string} />
+            <CustomInput label={t('product.sellingPrice')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.price?.message as string} />
           )}
         />
         <Controller
@@ -156,7 +153,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="costPrice"
           rules={{ validate: v => validatePositiveNumber(v, 'Cost price') }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label={t('product.costPrice')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.costPrice?.message as string} />
+            <CustomInput label={t('product.costPrice')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.costPrice?.message as string} />
           )}
         />
         <Controller
@@ -164,7 +161,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="stockQuantity"
           rules={{ validate: v => validateInteger(v, 'Stock quantity', 0) }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label={t('product.stockQty')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.stockQuantity?.message as string} />
+            <CustomInput label={t('product.stockQty')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.stockQuantity?.message as string} />
           )}
         />
         <Controller
@@ -172,7 +169,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="lowStockThreshold"
           rules={{ validate: v => validateInteger(v, 'Low stock threshold', 0) }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label={t('product.lowStockThreshold')} value={value} onChangeText={onChange} keyboardType="numeric" error={errors.lowStockThreshold?.message as string} />
+            <CustomInput label={t('product.lowStockThreshold')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.lowStockThreshold?.message as string} />
           )}
         />
 
@@ -197,6 +194,6 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
 };
 
 const styles = StyleSheet.create({
-  scroll: { padding: spacing.md, paddingBottom: spacing.xxl },
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
   menuButton: { marginBottom: spacing.md },
 });
