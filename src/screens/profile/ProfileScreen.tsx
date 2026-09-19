@@ -16,13 +16,12 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'ProfileHome'>;
 const menuItems: {
   labelKey: TranslationKey;
   icon: string;
-  screen: 'EditProfile' | 'ChangePassword' | 'CustomerList' | 'SupplierList' | 'Notifications' | 'Settings';
+  screen: 'EditProfile' | 'ChangePassword' | 'CustomerList' | 'SupplierList' | 'Settings';
 }[] = [
   { labelKey: 'profile.editProfile', icon: 'account-edit-outline', screen: 'EditProfile' },
   { labelKey: 'profile.changePassword', icon: 'lock-reset', screen: 'ChangePassword' },
   { labelKey: 'profile.customers', icon: 'account-group-outline', screen: 'CustomerList' },
   { labelKey: 'profile.suppliers', icon: 'truck-outline', screen: 'SupplierList' },
-  { labelKey: 'profile.notifications', icon: 'bell-outline', screen: 'Notifications' },
   { labelKey: 'profile.settings', icon: 'cog-outline', screen: 'Settings' },
 ];
 

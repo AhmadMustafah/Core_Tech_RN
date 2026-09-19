@@ -55,18 +55,32 @@ export const SaleDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.totalRow}><Text style={{ color: colors.textSecondary }}>{t('common.subtotal')}</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.subtotal)}</Text></View>
         <View style={styles.totalRow}><Text style={{ color: colors.textSecondary }}>{t('common.discount')}</Text><Text style={{ color: colors.text }}>-{formatCurrency(sale.discount)}</Text></View>
         <View style={styles.totalRow}><Text style={{ color: colors.textSecondary }}>{t('common.tax')}</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.tax)}</Text></View>
-        <View style={[styles.totalRow, styles.grandTotal]}><Text variant="titleMedium" style={{ color: colors.text, fontWeight: '700' }}>{t('common.total')}</Text><Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(sale.totalAmount)}</Text></View>
+        <View style={[styles.totalRow, styles.grandTotal, { borderTopColor: colors.border }]}>
+          <Text variant="titleMedium" style={{ color: colors.text, fontWeight: '700' }}>{t('common.total')}</Text>
+          <Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(sale.totalAmount)}</Text>
+        </View>
+        <View style={styles.invoiceAction}>
+          <CustomButton
+            title={t('sale.viewInvoice')}
+            icon="file-document-outline"
+            onPress={() => navigation.navigate('InvoicePreview', { saleId })}
+            fullWidth
+          />
+        </View>
       </CustomCard>
-
-      <CustomButton title={t('sale.viewInvoice')} onPress={() => navigation.navigate('InvoicePreview', { saleId })} fullWidth style={{ margin: spacing.md }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, padding: spacing.md },
   header: { padding: spacing.md },
   item: { padding: spacing.md, borderBottomWidth: 1 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  grandTotal: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: '#eee' },
+  grandTotal: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1 },
+  invoiceAction: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
 });
