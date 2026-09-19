@@ -52,6 +52,10 @@ export const NOTIFICATION_TITLE_KEYS = {
   purchase_completed: 'notify.purchaseCompleted',
   low_stock: 'notify.lowStock',
   order_created: 'notify.orderCreated',
+  customer_activity: 'notify.customerActivity',
+  supplier_activity: 'notify.supplierActivity',
+  payment_update: 'notify.paymentUpdate',
+  system_alert: 'notify.systemAlert',
 } as const;
 
 export const NOTIFICATION_BODY_KEYS = {
@@ -59,6 +63,10 @@ export const NOTIFICATION_BODY_KEYS = {
   purchase_completed: 'notify.body.purchaseCompleted',
   low_stock: 'notify.body.lowStock',
   order_created: 'notify.body.orderCreated',
+  customer_activity: 'notify.body.customerActivity',
+  supplier_activity: 'notify.body.supplierActivity',
+  payment_update: 'notify.body.paymentUpdate',
+  system_alert: 'notify.body.systemAlert',
 } as const;
 
 export const getCatalogLabel = (language: Language, value: string): string => {

@@ -128,13 +128,39 @@ export interface Activity {
   timestamp: string;
 }
 
+export type NotificationType =
+  | 'order_created'
+  | 'sale_completed'
+  | 'purchase_completed'
+  | 'low_stock'
+  | 'customer_activity'
+  | 'supplier_activity'
+  | 'payment_update'
+  | 'system_alert';
+
+export type NotificationRelatedType = 'product' | 'sale' | 'purchase' | 'customer' | 'supplier';
+
+export interface NotificationDetails {
+  productName?: string;
+  sku?: string;
+  quantity?: number;
+  threshold?: number;
+  reference?: string;
+  partyName?: string;
+  amount?: number;
+  status?: string;
+}
+
 export interface AppNotification {
   id: string;
-  type: 'order_created' | 'sale_completed' | 'purchase_completed' | 'low_stock';
+  type: NotificationType;
   title: string;
   message: string;
   read: boolean;
   createdAt: string;
+  relatedType?: NotificationRelatedType;
+  relatedId?: string;
+  details?: NotificationDetails;
 }
 
 export interface ApiResponse<T> {

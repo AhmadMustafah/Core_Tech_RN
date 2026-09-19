@@ -79,7 +79,7 @@ export const CreatePurchaseScreen: React.FC<Props> = ({ navigation }) => {
         </View>
       ))}
 
-      <Text variant="titleMedium" style={{ color: colors.secondary, fontWeight: '700', marginTop: spacing.md }}>
+      <Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700', marginTop: spacing.md }}>
         {t('common.total')}: {formatCurrency(totalAmount)}
       </Text>
 

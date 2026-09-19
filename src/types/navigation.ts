@@ -43,6 +43,7 @@ export type ProfileStackParamList = {
   PreferencesSettings: undefined;
   AboutSupport: undefined;
   Notifications: undefined;
+  NotificationDetails: { notificationId: string };
   CustomerList: undefined;
   CustomerDetails: { customerId: string };
   AddCustomer: undefined;
@@ -59,6 +60,9 @@ export type DashboardStackParamList = {
   DashboardHome: undefined;
   Activity: undefined;
   Notifications: undefined;
+  NotificationDetails: { notificationId: string };
+  Transactions: undefined;
+  Alerts: undefined;
 };
 
 export type MainTabParamList = {

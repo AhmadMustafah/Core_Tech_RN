@@ -6,6 +6,9 @@ import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import { DashboardScreen } from '@/screens/dashboard/DashboardScreen';
 import { ActivityScreen } from '@/screens/dashboard/ActivityScreen';
 import { NotificationsScreen } from '@/screens/notifications/NotificationsScreen';
+import { NotificationDetailsScreen } from '@/screens/notifications/NotificationDetailsScreen';
+import { TransactionsScreen } from '@/screens/dashboard/TransactionsScreen';
+import { AlertsScreen } from '@/screens/dashboard/AlertsScreen';
 import { renderDrawerHeaderLeft } from './drawerContext';
 import type { DashboardStackParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -63,6 +66,27 @@ export const DashboardNavigator: React.FC = () => {
         component={NotificationsScreen}
         options={{
           title: t('screen.notifications'),
+        }}
+      />
+      <Stack.Screen
+        name="NotificationDetails"
+        component={NotificationDetailsScreen}
+        options={{
+          title: t('screen.notificationDetails'),
+        }}
+      />
+      <Stack.Screen
+        name="Transactions"
+        component={TransactionsScreen}
+        options={{
+          title: t('screen.transactions'),
+        }}
+      />
+      <Stack.Screen
+        name="Alerts"
+        component={AlertsScreen}
+        options={{
+          title: t('screen.alerts'),
         }}
       />
     </Stack.Navigator>

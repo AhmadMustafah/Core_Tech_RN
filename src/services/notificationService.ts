@@ -19,6 +19,19 @@ export const notificationService = {
     return response.data.data;
   },
 
+  async getById(id: string): Promise<AppNotification> {
+    if (API_CONFIG.USE_MOCK) {
+      await delay();
+      const item = notifications.find(n => n.id === id);
+      if (!item) throw new Error('Notification not found');
+      return item;
+    }
+    const response = await apiClient.get(API_ENDPOINTS.NOTIFICATIONS.LIST);
+    const item = (response.data.data as AppNotification[]).find(n => n.id === id);
+    if (!item) throw new Error('Notification not found');
+    return item;
+  },
+
   async markAsRead(id: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
       await delay(200);

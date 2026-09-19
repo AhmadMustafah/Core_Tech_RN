@@ -1,27 +1,24 @@
-import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import { EmptyState, LoadingState } from '@/components/common';
 import { notificationService } from '@/services/notificationService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { AppNotification } from '@/types';
+import type { DashboardStackParamList, ProfileStackParamList } from '@/types/navigation';
 import { NOTIFICATION_BODY_KEYS, NOTIFICATION_TITLE_KEYS } from '@/localization';
-import { spacing, borderRadius } from '@/theme';
+import { borderRadius, spacing } from '@/theme';
+import { getNotificationColor, getNotificationIcon } from './notifyMeta';
 
-const getNotificationIcon = (type: AppNotification['type']) => {
-  switch (type) {
-    case 'sale_completed': return 'cart-check';
-    case 'purchase_completed': return 'truck-check';
-    case 'low_stock': return 'alert-outline';
-    default: return 'clipboard-text-outline';
-  }
-};
+type NotifyNav = NavigationProp<DashboardStackParamList & ProfileStackParamList>;
 
 export const NotificationsScreen: React.FC = () => {
+  const navigation = useNavigation<NotifyNav>();
   const { colors } = useAppTheme();
   const { t, language } = useLocalization();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -29,81 +26,110 @@ export const NotificationsScreen: React.FC = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setNotifications(await notificationService.getAll()); }
-    finally { setLoading(false); }
+    try {
+      setNotifications(await notificationService.getAll());
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
-
-  const markAsRead = async (id: string) => {
-    await notificationService.markAsRead(id);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
 
   const markAllRead = async () => {
     await notificationService.markAllAsRead();
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
-  if (loading && notifications.length === 0) return <LoadingState message="notify.loading" />;
+  const openDetails = async (item: AppNotification) => {
+    if (!item.read) {
+      await notificationService.markAsRead(item.id);
+    }
+    navigation.navigate('NotificationDetails', { notificationId: item.id });
+  };
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  if (loading && notifications.length === 0) {
+    return <LoadingState message="notify.loading" />;
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {notifications.some(n => !n.read) && (
-        <TouchableOpacity style={styles.markAll} onPress={markAllRead} activeOpacity={0.75}>
-          <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('notify.markAll')}</Text>
-        </TouchableOpacity>
-      )}
+      {notifications.length > 0 ? (
+        <View style={styles.toolbar}>
+          <Text style={{ color: colors.textSecondary }}>
+            {unreadCount > 0 ? t('notify.unreadCount', { count: unreadCount }) : t('notify.read')}
+          </Text>
+          {unreadCount > 0 ? (
+            <TouchableOpacity onPress={markAllRead} activeOpacity={0.75}>
+              <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('notify.markAll')}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : null}
       <FlatList
         data={notifications}
         keyExtractor={item => item.id}
         contentContainerStyle={[styles.list, notifications.length === 0 && styles.emptyList]}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.82}
-            style={[
-              styles.card,
-              {
-                backgroundColor: item.read ? colors.surface : colors.primary + '08',
-                borderColor: colors.border,
-              },
-            ]}
-            onPress={() => !item.read && markAsRead(item.id)}>
-            <View style={[styles.iconWrap, { backgroundColor: colors.primaryMuted }]}>
-              <Icon name={getNotificationIcon(item.type)} size={22} color={colors.primary} />
-            </View>
-            <View style={styles.textContent}>
-              <View style={styles.titleRow}>
-                <Text
-                  variant="titleSmall"
-                  style={{ color: colors.text, fontWeight: item.read ? '500' : '700', flex: 1 }}
-                  numberOfLines={1}>
-                  {t(NOTIFICATION_TITLE_KEYS[item.type])}
-                </Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: (item.read ? colors.textMuted : colors.primary) + '18' },
-                  ]}>
-                  <Text
-                    variant="labelSmall"
-                    style={{ color: item.read ? colors.textMuted : colors.primary, fontWeight: '600' }}>
-                    {t(item.read ? 'notify.read' : 'notify.unread')}
-                  </Text>
-                </View>
+        renderItem={({ item }) => {
+          const accent = getNotificationColor(item.type, colors);
+          return (
+            <TouchableOpacity
+              activeOpacity={0.82}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: item.read ? colors.surface : colors.primary + '08',
+                  borderColor: item.read ? colors.border : colors.primary + '44',
+                },
+              ]}
+              onPress={() => openDetails(item)}>
+              <View style={[styles.iconWrap, { backgroundColor: accent + '18' }]}>
+                <Icon name={getNotificationIcon(item.type)} size={22} color={accent} />
               </View>
-              <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 4 }}>
-                {t(NOTIFICATION_BODY_KEYS[item.type])}
-              </Text>
-              <Text variant="labelSmall" style={{ color: colors.textMuted, marginTop: 6 }}>
-                {formatRelativeTime(item.createdAt, language)}
-              </Text>
-            </View>
-            {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<EmptyState icon="bell-off-outline" title={t('notify.empty')} message={t('notify.emptyMsg')} />}
+              <View style={styles.textContent}>
+                <View style={styles.titleRow}>
+                  <Text
+                    variant="titleSmall"
+                    style={{ color: colors.text, fontWeight: item.read ? '500' : '700', flex: 1 }}
+                    numberOfLines={1}>
+                    {t(NOTIFICATION_TITLE_KEYS[item.type])}
+                  </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: (item.read ? colors.textMuted : colors.primary) + '18' }]}>
+                    <Text
+                      variant="labelSmall"
+                      style={{ color: item.read ? colors.textMuted : colors.primary, fontWeight: '600' }}>
+                      {t(item.read ? 'notify.read' : 'notify.unread')}
+                    </Text>
+                  </View>
+                </View>
+                <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 4 }} numberOfLines={2}>
+                  {item.message || t(NOTIFICATION_BODY_KEYS[item.type])}
+                </Text>
+                {item.details?.reference || item.details?.productName ? (
+                  <Text variant="labelSmall" style={{ color: colors.textMuted, marginTop: 4 }} numberOfLines={1}>
+                    {item.details.reference || item.details.productName}
+                    {item.details.quantity != null
+                      ? ` · ${item.details.quantity}/${item.details.threshold ?? '-'}`
+                      : ''}
+                  </Text>
+                ) : null}
+                <Text variant="labelSmall" style={{ color: colors.textMuted, marginTop: 6 }}>
+                  {formatRelativeTime(item.createdAt, language)}
+                </Text>
+              </View>
+              {!item.read ? <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} /> : null}
+            </TouchableOpacity>
+          );
+        }}
+        ListEmptyComponent={
+          <EmptyState icon="bell-off-outline" title={t('notify.empty')} message={t('notify.emptyMsg')} />
+        }
       />
     </View>
   );
@@ -111,7 +137,13 @@ export const NotificationsScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  markAll: { alignItems: 'flex-end', paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  toolbar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+  },
   list: { padding: spacing.md, paddingTop: spacing.sm, paddingBottom: spacing.xxl },
   emptyList: { flexGrow: 1 },
   card: {

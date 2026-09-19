@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -23,9 +23,19 @@ import {
 } from '@/components/common';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { fetchDashboard } from '@/redux/slices/dashboardSlice';
+import { saleService } from '@/services/saleService';
+import { purchaseService } from '@/services/purchaseService';
+import { productService } from '@/services/productService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, formatRelativeTime } from '@/utils/formatters';
+import { openRelatedRecord } from '@/utils/relatedNavigation';
+import {
+  buildAlerts,
+  buildTransactions,
+  type WorkspaceAlert,
+  type WorkspaceTransaction,
+} from '@/utils/workspaceRecords';
 import type { Activity } from '@/types';
 import type {
   DashboardStackParamList,
@@ -44,62 +54,13 @@ type Props = CompositeScreenProps<
 >;
 
 const RECENT_ACTIVITY_LIMIT = 5;
+const RECENT_TRANSACTION_LIMIT = 5;
+const DASHBOARD_ALERT_LIMIT = 3;
 const MAX_CONTENT_WIDTH = layout.maxContentWidth;
 
-const MOCK_TRANSACTIONS = [
-  {
-    id: 'txn-1',
-    ref: 'INV-1042',
-    type: 'Sale' as const,
-    party: 'Ahmed Traders',
-    amount: 45200,
-    status: 'Completed' as const,
-    timestamp: '2026-07-30T10:30:00',
-  },
-  {
-    id: 'txn-2',
-    ref: 'PO-0891',
-    type: 'Purchase' as const,
-    party: 'Metro Supplies',
-    amount: 28750,
-    status: 'Pending' as const,
-    timestamp: '2026-07-30T08:15:00',
-  },
-  {
-    id: 'txn-3',
-    ref: 'INV-1041',
-    type: 'Sale' as const,
-    party: 'City Mart',
-    amount: 12800,
-    status: 'Completed' as const,
-    timestamp: '2026-07-29T16:45:00',
-  },
-];
-
-const MOCK_ALERTS = [
-  {
-    id: 'alert-1',
-    severity: 'warning' as const,
-    titleKey: 'dash.alert.lowStock' as const,
-    messageKey: 'dash.alert.lowStockMsg' as const,
-  },
-  {
-    id: 'alert-2',
-    severity: 'info' as const,
-    titleKey: 'dash.alert.pendingPo' as const,
-    messageKey: 'dash.alert.pendingPoMsg' as const,
-  },
-  {
-    id: 'alert-3',
-    severity: 'error' as const,
-    titleKey: 'dash.alert.overdue' as const,
-    messageKey: 'dash.alert.overdueMsg' as const,
-  },
-];
-
-const transactionIcons: Record<(typeof MOCK_TRANSACTIONS)[number]['type'], string> = {
-  Sale: 'cart-check',
-  Purchase: 'truck-delivery',
+const transactionIcons: Record<WorkspaceTransaction['type'], string> = {
+  sale: 'cart-check',
+  purchase: 'truck-delivery',
 };
 
 const activityIcons: Record<Activity['type'], string> = {
@@ -265,12 +226,23 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const { summary, activities, isLoading, error } = useAppSelector(
     state => state.dashboard,
   );
+  const [transactions, setTransactions] = useState<WorkspaceTransaction[]>([]);
+  const [alerts, setAlerts] = useState<WorkspaceAlert[]>([]);
+  const [expandedAlertId, setExpandedAlertId] = useState<string | null>(null);
 
   const { isCompact, isWide, contentPadding, kpiColumns, kpiItemWidth } =
     getLayoutMetrics(width);
 
   const loadData = useCallback(() => {
     dispatch(fetchDashboard());
+    Promise.all([
+      saleService.getAll(),
+      purchaseService.getAll(),
+      productService.getAll(),
+    ]).then(([sales, purchases, products]) => {
+      setTransactions(buildTransactions(sales, purchases));
+      setAlerts(buildAlerts(products, sales));
+    });
   }, [dispatch]);
 
   useFocusEffect(
@@ -288,7 +260,15 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Activity');
   }, [navigation]);
 
-  const getAlertColor = (severity: (typeof MOCK_ALERTS)[number]['severity']) => {
+  const openTransactions = useCallback(() => {
+    navigation.navigate('Transactions');
+  }, [navigation]);
+
+  const openAlerts = useCallback(() => {
+    navigation.navigate('Alerts');
+  }, [navigation]);
+
+  const getAlertColor = (severity: WorkspaceAlert['severity']) => {
     switch (severity) {
       case 'warning':
         return colors.warning;
@@ -299,8 +279,18 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const getStatusColor = (status: (typeof MOCK_TRANSACTIONS)[number]['status']) =>
-    status === 'Completed' ? colors.success : colors.warning;
+  const getStatusColor = (status: WorkspaceTransaction['status']) => {
+    if (status === 'paid' || status === 'recorded') return colors.success;
+    if (status === 'partial') return colors.info;
+    return colors.warning;
+  };
+
+  const transactionStatusLabel = (status: WorkspaceTransaction['status']) => {
+    if (status === 'recorded') return t('dash.status.recorded');
+    if (status === 'paid') return t('dash.status.completed');
+    if (status === 'partial') return t('dash.status.partial');
+    return t('dash.status.pending');
+  };
 
   const getActivityColor = (type: Activity['type']) => {
     switch (type) {
@@ -446,39 +436,74 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <View style={styles.section}>
-        <CustomCard title={t('dash.alerts')} subtitle={t('dash.alertsSubtitle')}>
+        <CustomCard
+          title={t('dash.alerts')}
+          subtitle={t('dash.alertsSubtitle')}
+          headerRight={
+            <TouchableOpacity onPress={openAlerts} hitSlop={8}>
+              <Text variant="labelMedium" style={{ color: colors.primary }}>
+                {t('common.viewAll')}
+              </Text>
+            </TouchableOpacity>
+          }>
           <View style={styles.cardBody}>
-            {MOCK_ALERTS.map(alert => (
-              <View
-                key={alert.id}
-                style={[
-                  styles.alertItem,
-                  {
-                    backgroundColor: colors.surfaceVariant,
-                    borderStartColor: getAlertColor(alert.severity),
-                  },
-                ]}>
-                <Icon
-                  source={
-                    alert.severity === 'error'
-                      ? 'alert-circle'
-                      : alert.severity === 'warning'
-                        ? 'alert'
-                        : 'information'
-                  }
-                  size={20}
-                  color={getAlertColor(alert.severity)}
-                />
-                <View style={styles.alertContent}>
-                  <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '600' }}>
-                    {t(alert.titleKey)}
-                  </Text>
-                  <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-                    {t(alert.messageKey)}
-                  </Text>
-                </View>
-              </View>
-            ))}
+            {alerts.length === 0 ? (
+              <EmptyState icon="bell-check-outline" title={t('dash.noAlerts')} message={t('dash.noAlertsMsg')} />
+            ) : (
+              alerts.slice(0, DASHBOARD_ALERT_LIMIT).map(alert => {
+                const expanded = expandedAlertId === alert.id;
+                return (
+                  <TouchableOpacity
+                    key={alert.id}
+                    activeOpacity={0.85}
+                    onPress={() => setExpandedAlertId(expanded ? null : alert.id)}
+                    style={[
+                      styles.alertItem,
+                      {
+                        backgroundColor: colors.surfaceVariant,
+                        borderStartColor: getAlertColor(alert.severity),
+                      },
+                    ]}>
+                    <Icon
+                      source={alert.kind === 'low_stock' ? 'alert' : 'cash-alert'}
+                      size={20}
+                      color={getAlertColor(alert.severity)}
+                    />
+                    <View style={styles.alertContent}>
+                      <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '600' }}>
+                        {alert.kind === 'low_stock' ? t('dash.alert.lowStock') : t('dash.alert.overdue')}
+                      </Text>
+                      <Text variant="bodySmall" style={{ color: colors.text, marginTop: 2 }}>
+                        {alert.productName || alert.reference}
+                      </Text>
+                      {alert.kind === 'low_stock' ? (
+                        <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
+                          {t('dash.alert.qty')}: {alert.quantity} · {t('dash.alert.threshold')}: {alert.threshold}
+                        </Text>
+                      ) : (
+                        <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
+                          {alert.partyName}
+                          {alert.amount != null ? ` · ${formatCurrency(alert.amount)}` : ''}
+                        </Text>
+                      )}
+                      {expanded ? (
+                        <Text
+                          variant="labelMedium"
+                          style={{ color: colors.primary, marginTop: spacing.sm }}
+                          onPress={() =>
+                            openRelatedRecord(navigation as never, {
+                              relatedType: alert.relatedType,
+                              relatedId: alert.relatedId,
+                            })
+                          }>
+                          {t('dash.alert.openRecord')}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
           </View>
         </CustomCard>
       </View>
@@ -488,72 +513,89 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
           title={t('dash.recentTransactions')}
           subtitle={t('dash.recentTransactionsSubtitle')}
           headerRight={
-            <Text variant="labelMedium" style={{ color: colors.primary }}>
-              {t('common.viewAll')}
-            </Text>
+            <TouchableOpacity onPress={openTransactions} hitSlop={8}>
+              <Text variant="labelMedium" style={{ color: colors.primary }}>
+                {t('common.viewAll')}
+              </Text>
+            </TouchableOpacity>
           }>
           <View style={styles.cardBody}>
-            {MOCK_TRANSACTIONS.map((transaction, index) => (
-              <View
-                key={transaction.id}
-                style={[
-                  styles.listItem,
-                  index < MOCK_TRANSACTIONS.length - 1 && {
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: colors.border,
-                  },
-                ]}>
-                <View
+            {transactions.length === 0 ? (
+              <EmptyState
+                icon="swap-horizontal"
+                title={t('dash.noTransactions')}
+                message={t('dash.noTransactionsMsg')}
+              />
+            ) : (
+              transactions.slice(0, RECENT_TRANSACTION_LIMIT).map((transaction, index) => (
+                <TouchableOpacity
+                  key={transaction.id}
+                  activeOpacity={0.8}
+                  onPress={() =>
+                    openRelatedRecord(navigation as never, {
+                      relatedType: transaction.type,
+                      relatedId: transaction.sourceId,
+                    })
+                  }
                   style={[
-                    styles.listIcon,
-                    { backgroundColor: colors.primary + '15' },
+                    styles.listItem,
+                    index < Math.min(transactions.length, RECENT_TRANSACTION_LIMIT) - 1 && {
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: colors.border,
+                    },
                   ]}>
-                  <Icon
-                    source={transactionIcons[transaction.type]}
-                    size={20}
-                    color={colors.primary}
-                  />
-                </View>
-                <View style={styles.listContent}>
-                  <View style={styles.listHeader}>
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: colors.text, fontWeight: '600', flex: 1 }}
-                      numberOfLines={1}>
-                      {transaction.ref}
-                    </Text>
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: colors.text, fontWeight: '700', flexShrink: 0 }}
-                      numberOfLines={1}>
-                      {formatCurrency(transaction.amount)}
-                    </Text>
+                  <View
+                    style={[
+                      styles.listIcon,
+                      { backgroundColor: colors.primary + '15' },
+                    ]}>
+                    <Icon
+                      source={transactionIcons[transaction.type]}
+                      size={20}
+                      color={colors.primary}
+                    />
                   </View>
-                  <View style={styles.listMeta}>
-                    <Text
-                      variant="bodySmall"
-                      style={[styles.listMetaText, { color: colors.textSecondary }]}
-                      numberOfLines={1}>
-                      {t(transaction.type === 'Sale' ? 'dash.type.sale' : 'dash.type.purchase')} · {transaction.party}
-                    </Text>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusColor(transaction.status) + '18' },
-                      ]}>
+                  <View style={styles.listContent}>
+                    <View style={styles.listHeader}>
                       <Text
-                        variant="labelSmall"
-                        style={{ color: getStatusColor(transaction.status) }}>
-                        {t(transaction.status === 'Completed' ? 'dash.status.completed' : 'dash.status.pending')}
+                        variant="bodyMedium"
+                        style={{ color: colors.text, fontWeight: '600', flex: 1 }}
+                        numberOfLines={1}>
+                        {transaction.ref}
+                      </Text>
+                      <Text
+                        variant="bodyMedium"
+                        style={{ color: colors.text, fontWeight: '700', flexShrink: 0 }}
+                        numberOfLines={1}>
+                        {formatCurrency(transaction.amount)}
                       </Text>
                     </View>
+                    <View style={styles.listMeta}>
+                      <Text
+                        variant="bodySmall"
+                        style={[styles.listMetaText, { color: colors.textSecondary }]}
+                        numberOfLines={1}>
+                        {t(transaction.type === 'sale' ? 'dash.type.sale' : 'dash.type.purchase')} · {transaction.party}
+                      </Text>
+                      <View
+                        style={[
+                          styles.statusBadge,
+                          { backgroundColor: getStatusColor(transaction.status) + '18' },
+                        ]}>
+                        <Text
+                          variant="labelSmall"
+                          style={{ color: getStatusColor(transaction.status) }}>
+                          {transactionStatusLabel(transaction.status)}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
+                      {formatRelativeTime(transaction.timestamp, language)}
+                    </Text>
                   </View>
-                  <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-                    {formatRelativeTime(transaction.timestamp, language)}
-                  </Text>
-                </View>
-              </View>
-            ))}
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </CustomCard>
       </View>
@@ -651,10 +693,10 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   section: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   heroCard: {
-    marginBottom: 0,
+    marginBottom: spacing.lg,
     borderRadius: borderRadius.xl,
     borderWidth: 1,
     overflow: 'hidden',

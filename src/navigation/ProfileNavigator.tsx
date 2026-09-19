@@ -11,6 +11,7 @@ import { NotificationSettingsScreen } from '@/screens/settings/NotificationSetti
 import { PreferencesSettingsScreen } from '@/screens/settings/PreferencesSettingsScreen';
 import { AboutSupportScreen } from '@/screens/settings/AboutSupportScreen';
 import { NotificationsScreen } from '@/screens/notifications/NotificationsScreen';
+import { NotificationDetailsScreen } from '@/screens/notifications/NotificationDetailsScreen';
 import { CustomerListScreen } from '@/screens/customers/CustomerListScreen';
 import { CustomerDetailsScreen } from '@/screens/customers/CustomerDetailsScreen';
 import { CustomerFormScreen } from '@/screens/customers/CustomerFormScreen';
@@ -60,6 +61,11 @@ export const ProfileNavigator: React.FC = () => {
         name="Notifications"
         component={NotificationsScreen}
         options={{ title: t('screen.notifications') }}
+      />
+      <Stack.Screen
+        name="NotificationDetails"
+        component={NotificationDetailsScreen}
+        options={{ title: t('screen.notificationDetails') }}
       />
       <Stack.Screen name="CustomerList" component={CustomerListScreen} options={{ title: t('screen.customers') }} />
       <Stack.Screen name="CustomerDetails" component={CustomerDetailsScreen} options={{ title: t('screen.customerDetails') }} />

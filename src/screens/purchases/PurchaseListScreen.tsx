@@ -41,17 +41,19 @@ export const PurchaseListScreen: React.FC<Props> = ({ navigation }) => {
           contentContainerStyle={styles.list}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.card, { backgroundColor: colors.surface }]}
+            <TouchableOpacity
+              activeOpacity={0.82}
+              style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
               onPress={() => navigation.navigate('PurchaseDetails', { purchaseId: item.id })}>
               <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '600' }}>{item.purchaseNumber}</Text>
               <Text variant="bodySmall" style={{ color: colors.textSecondary }}>{item.supplierName} • {formatDate(item.createdAt, language)}</Text>
-              <Text variant="titleMedium" style={{ color: colors.secondary, marginTop: spacing.sm, fontWeight: '700' }}>{formatCurrency(item.totalAmount)}</Text>
+              <Text variant="titleMedium" style={{ color: colors.primary, marginTop: spacing.sm, fontWeight: '700' }}>{formatCurrency(item.totalAmount)}</Text>
             </TouchableOpacity>
           )}
           ListEmptyComponent={<EmptyState icon="truck-outline" title={t('purchase.empty')} message={t('purchase.emptyMsg')} />}
         />
       )}
-      <FAB icon="plus" style={[styles.fab, { backgroundColor: colors.secondary }]} onPress={() => navigation.navigate('CreatePurchase')} />
+      <FAB icon="plus" style={[styles.fab, { backgroundColor: colors.primary }]} color={colors.onPrimary} onPress={() => navigation.navigate('CreatePurchase')} />
     </View>
   );
 };
@@ -59,6 +61,6 @@ export const PurchaseListScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: spacing.md, paddingBottom: 80 },
-  card: { padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, elevation: 1 },
+  card: { padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, borderWidth: 1, elevation: 1 },
   fab: { position: 'absolute', end: spacing.md, bottom: spacing.md },
 });

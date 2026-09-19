@@ -10,6 +10,8 @@ interface FilterChipsProps {
   selected: string | null;
   onSelect: (value: string | null) => void;
   showAll?: boolean;
+  allLabel?: string;
+  labelFor?: (option: string) => string;
 }
 
 export const FilterChips: React.FC<FilterChipsProps> = ({
@@ -17,6 +19,8 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
   selected,
   onSelect,
   showAll = true,
+  allLabel,
+  labelFor,
 }) => {
   const { colors } = useAppTheme();
   const { t, catalogLabel } = useLocalization();
@@ -34,18 +38,18 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
           style={styles.chip}
           selectedColor={colors.primary}
           showSelectedOverlay>
-          {t('common.all')}
+          {allLabel ?? t('common.all')}
         </Chip>
       )}
       {options.map(option => (
         <Chip
           key={option}
           selected={selected === option}
-          onPress={() => onSelect(option)}
+          onPress={() => onSelect(selected === option ? null : option)}
           style={styles.chip}
           selectedColor={colors.primary}
           showSelectedOverlay>
-          {catalogLabel(option)}
+          {labelFor ? labelFor(option) : catalogLabel(option)}
         </Chip>
       ))}
     </ScrollView>
