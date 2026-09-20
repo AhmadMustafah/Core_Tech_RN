@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { Snackbar } from 'react-native-paper';
+import { Portal, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import {
+  CustomButton,
+  CustomInput,
+  FormScrollView,
+  FormIntro,
+  formScreenStyles,
+} from '@/components/common';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { updateProfile } from '@/redux/slices/authSlice';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { validateEmail, validatePhone, validateName, validateCompany } from '@/utils/validators';
+import { validateEmail, validatePhone, validateName, validateCompany, withRequiredCheck } from '@/utils/validators';
 import type { ProfileStackParamList } from '@/types/navigation';
-import { spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'EditProfile'>;
 
@@ -37,13 +41,28 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <FormScrollView
-      centerContent
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={styles.scroll}>
+    <>
+      <FormScrollView
+        centerContent
+        style={[formScreenStyles.screen, { backgroundColor: colors.background }]}
+        contentContainerStyle={formScreenStyles.content}>
+        <FormIntro
+          icon="account-edit-outline"
+          title={t('form.editProfileTitle')}
+          description={t('form.editProfileHint')}
+        />
         {(['name', 'email', 'phone', 'company'] as const).map(field => (
           <Controller key={field} control={control} name={field}
-            rules={{ validate: field === 'name' ? (v: string) => validateName(v, t('auth.fullName')) : field === 'email' ? validateEmail : field === 'phone' ? validatePhone : validateCompany }}
+            rules={{
+              validate:
+                field === 'name'
+                  ? withRequiredCheck((v: string) => validateName(v, t('auth.fullName')), 'validation.nameRequired')
+                  : field === 'email'
+                    ? withRequiredCheck(validateEmail, 'validation.emailRequired')
+                    : field === 'phone'
+                      ? withRequiredCheck(validatePhone, 'validation.phoneRequired')
+                      : withRequiredCheck(validateCompany, 'validation.companyRequired'),
+            }}
             render={({ field: { onChange, value } }) => (
               <CustomInput
                 label={t(field === 'name' ? 'auth.fullName' : field === 'email' ? 'auth.email' : field === 'phone' ? 'auth.phone' : 'auth.company')}
@@ -61,14 +80,12 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
           onPress={handleSubmit(onSubmit)}
           loading={loading}
           fullWidth
-          style={styles.submit}
+          style={formScreenStyles.submit}
         />
-      <Snackbar visible={success} onDismiss={() => setSuccess(false)}>{t('profile.updated')}</Snackbar>
-    </FormScrollView>
+      </FormScrollView>
+      <Portal>
+        <Snackbar visible={success} onDismiss={() => setSuccess(false)}>{t('profile.updated')}</Snackbar>
+      </Portal>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  submit: { marginTop: spacing.sm },
-});

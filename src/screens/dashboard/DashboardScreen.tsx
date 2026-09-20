@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,7 @@ import {
   RefreshControl,
   useWindowDimensions,
   TouchableOpacity,
+  Pressable,
   type DimensionValue,
 } from 'react-native';
 import { Text, Icon } from 'react-native-paper';
@@ -44,6 +45,7 @@ import type {
 } from '@/types/navigation';
 import type { TranslationKey } from '@/localization';
 import { borderRadius, layout, shadows, spacing, typography } from '@/theme';
+import { ActivityDetailsModal, ActivityListItem } from './activityUi';
 
 type Props = CompositeScreenProps<
   NativeStackScreenProps<DashboardStackParamList, 'DashboardHome'>,
@@ -63,24 +65,20 @@ const transactionIcons: Record<WorkspaceTransaction['type'], string> = {
   purchase: 'truck-delivery',
 };
 
-const activityIcons: Record<Activity['type'], string> = {
-  sale: 'cart-check',
-  purchase: 'truck-delivery',
-  product: 'package-variant',
-  customer: 'account-plus',
-};
-
-const activityTypeKeys: Record<Activity['type'], TranslationKey> = {
-  sale: 'activity.type.sale',
-  purchase: 'activity.type.purchase',
-  product: 'activity.type.product',
-  customer: 'activity.type.customer',
-};
-
 const sortActivitiesByLatest = (items: Activity[]) =>
   [...items].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
   );
+
+const transactionStatusLabel = (
+  status: WorkspaceTransaction['status'],
+  t: (key: TranslationKey) => string,
+) => {
+  if (status === 'recorded') return t('dash.status.recorded');
+  if (status === 'paid') return t('dash.status.completed');
+  if (status === 'partial') return t('dash.status.partial');
+  return t('dash.status.pending');
+};
 
 const getLayoutMetrics = (width: number) => {
   const isCompact = width < 380;
@@ -106,7 +104,7 @@ type KpiStatCardProps = {
   compactValue?: boolean;
 };
 
-const KpiStatCard: React.FC<KpiStatCardProps> = ({
+const KpiStatCard: React.FC<KpiStatCardProps> = memo(({
   title,
   value,
   icon,
@@ -169,7 +167,9 @@ const KpiStatCard: React.FC<KpiStatCardProps> = ({
   }
 
   return <View style={kpiStyles.wrapper}>{content}</View>;
-};
+});
+
+KpiStatCard.displayName = 'KpiStatCard';
 
 const kpiStyles = StyleSheet.create({
   wrapper: {
@@ -229,12 +229,14 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const [transactions, setTransactions] = useState<WorkspaceTransaction[]>([]);
   const [alerts, setAlerts] = useState<WorkspaceAlert[]>([]);
   const [expandedAlertId, setExpandedAlertId] = useState<string | null>(null);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const hasDashboardData = useRef(false);
 
   const { isCompact, isWide, contentPadding, kpiColumns, kpiItemWidth } =
     getLayoutMetrics(width);
 
-  const loadData = useCallback(() => {
-    dispatch(fetchDashboard());
+  const loadData = useCallback((force = false) => {
+    dispatch(fetchDashboard(!force && hasDashboardData.current));
     Promise.all([
       saleService.getAll(),
       purchaseService.getAll(),
@@ -242,6 +244,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     ]).then(([sales, purchases, products]) => {
       setTransactions(buildTransactions(sales, purchases));
       setAlerts(buildAlerts(products, sales));
+      hasDashboardData.current = true;
     });
   }, [dispatch]);
 
@@ -283,28 +286,6 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     if (status === 'paid' || status === 'recorded') return colors.success;
     if (status === 'partial') return colors.info;
     return colors.warning;
-  };
-
-  const transactionStatusLabel = (status: WorkspaceTransaction['status']) => {
-    if (status === 'recorded') return t('dash.status.recorded');
-    if (status === 'paid') return t('dash.status.completed');
-    if (status === 'partial') return t('dash.status.partial');
-    return t('dash.status.pending');
-  };
-
-  const getActivityColor = (type: Activity['type']) => {
-    switch (type) {
-      case 'sale':
-        return colors.success;
-      case 'purchase':
-        return colors.secondary;
-      case 'product':
-        return colors.warning;
-      case 'customer':
-        return colors.info;
-      default:
-        return colors.primary;
-    }
   };
 
   const kpiItems = useMemo(
@@ -349,7 +330,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   if (error && !summary) {
-    return <ErrorState message={error} onRetry={loadData} />;
+    return <ErrorState message={error} onRetry={() => loadData(true)} />;
   }
 
   return (
@@ -367,7 +348,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         },
       ]}
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={loadData} />
+        <RefreshControl refreshing={isLoading} onRefresh={() => loadData(true)} />
       }
       showsVerticalScrollIndicator={false}>
       <ScreenHeader
@@ -375,14 +356,22 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         subtitle={t('dash.subtitle')}
         showAvatar
         userName={user?.name || t('common.user')}
+        imageUri={user?.avatar}
       />
 
-      <View
-        style={[
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('screen.transactions')}
+        onPress={openTransactions}
+        style={({ pressed }) => [
           styles.section,
           styles.heroCard,
           shadows.md,
-          { backgroundColor: colors.primary, borderColor: colors.primaryDark },
+          {
+            backgroundColor: colors.primary,
+            borderColor: colors.primaryDark,
+            opacity: pressed ? 0.92 : 1,
+          },
         ]}>
         <View style={[styles.heroContent, isCompact && styles.heroContentCompact]}>
           <View style={styles.heroText}>
@@ -402,7 +391,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             <Icon source="chart-line" size={28} color="#FFFFFF" />
           </View>
         </View>
-      </View>
+      </Pressable>
 
       <View style={styles.section}>
         <Text
@@ -585,7 +574,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                         <Text
                           variant="labelSmall"
                           style={{ color: getStatusColor(transaction.status) }}>
-                          {transactionStatusLabel(transaction.status)}
+                          {transactionStatusLabel(transaction.status, t)}
                         </Text>
                       </View>
                     </View>
@@ -622,67 +611,31 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
               </View>
             ) : (
               recentActivities.map((activity, index) => (
-                <TouchableOpacity
+                <ActivityListItem
                   key={activity.id}
-                  activeOpacity={0.7}
-                  onPress={openActivityHistory}
-                  style={[
-                    styles.listItem,
-                    index < recentActivities.length - 1 && {
-                      borderBottomWidth: StyleSheet.hairlineWidth,
-                      borderBottomColor: colors.border,
-                    },
-                  ]}>
-                  <View
-                    style={[
-                      styles.listIcon,
-                      styles.activityIcon,
-                      { backgroundColor: getActivityColor(activity.type) + '18' },
-                    ]}>
-                    <Icon
-                      source={activityIcons[activity.type]}
-                      size={18}
-                      color={getActivityColor(activity.type)}
-                    />
-                  </View>
-                  <View style={styles.listContent}>
-                    <View style={styles.activityTitleRow}>
-                      <Text
-                        variant="bodyMedium"
-                        style={{ color: colors.text, fontWeight: '600', flex: 1 }}
-                        numberOfLines={1}>
-                        {t(activityTypeKeys[activity.type])}
-                      </Text>
-                      <View
-                        style={[
-                          styles.typeBadge,
-                          { backgroundColor: getActivityColor(activity.type) + '18' },
-                        ]}>
-                        <Text
-                          variant="labelSmall"
-                          style={{ color: getActivityColor(activity.type) }}>
-                          {t(activityTypeKeys[activity.type])}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text
-                      variant="bodySmall"
-                      style={{ color: colors.textSecondary, marginTop: 2 }}
-                      numberOfLines={2}>
-                      {activity.description}
-                    </Text>
-                    <Text
-                      variant="labelSmall"
-                      style={{ color: colors.textSecondary, marginTop: 4 }}>
-                      {formatRelativeTime(activity.timestamp, language)}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  activity={activity}
+                  onPress={setSelectedActivity}
+                  last={index === recentActivities.length - 1}
+                />
               ))
             )}
           </View>
         </CustomCard>
       </View>
+      <ActivityDetailsModal
+        activity={selectedActivity}
+        visible={!!selectedActivity}
+        onDismiss={() => setSelectedActivity(null)}
+        onOpenRecord={activity => {
+          const opened = openRelatedRecord(navigation as never, {
+            relatedType: activity.entityType === 'auth' ? undefined : activity.entityType,
+            relatedId: activity.entityId,
+          });
+          if (opened) {
+            setSelectedActivity(null);
+          }
+        }}
+      />
     </ScrollView>
   );
 };

@@ -35,6 +35,8 @@ export const login = createAsyncThunk(
       const { user, tokens } = await authService.login(credentials);
       await tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
       await storage.setItem(STORAGE_KEYS.USER, user);
+      const { activityService } = await import('@/services/activityService');
+      void activityService.recordAuth('logged_in', user);
       return user;
     } catch (error) {
       return rejectWithValue(authService.getErrorMessage(error));
@@ -56,7 +58,10 @@ export const register = createAsyncThunk(
   },
 );
 
-export const logout = createAsyncThunk('auth/logout', async () => {
+export const logout = createAsyncThunk('auth/logout', async (_, { getState }) => {
+  const state = getState() as { auth: { user: User | null } };
+  const { activityService } = await import('@/services/activityService');
+  void activityService.recordAuth('logged_out', state.auth.user);
   await authService.logout();
   await tokenStorage.clearTokens();
 });

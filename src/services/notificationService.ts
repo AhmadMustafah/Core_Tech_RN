@@ -1,11 +1,9 @@
 import { API_CONFIG } from '@/constants';
 import { API_ENDPOINTS } from '@/constants/api';
 import type { AppNotification } from '@/types';
+import { mockDelay } from '@/utils/mockDelay';
 import { apiClient } from './api';
 import { mockNotifications } from './mockData';
-
-const delay = (ms = 400): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
 
 let notifications = [...mockNotifications];
 const listeners = new Set<() => void>();
@@ -27,7 +25,7 @@ export const notificationService = {
   },
   async getAll(): Promise<AppNotification[]> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       return [...notifications];
     }
     const response = await apiClient.get(API_ENDPOINTS.NOTIFICATIONS.LIST);
@@ -38,7 +36,7 @@ export const notificationService = {
 
   async getById(id: string): Promise<AppNotification> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       const item = notifications.find(n => n.id === id);
       if (!item) throw new Error('Notification not found');
       return item;
@@ -51,7 +49,7 @@ export const notificationService = {
 
   async markAsRead(id: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay(200);
+      await mockDelay();
       notifications = notifications.map(n =>
         n.id === id ? { ...n, read: true } : n,
       );
@@ -67,7 +65,7 @@ export const notificationService = {
 
   async markAllAsRead(): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay(200);
+      await mockDelay();
       notifications = notifications.map(n => ({ ...n, read: true }));
       notifyListeners();
       return;

@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Text, Snackbar } from 'react-native-paper';
+import { Portal, Snackbar } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, PasswordInput, FormScrollView } from '@/components/common';
+import {
+  CustomButton,
+  PasswordInput,
+  FormScrollView,
+  FormIntro,
+  FormErrorBanner,
+  formScreenStyles,
+} from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import {
   validateSecurePassword,
   validateConfirmPassword,
+  withRequiredCheck,
 } from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
-import { spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ResetPassword'>;
 
@@ -24,10 +30,9 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const { control, handleSubmit, watch, formState: { errors } } = useForm<{
-    password: string;
-    confirmPassword: string;
-  }>();
+  const { control, handleSubmit, watch, formState: { errors } } = useForm({
+    defaultValues: { password: '', confirmPassword: '' },
+  });
 
   const password = watch('password');
 
@@ -46,25 +51,23 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <FormScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}>
-      <View>
-        <Text style={styles.icon}>🔑</Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.xl }}>
-          {t('auth.resetPasswordHint')}
-        </Text>
+    <>
+      <FormScrollView
+        centerContent
+        style={[formScreenStyles.screen, { backgroundColor: colors.background }]}
+        contentContainerStyle={formScreenStyles.content}>
+        <FormIntro
+          icon="lock-reset"
+          title={t('auth.resetPasswordTitle')}
+          description={t('auth.resetPasswordHint')}
+        />
 
-        {error && (
-          <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
-            <Text style={{ color: colors.error }}>{error}</Text>
-          </View>
-        )}
+        <FormErrorBanner message={error} />
 
         <Controller
           control={control}
           name="password"
-          rules={{ validate: validateSecurePassword }}
+          rules={{ validate: withRequiredCheck(validateSecurePassword, 'validation.passwordRequired') }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput
               label={t('auth.newPassword')}
@@ -82,7 +85,7 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         <Controller
           control={control}
           name="confirmPassword"
-          rules={{ validate: v => validateConfirmPassword(password, v) }}
+          rules={{ validate: withRequiredCheck(v => validateConfirmPassword(password, v), 'validation.confirmRequired') }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput
               label={t('auth.confirmPassword')}
@@ -96,19 +99,19 @@ export const ResetPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
           )}
         />
 
-        <CustomButton title={t('auth.resetPassword')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-      </View>
-
-      <Snackbar visible={success} onDismiss={() => setSuccess(false)}>
-        {t('auth.resetSuccess')}
-      </Snackbar>
-    </FormScrollView>
+        <CustomButton
+          title={t('auth.resetPassword')}
+          onPress={handleSubmit(onSubmit)}
+          loading={loading}
+          fullWidth
+          style={formScreenStyles.submit}
+        />
+      </FormScrollView>
+      <Portal>
+        <Snackbar visible={success} onDismiss={() => setSuccess(false)}>
+          {t('auth.resetSuccess')}
+        </Snackbar>
+      </Portal>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
-  icon: { fontSize: 56, textAlign: 'center', marginBottom: spacing.lg },
-  errorBox: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.md },
-});

@@ -7,13 +7,21 @@ import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
-import { CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
+import {
+  CustomButton,
+  CustomInput,
+  PasswordInput,
+  FormScrollView,
+  FormIntro,
+  FormErrorBanner,
+  formScreenStyles,
+} from '@/components/common';
 import { useAppDispatch } from '@/redux/hooks';
 import { login as loginAction } from '@/redux/slices/authSlice';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { validateEmail, validateLoginPassword } from '@/utils/validators';
+import { validateEmail, validateLoginPassword, withRequiredCheck } from '@/utils/validators';
 import { APP_NAME } from '@/constants';
 import type { AuthStackParamList } from '@/types/navigation';
 import type { LoginRequest } from '@/types';
@@ -52,28 +60,21 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <FormScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Text style={styles.logo}>🏢</Text>
-          <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
-            {t('auth.welcomeBack')}
-          </Text>
-          <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: 4 }}>
-            {t('auth.signInTo', { app: APP_NAME })}
-          </Text>
-        </View>
+      centerContent
+      style={[formScreenStyles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={formScreenStyles.content}>
+        <FormIntro
+          icon="office-building-outline"
+          title={t('auth.welcomeBack')}
+          description={t('auth.signInTo', { app: APP_NAME })}
+        />
 
-        {error && (
-          <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
-            <Text style={{ color: colors.error }}>{error}</Text>
-          </View>
-        )}
+        <FormErrorBanner message={error} />
 
         <Controller
           control={control}
           name="email"
-          rules={{ validate: validateEmail }}
+            rules={{ validate: withRequiredCheck(validateEmail, 'validation.emailRequired') }}
           render={({ field: { onChange, onBlur, value } }) => (
             <CustomInput
               label={t('auth.email')}
@@ -93,7 +94,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         <Controller
           control={control}
           name="password"
-          rules={{ validate: validateLoginPassword }}
+            rules={{ validate: withRequiredCheck(validateLoginPassword, 'validation.passwordRequired') }}
           render={({ field: { onChange, onBlur, value } }) => (
             <PasswordInput
               label={t('auth.password')}
@@ -135,25 +136,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    padding: spacing.lg,
-    justifyContent: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: spacing.xl,
-  },
-  logo: {
-    fontSize: 56,
-    marginBottom: spacing.md,
-  },
-  errorBox: {
-    padding: spacing.md,
-    borderRadius: 8,
-    marginBottom: spacing.md,
-  },
   forgotButton: {
     alignSelf: 'flex-end',
     marginBottom: spacing.md,

@@ -1,58 +1,65 @@
-import React, { useCallback, useMemo } from 'react';
-import {
-  FlatList,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { Text, Icon } from 'react-native-paper';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { Text } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useFocusEffect } from '@react-navigation/native';
+import type { NavigationProp } from '@react-navigation/native';
 import {
   CustomCard,
   EmptyState,
   ErrorState,
+  FilterChips,
   LoadingState,
+  SearchBar,
 } from '@/components/common';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { fetchDashboard } from '@/redux/slices/dashboardSlice';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { formatRelativeTime } from '@/utils/formatters';
-import type { Activity } from '@/types';
-import type { DashboardStackParamList } from '@/types/navigation';
-import type { TranslationKey } from '@/localization';
-import { borderRadius, spacing } from '@/theme';
+import { openRelatedRecord } from '@/utils/relatedNavigation';
+import type { Activity, ActivityType } from '@/types';
+import type { DashboardStackParamList, MainTabParamList } from '@/types/navigation';
+import { spacing } from '@/theme';
+import {
+  ACTIVITY_TYPE_KEYS,
+  ActivityDetailsModal,
+  ActivityListItem,
+} from './activityUi';
 
 type Props = NativeStackScreenProps<DashboardStackParamList, 'Activity'>;
 
-const activityTypeKeys: Record<Activity['type'], TranslationKey> = {
-  sale: 'activity.type.sale',
-  purchase: 'activity.type.purchase',
-  product: 'activity.type.product',
-  customer: 'activity.type.customer',
-};
+const TYPE_FILTERS: ActivityType[] = [
+  'sale',
+  'purchase',
+  'product',
+  'customer',
+  'supplier',
+  'payment',
+  'auth',
+];
 
-const activityIcons: Record<Activity['type'], string> = {
-  sale: 'cart-check',
-  purchase: 'truck-delivery',
-  product: 'package-variant',
-  customer: 'account-plus',
-};
-
-export const ActivityScreen: React.FC<Props> = () => {
+export const ActivityScreen: React.FC<Props> = ({ navigation }) => {
   const dispatch = useAppDispatch();
+  const tabNavigation = navigation.getParent<NavigationProp<MainTabParamList>>();
   const { colors } = useAppTheme();
-  const { t, language } = useLocalization();
+  const { t } = useLocalization();
   const { activities, isLoading, error } = useAppSelector(state => state.dashboard);
+  const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Activity | null>(null);
+  const hasLoaded = useRef(false);
 
-  const loadData = useCallback(() => {
-    dispatch(fetchDashboard());
-  }, [dispatch]);
+  const loadData = useCallback(
+    (force = false) => {
+      dispatch(fetchDashboard(!force && hasLoaded.current));
+    },
+    [dispatch],
+  );
 
   useFocusEffect(
     useCallback(() => {
       loadData();
+      hasLoaded.current = true;
     }, [loadData]),
   );
 
@@ -64,96 +71,104 @@ export const ActivityScreen: React.FC<Props> = () => {
     [activities],
   );
 
-  const getActivityColor = (type: Activity['type']) => {
-    switch (type) {
-      case 'sale':
-        return colors.success;
-      case 'purchase':
-        return colors.secondary;
-      case 'product':
-        return colors.warning;
-      case 'customer':
-        return colors.info;
-      default:
-        return colors.primary;
-    }
-  };
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return sortedActivities.filter(item => {
+      const matchesType = !typeFilter || item.type === typeFilter;
+      const haystack = [
+        item.title,
+        item.description,
+        item.entityName,
+        item.entityReference,
+        item.actor?.name,
+        item.actor?.role,
+        item.status,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return matchesType && (!needle || haystack.includes(needle));
+    });
+  }, [query, sortedActivities, typeFilter]);
 
   if (isLoading && activities.length === 0) {
     return <LoadingState message="activity.loading" />;
   }
 
   if (error && activities.length === 0) {
-    return <ErrorState message={error} onRetry={loadData} />;
+    return <ErrorState message={error} onRetry={() => loadData(true)} />;
   }
 
   return (
-    <FlatList
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      data={sortedActivities}
-      keyExtractor={item => item.id}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={loadData} />
-      }
-      ListHeaderComponent={
-        <CustomCard
-          style={styles.summaryCard}
-          title={t('activity.history')}
-          subtitle={t('activity.subtitle')}>
-          <Text variant="bodySmall" style={{ color: colors.textSecondary, paddingHorizontal: spacing.md, paddingBottom: spacing.md }}>
-            {t(sortedActivities.length === 1 ? 'activity.event' : 'activity.events', { count: sortedActivities.length })}
-          </Text>
-        </CustomCard>
-      }
-      ListEmptyComponent={
-        <EmptyState
-          icon="history"
-          title={t('activity.empty')}
-          message={t('activity.emptyMsg')}
-        />
-      }
-      renderItem={({ item, index }) => (
-        <View
-          style={[
-            styles.activityRow,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              marginBottom: index === sortedActivities.length - 1 ? spacing.lg : spacing.sm,
-            },
-          ]}>
-          <View
-            style={[
-              styles.activityIcon,
-              { backgroundColor: getActivityColor(item.type) + '18' },
-            ]}>
-            <Icon
-              source={activityIcons[item.type]}
-              size={20}
-              color={getActivityColor(item.type)}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <FlatList
+        style={styles.list}
+        contentContainerStyle={styles.content}
+        data={filtered}
+        keyExtractor={item => item.id}
+        initialNumToRender={10}
+        windowSize={7}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={() => loadData(true)} />
+        }
+        ListHeaderComponent={
+          <View>
+            <CustomCard
+              style={styles.summaryCard}
+              title={t('activity.history')}
+              subtitle={t('activity.subtitle')}>
+              <Text
+                variant="bodySmall"
+                style={{ color: colors.textSecondary, paddingHorizontal: spacing.md, paddingBottom: spacing.md }}>
+                {t(filtered.length === 1 ? 'activity.event' : 'activity.events', { count: filtered.length })}
+              </Text>
+            </CustomCard>
+            <SearchBar value={query} onChangeText={setQuery} placeholder={t('activity.search')} />
+            <FilterChips
+              options={TYPE_FILTERS}
+              selected={typeFilter}
+              onSelect={setTypeFilter}
+              labelFor={option => t(ACTIVITY_TYPE_KEYS[option as ActivityType])}
             />
           </View>
-          <View style={styles.activityContent}>
-            <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '600' }}>
-              {t(activityTypeKeys[item.type])}
-            </Text>
-            <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-              {item.description}
-            </Text>
-            <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 4 }}>
-              {formatRelativeTime(item.timestamp, language)}
-            </Text>
-          </View>
-        </View>
-      )}
-    />
+        }
+        ListEmptyComponent={
+          <EmptyState
+            icon="history"
+            title={t('activity.empty')}
+            message={t('activity.emptyMsg')}
+          />
+        }
+        renderItem={({ item, index }) => (
+          <ActivityListItem
+            activity={item}
+            onPress={setSelected}
+            last={index === filtered.length - 1}
+          />
+        )}
+      />
+      <ActivityDetailsModal
+        activity={selected}
+        visible={!!selected}
+        onDismiss={() => setSelected(null)}
+        onOpenRecord={activity => {
+          const opened = openRelatedRecord(tabNavigation, {
+            relatedType: activity.entityType === 'auth' ? undefined : activity.entityType,
+            relatedId: activity.entityId,
+          });
+          if (opened) {
+            setSelected(null);
+          }
+        }}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  list: { flex: 1 },
   content: {
     padding: spacing.md,
     paddingBottom: spacing.xxl,
@@ -162,19 +177,4 @@ const styles = StyleSheet.create({
   summaryCard: {
     marginBottom: spacing.md,
   },
-  activityRow: {
-    flexDirection: 'row',
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-  },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: borderRadius.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginEnd: spacing.md,
-  },
-  activityContent: { flex: 1 },
 });

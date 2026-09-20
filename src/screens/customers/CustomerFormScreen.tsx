@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import {
+  CustomButton,
+  CustomInput,
+  FormScrollView,
+  FormIntro,
+  formScreenStyles,
+} from '@/components/common';
 import { customerService } from '@/services/customerService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { validateEmail, validatePhone, validateName, validateOptionalText } from '@/utils/validators';
+import { validateEmail, validatePhone, validateName, validateOptionalText, withRequiredCheck } from '@/utils/validators';
 import type { ProfileStackParamList } from '@/types/navigation';
-import { spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'AddCustomer' | 'EditCustomer'>;
 
 interface CustomerForm { name: string; email: string; phone: string; address: string; company: string; }
+
+const emptyForm: CustomerForm = { name: '', email: '', phone: '', address: '', company: '' };
 
 export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
   const isEdit = route.name === 'EditCustomer';
@@ -20,7 +26,9 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppTheme();
   const { t } = useLocalization();
   const [loading, setLoading] = useState(false);
-  const { control, handleSubmit, setValue, formState: { errors } } = useForm<CustomerForm>();
+  const { control, handleSubmit, setValue, formState: { errors } } = useForm<CustomerForm>({
+    defaultValues: emptyForm,
+  });
 
   React.useEffect(() => {
     if (isEdit && customerId) {
@@ -41,18 +49,23 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const fields = [
-    { name: 'name' as const, label: t('customer.name'), validate: (v: string) => validateName(v), required: true },
-    { name: 'email' as const, label: t('customer.email'), validate: validateEmail, required: true },
-    { name: 'phone' as const, label: t('customer.phone'), validate: validatePhone, required: true },
+    { name: 'name' as const, label: t('customer.name'), validate: withRequiredCheck(v => validateName(v), 'validation.nameRequired'), required: true },
+    { name: 'email' as const, label: t('customer.email'), validate: withRequiredCheck(validateEmail, 'validation.emailRequired'), required: true },
+    { name: 'phone' as const, label: t('customer.phone'), validate: withRequiredCheck(validatePhone, 'validation.phoneRequired'), required: true },
     { name: 'company' as const, label: t('customer.company'), validate: (v: string) => validateOptionalText(v, 'Company', 100), required: false },
-    { name: 'address' as const, label: t('customer.address'), validate: (v: string) => validateOptionalText(v, 'Address', 200), required: false },
+    { name: 'address' as const, label: t('customer.address'), validate: (v: string) => validateOptionalText(v, 'Address', 200), required: false, multiline: true },
   ];
 
   return (
     <FormScrollView
       centerContent
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={styles.scroll}>
+      style={[formScreenStyles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={formScreenStyles.content}>
+        <FormIntro
+          icon={isEdit ? 'account-edit-outline' : 'account-plus-outline'}
+          title={t(isEdit ? 'form.editCustomerTitle' : 'form.addCustomerTitle')}
+          description={t(isEdit ? 'form.editCustomerHint' : 'form.addCustomerHint')}
+        />
         {fields.map(f => (
           <Controller key={f.name} control={control} name={f.name} rules={{ validate: f.validate }}
             render={({ field: { onChange, value } }) => (
@@ -61,6 +74,8 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={value}
                 onChangeText={onChange}
                 required={f.required}
+                multiline={f.multiline}
+                numberOfLines={f.multiline ? 3 : 1}
                 keyboardType={f.name === 'email' ? 'email-address' : f.name === 'phone' ? 'phone-pad' : 'default'}
                 autoCapitalize={f.name === 'email' ? 'none' : 'sentences'}
                 error={errors[f.name]?.message as string}
@@ -72,13 +87,8 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
           onPress={handleSubmit(onSubmit)}
           loading={loading}
           fullWidth
-          style={styles.submit}
+          style={formScreenStyles.submit}
         />
     </FormScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  submit: { marginTop: spacing.sm },
-});

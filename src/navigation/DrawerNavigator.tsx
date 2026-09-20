@@ -8,7 +8,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, Avatar, TouchableRipple } from 'react-native-paper';
+import { Text, TouchableRipple } from 'react-native-paper';
 import {
   CommonActions,
   type NavigationProp,
@@ -20,7 +20,7 @@ import { DrawerContext, type ActiveRoute } from './drawerContext';
 import type { MainTabParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useAppSelector } from '@/redux/hooks';
-import { getInitials } from '@/utils/formatters';
+import { InitialsAvatar } from '@/components/common';
 import { borderRadius, getDrawerShadow, layout, spacing, typography } from '@/theme';
 import { useLocalization } from '@/hooks/useLocalization';
 import type { TranslationKey } from '@/localization';
@@ -224,11 +224,12 @@ const DrawerPanel = memo<{
             { backgroundColor: colors.drawerHeader },
             pressed && styles.drawerHeaderPressed,
           ]}>
-          <Avatar.Text
+          <InitialsAvatar
             size={52}
-            label={getInitials(user?.name || t('common.user'))}
-            style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}
-            color="#FFFFFF"
+            name={user?.name || t('common.user')}
+            imageUri={user?.avatar}
+            backgroundColor="rgba(255,255,255,0.22)"
+            labelColor="#FFFFFF"
           />
           <Text style={styles.drawerName}>{user?.name || t('common.user')}</Text>
           <Text style={styles.drawerCompany}>{user?.company || t('common.appName')}</Text>

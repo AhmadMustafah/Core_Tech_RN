@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Alert,
-} from 'react-native';
-import { Text } from 'react-native-paper';
+import { Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
+import {
+  CustomButton,
+  CustomInput,
+  PasswordInput,
+  FormScrollView,
+  FormIntro,
+  FormErrorBanner,
+  formScreenStyles,
+} from '@/components/common';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import {
@@ -17,6 +20,7 @@ import {
   validateName,
   validateCompany,
   validateConfirmPassword,
+  withRequiredCheck,
 } from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
 import type { RegisterRequest } from '@/types';
@@ -67,7 +71,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       name: 'name' as const,
       label: t('auth.fullName'),
       icon: 'account-outline',
-      validate: (v: string) => validateName(v ?? '', t('auth.fullName')),
+      validate: withRequiredCheck((v: string) => validateName(v ?? '', t('auth.fullName')), 'validation.nameRequired'),
       keyboard: 'default' as const,
       secure: false,
       showStrength: false,
@@ -76,7 +80,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       name: 'email' as const,
       label: t('auth.email'),
       icon: 'email-outline',
-      validate: (v: string) => validateEmail(v ?? ''),
+      validate: withRequiredCheck((v: string) => validateEmail(v ?? ''), 'validation.emailRequired'),
       keyboard: 'email-address' as const,
       secure: false,
       showStrength: false,
@@ -85,7 +89,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       name: 'phone' as const,
       label: t('auth.phone'),
       icon: 'phone-outline',
-      validate: (v: string) => validatePhone(v ?? ''),
+      validate: withRequiredCheck((v: string) => validatePhone(v ?? ''), 'validation.phoneRequired'),
       keyboard: 'phone-pad' as const,
       secure: false,
       showStrength: false,
@@ -94,7 +98,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       name: 'company' as const,
       label: t('auth.company'),
       icon: 'office-building-outline',
-      validate: (v: string) => validateCompany(v ?? ''),
+      validate: withRequiredCheck((v: string) => validateCompany(v ?? ''), 'validation.companyRequired'),
       keyboard: 'default' as const,
       secure: false,
       showStrength: false,
@@ -103,7 +107,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       name: 'password' as const,
       label: t('auth.password'),
       icon: 'lock-outline',
-      validate: (v: string) => validateSecurePassword(v ?? ''),
+      validate: withRequiredCheck((v: string) => validateSecurePassword(v ?? ''), 'validation.passwordRequired'),
       keyboard: 'default' as const,
       secure: true,
       showStrength: true,
@@ -112,7 +116,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       name: 'confirmPassword' as const,
       label: t('auth.confirmPassword'),
       icon: 'lock-check-outline',
-      validate: (v: string) => validateConfirmPassword(password, v ?? ''),
+      validate: withRequiredCheck((v: string) => validateConfirmPassword(password, v ?? ''), 'validation.confirmRequired'),
       keyboard: 'default' as const,
       secure: true,
       showStrength: false,
@@ -121,20 +125,15 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <FormScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.scroll}>
-        <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
-          {t('auth.createAccount')}
-        </Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>
-          {t('auth.registerSubtitle')}
-        </Text>
+      style={[formScreenStyles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={formScreenStyles.content}>
+        <FormIntro
+          icon="account-plus-outline"
+          title={t('auth.createAccount')}
+          description={t('auth.registerSubtitle')}
+        />
 
-        {formError && (
-          <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
-            <Text style={{ color: colors.error }}>{formError}</Text>
-          </View>
-        )}
+        <FormErrorBanner message={formError} />
 
         {fields.map(field => (
           <Controller
@@ -181,7 +180,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           title={t('auth.createAccount')}
           onPress={handleSubmit(onSubmit, onInvalid)}
           fullWidth
-          style={{ marginTop: spacing.md }}
+          style={formScreenStyles.submit}
         />
 
         <CustomButton
@@ -193,13 +192,3 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     </FormScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  errorBox: {
-    padding: spacing.md,
-    borderRadius: 8,
-    marginBottom: spacing.md,
-  },
-});

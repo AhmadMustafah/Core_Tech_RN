@@ -1,9 +1,17 @@
-import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Text, Menu, Button, Divider } from 'react-native-paper';
+import React, { useState, useCallback, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Text, Divider } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import {
+  CustomButton,
+  CustomInput,
+  FormScrollView,
+  FormIntro,
+  FormErrorBanner,
+  formScreenStyles,
+  AppSelect,
+} from '@/components/common';
 import { saleService } from '@/services/saleService';
 import { productService } from '@/services/productService';
 import { customerService } from '@/services/customerService';
@@ -14,7 +22,7 @@ import type { Customer, Product, SaleItem } from '@/types';
 import type { SalesStackParamList } from '@/types/navigation';
 import { PAYMENT_STATUS_KEYS } from '@/localization';
 import { spacing } from '@/theme';
-import { validatePositiveNumber } from '@/utils/validators';
+import { validatePositiveNumber, requiredField, withRequiredCheck } from '@/utils/validators';
 
 type Props = NativeStackScreenProps<SalesStackParamList, 'CreateSale'>;
 
@@ -23,21 +31,27 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
   const { t } = useLocalization();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [listsLoading, setListsLoading] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [items, setItems] = useState<SaleItem[]>([]);
   const [discount, setDiscount] = useState('0');
   const [tax, setTax] = useState('0');
   const [paymentStatus, setPaymentStatus] = useState<'paid' | 'pending' | 'partial'>('pending');
   const [loading, setLoading] = useState(false);
-  const [customerMenu, setCustomerMenu] = useState(false);
-  const [productMenu, setProductMenu] = useState(false);
   const [discountError, setDiscountError] = useState<string | undefined>();
   const [taxError, setTaxError] = useState<string | undefined>();
+  const [customerError, setCustomerError] = useState<string | undefined>();
+  const [paymentError, setPaymentError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
 
   useFocusEffect(useCallback(() => {
-    customerService.getAll().then(setCustomers);
-    productService.getAll().then(setProducts);
+    setListsLoading(true);
+    Promise.all([customerService.getAll(), productService.getAll()])
+      .then(([nextCustomers, nextProducts]) => {
+        setCustomers(nextCustomers);
+        setProducts(nextProducts);
+      })
+      .finally(() => setListsLoading(false));
   }, []));
 
   const addProduct = (product: Product) => {
@@ -48,7 +62,6 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
       }
       return [...prev, { productId: product.id, productName: product.name, quantity: 1, price: product.price, discount: 0, tax: 0, total: product.price }];
     });
-    setProductMenu(false);
   };
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.price, 0);
@@ -56,14 +69,34 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
   const totalTax = parseFloat(tax) || 0;
   const totalAmount = subtotal - totalDiscount + totalTax;
 
+  const customerOptions = useMemo(
+    () => customers.map(c => ({ value: c.id, label: c.name, subtitle: c.company || c.email })),
+    [customers],
+  );
+  const productOptions = useMemo(
+    () => products.map(p => ({ value: p.id, label: p.name, subtitle: `${p.sku} · ${formatCurrency(p.price)}` })),
+    [products],
+  );
+
   const handleSubmit = async () => {
     setFormError(null);
-    const discountValidation = validatePositiveNumber(discount, 'Discount', true);
-    const taxValidation = validatePositiveNumber(tax, 'Tax', true);
+    const customerCheck = requiredField(selectedCustomer?.id, 'sale.pleaseCustomer');
+    const paymentCheck = requiredField(paymentStatus, 'validation.required');
+    const discountValidation = withRequiredCheck(
+      value => validatePositiveNumber(value, 'Discount', true),
+      'validation.numberRequired',
+    )(discount);
+    const taxValidation = withRequiredCheck(
+      value => validatePositiveNumber(value, 'Tax', true),
+      'validation.numberRequired',
+    )(tax);
+
+    setCustomerError(customerCheck === true ? undefined : customerCheck);
+    setPaymentError(paymentCheck === true ? undefined : paymentCheck);
     setDiscountError(discountValidation === true ? undefined : discountValidation);
     setTaxError(taxValidation === true ? undefined : taxValidation);
 
-    if (!selectedCustomer) {
+    if (customerCheck !== true) {
       setFormError(t('sale.pleaseCustomer'));
       return;
     }
@@ -71,7 +104,7 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
       setFormError(t('sale.pleaseProduct'));
       return;
     }
-    if (discountValidation !== true || taxValidation !== true) return;
+    if (paymentCheck !== true || discountValidation !== true || taxValidation !== true) return;
     if (totalAmount < 0) {
       setFormError(t('sale.totalNegative'));
       return;
@@ -96,72 +129,106 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      {formError && (
-        <Text style={{ color: colors.error, marginBottom: spacing.sm }}>{formError}</Text>
-      )}
+    <FormScrollView style={[formScreenStyles.screen, { backgroundColor: colors.background }]} contentContainerStyle={formScreenStyles.content}>
+      <FormIntro
+        icon="point-of-sale"
+        title={t('form.createSaleTitle')}
+        description={t('form.createSaleHint')}
+      />
+      <FormErrorBanner message={formError} />
 
-      <Menu visible={customerMenu} onDismiss={() => setCustomerMenu(false)} anchor={
-        <Button mode="outlined" onPress={() => setCustomerMenu(true)} icon="account" style={styles.menuBtn}>
-          {selectedCustomer ? selectedCustomer.name : t('sale.selectCustomer')}
-        </Button>
-      }>
-        {customers.map(c => (
-          <Menu.Item key={c.id} onPress={() => { setSelectedCustomer(c); setCustomerMenu(false); }} title={c.name} />
-        ))}
-      </Menu>
+      <AppSelect
+        label={t('sale.customer')}
+        placeholder={t('sale.selectCustomer')}
+        icon="account-outline"
+        variant="sheet"
+        searchable
+        required
+        loading={listsLoading}
+        value={selectedCustomer?.id ?? null}
+        error={customerError}
+        options={customerOptions}
+        onChange={(id) => {
+          setSelectedCustomer(customers.find(c => c.id === id) || null);
+          setCustomerError(undefined);
+        }}
+      />
 
-      <Menu visible={productMenu} onDismiss={() => setProductMenu(false)} anchor={
-        <Button mode="outlined" onPress={() => setProductMenu(true)} icon="plus" style={styles.menuBtn}>{t('sale.addProduct')}</Button>
-      }>
-        {products.map(p => (
-          <Menu.Item key={p.id} onPress={() => addProduct(p)} title={`${p.name} - ${formatCurrency(p.price)}`} />
-        ))}
-      </Menu>
+      <AppSelect
+        label={t('sale.addProduct')}
+        placeholder={t('sale.addProduct')}
+        icon="package-variant"
+        variant="sheet"
+        searchable
+        resetOnSelect
+        loading={listsLoading}
+        value={null}
+        options={productOptions}
+        onChange={(_, option) => {
+          const product = products.find(p => p.id === option?.value);
+          if (product) addProduct(product);
+        }}
+      />
 
       {items.map((item, index) => (
-        <View key={index} style={[styles.itemCard, { backgroundColor: colors.surface }]}>
+        <View key={`${item.productId}-${index}`} style={[styles.itemCard, { backgroundColor: colors.surface }]}>
           <Text style={{ color: colors.text, fontWeight: '600' }}>{item.productName}</Text>
           <Text style={{ color: colors.textSecondary }}>{t('common.qty')}: {item.quantity} • {formatCurrency(item.price)}</Text>
         </View>
       ))}
 
-      <CustomInput label={t('common.discount')} value={discount} onChangeText={setDiscount} keyboardType="numeric" required error={discountError} />
-      <CustomInput label={t('common.tax')} value={tax} onChangeText={setTax} keyboardType="numeric" required error={taxError} />
+      <CustomInput
+        label={t('common.discount')}
+        value={discount}
+        onChangeText={text => {
+          setDiscount(text);
+          setDiscountError(undefined);
+        }}
+        keyboardType="numeric"
+        required
+        error={discountError}
+      />
+      <CustomInput
+        label={t('common.tax')}
+        value={tax}
+        onChangeText={text => {
+          setTax(text);
+          setTaxError(undefined);
+        }}
+        keyboardType="numeric"
+        required
+        error={taxError}
+      />
 
-      <View style={styles.paymentRow}>
-        {(['paid', 'pending', 'partial'] as const).map(status => (
-          <TouchableOpacity
-            key={status}
-            onPress={() => setPaymentStatus(status)}
-            style={[
-              styles.paymentChip,
-              {
-                backgroundColor:
-                  paymentStatus === status ? colors.primary : colors.surfaceVariant,
-              },
-            ]}>
-            <Text style={{ color: paymentStatus === status ? '#FFF' : colors.text }}>
-              {t(PAYMENT_STATUS_KEYS[status])}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <AppSelect
+        label={t('sale.filterPaymentStatus')}
+        placeholder={t('sale.filterPaymentStatus')}
+        icon="cash"
+        variant="compact"
+        required
+        value={paymentStatus}
+        error={paymentError}
+        options={(['paid', 'pending', 'partial'] as const).map(status => ({
+          value: status,
+          label: t(PAYMENT_STATUS_KEYS[status]),
+        }))}
+        onChange={value => {
+          if (value === 'paid' || value === 'pending' || value === 'partial') {
+            setPaymentStatus(value);
+            setPaymentError(undefined);
+          }
+        }}
+      />
 
       <Divider style={{ marginVertical: spacing.md }} />
       <View style={styles.totalRow}><Text variant="titleMedium" style={{ color: colors.text }}>{t('common.total')}</Text><Text variant="titleLarge" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(totalAmount)}</Text></View>
 
-      <CustomButton title={t('sale.create')} onPress={handleSubmit} loading={loading} fullWidth disabled={!selectedCustomer || items.length === 0} style={{ marginTop: spacing.lg }} />
+      <CustomButton title={t('sale.create')} onPress={handleSubmit} loading={loading} fullWidth style={{ marginTop: spacing.lg }} />
     </FormScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: spacing.md, paddingBottom: spacing.xxl },
-  menuBtn: { marginBottom: spacing.md },
   itemCard: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.sm },
-  paymentRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
-  paymentChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: 20 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 });

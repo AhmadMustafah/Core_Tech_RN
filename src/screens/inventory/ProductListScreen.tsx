@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -36,24 +36,43 @@ export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string | null>(null);
 
-  const loadProducts = useCallback(async () => {
-    setLoading(true);
+  const hasLoaded = useRef(false);
+
+  const loadProducts = useCallback(async (force = false) => {
+    if (!hasLoaded.current || force) {
+      if (!hasLoaded.current) {
+        setLoading(true);
+      }
+    }
     setError(null);
     try {
-      const data = await productService.getAll({ search, category: category || undefined });
+      const data = await productService.getAll();
       setProducts(data);
+      hasLoaded.current = true;
     } catch (err) {
         setError(err instanceof Error ? err.message : 'product.failedLoad');
     } finally {
       setLoading(false);
     }
-  }, [search, category]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       loadProducts();
     }, [loadProducts]),
   );
+
+  const visibleProducts = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return products.filter(product => {
+      const matchesCategory = !category || product.category === category;
+      const matchesSearch =
+        !needle ||
+        product.name.toLowerCase().includes(needle) ||
+        product.sku.toLowerCase().includes(needle);
+      return matchesCategory && matchesSearch;
+    });
+  }, [category, products, search]);
 
   const renderItem = ({ item }: { item: Product }) => {
     const lowStock = isLowStock(item.stockQuantity, item.lowStockThreshold);
@@ -104,11 +123,11 @@ export const ProductListScreen: React.FC<Props> = ({ navigation }) => {
         <ErrorState message={error} onRetry={loadProducts} />
       ) : (
         <FlatList
-          data={products}
+          data={visibleProducts}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={loadProducts} />}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={() => loadProducts(true)} />}
           ListEmptyComponent={
             <EmptyState
               icon="package-variant"

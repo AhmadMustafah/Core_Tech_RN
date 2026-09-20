@@ -19,7 +19,7 @@ const initialState: DashboardState = {
 
 export const fetchDashboard = createAsyncThunk(
   'dashboard/fetch',
-  async (_, { rejectWithValue }) => {
+  async (_silent: boolean | undefined, { rejectWithValue }) => {
     try {
       const [summary, activities] = await Promise.all([
         dashboardService.getSummary(),
@@ -38,8 +38,10 @@ const dashboardSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
-      .addCase(fetchDashboard.pending, state => {
-        state.isLoading = true;
+      .addCase(fetchDashboard.pending, (state, action) => {
+        if (!action.meta.arg) {
+          state.isLoading = true;
+        }
         state.error = null;
       })
       .addCase(fetchDashboard.fulfilled, (state, action) => {

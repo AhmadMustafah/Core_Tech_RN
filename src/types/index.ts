@@ -120,12 +120,49 @@ export interface DashboardSummary {
   purchasesAmount: number;
 }
 
+export type NotificationRelatedType = 'product' | 'sale' | 'purchase' | 'customer' | 'supplier';
+
+export type ActivityType =
+  | 'sale'
+  | 'purchase'
+  | 'product'
+  | 'customer'
+  | 'supplier'
+  | 'payment'
+  | 'auth';
+
+export type ActivityAction =
+  | 'created'
+  | 'updated'
+  | 'deleted'
+  | 'status_changed'
+  | 'stock_changed'
+  | 'logged_in'
+  | 'logged_out'
+  | 'alert';
+
+export interface ActivityActor {
+  id?: string;
+  name?: string;
+  role?: string;
+  avatar?: string;
+}
+
 export interface Activity {
   id: string;
-  type: 'sale' | 'purchase' | 'product' | 'customer';
+  type: ActivityType;
   title: string;
   description: string;
   timestamp: string;
+  action?: ActivityAction;
+  actor?: ActivityActor;
+  entityType?: NotificationRelatedType | 'auth';
+  entityId?: string;
+  entityName?: string;
+  entityReference?: string;
+  status?: string;
+  previousValue?: string;
+  newValue?: string;
 }
 
 export type NotificationType =
@@ -137,8 +174,6 @@ export type NotificationType =
   | 'supplier_activity'
   | 'payment_update'
   | 'system_alert';
-
-export type NotificationRelatedType = 'product' | 'sale' | 'purchase' | 'customer' | 'supplier';
 
 export interface NotificationDetails {
   productName?: string;

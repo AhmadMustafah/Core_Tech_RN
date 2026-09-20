@@ -1,26 +1,25 @@
 import { API_CONFIG } from '@/constants';
 import { API_ENDPOINTS } from '@/constants/api';
-import type { Activity, DashboardSummary } from '@/types';
+import type { DashboardSummary } from '@/types';
 import { apiClient } from './api';
-import { mockActivities, mockDashboardSummary } from './mockData';
-
-const delay = (ms = 400): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+import { mockDashboardSummary } from './mockData';
+import { activityService } from './activityService';
+import { mockDelay } from '@/utils/mockDelay';
 
 export const dashboardService = {
   async getSummary(): Promise<DashboardSummary> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       return mockDashboardSummary;
     }
     const response = await apiClient.get(API_ENDPOINTS.DASHBOARD.SUMMARY);
     return response.data.data;
   },
 
-  async getActivities(): Promise<Activity[]> {
+  async getActivities() {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
-      return mockActivities;
+      await mockDelay();
+      return activityService.getAll();
     }
     const response = await apiClient.get(API_ENDPOINTS.DASHBOARD.ACTIVITIES);
     return response.data.data;

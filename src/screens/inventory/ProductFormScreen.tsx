@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { Menu, Button } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import { CustomButton, CustomInput, FormScrollView, FormIntro, formScreenStyles, AppSelect } from '@/components/common';
 import { productService } from '@/services/productService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
@@ -13,10 +11,11 @@ import {
   validatePositiveNumber,
   validateInteger,
   validateDescription,
+  requiredField,
+  withRequiredCheck,
 } from '@/utils/validators';
 import { PRODUCT_CATEGORIES, PRODUCT_UNITS } from '@/constants';
 import type { InventoryStackParamList } from '@/types/navigation';
-import { spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<InventoryStackParamList, 'AddProduct' | 'EditProduct'>;
 
@@ -38,18 +37,13 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useAppTheme();
   const { t, catalogLabel } = useLocalization();
   const [loading, setLoading] = useState(false);
-  const [categoryMenu, setCategoryMenu] = useState(false);
-  const [unitMenu, setUnitMenu] = useState(false);
 
-  const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProductForm>({
+  const { control, handleSubmit, setValue, formState: { errors } } = useForm<ProductForm>({
     defaultValues: {
       name: '', sku: '', category: PRODUCT_CATEGORIES[0], unit: PRODUCT_UNITS[0],
       price: '', costPrice: '', stockQuantity: '0', lowStockThreshold: '10', description: '',
     },
   });
-
-  const category = watch('category');
-  const unit = watch('unit');
 
   React.useEffect(() => {
     if (isEdit && productId) {
@@ -97,15 +91,23 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <FormScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={styles.scroll}>
+      style={[formScreenStyles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={formScreenStyles.content}>
+        <FormIntro
+          icon={isEdit ? 'package-variant-closed' : 'package-variant'}
+          title={t(isEdit ? 'form.editProductTitle' : 'form.addProductTitle')}
+          description={t(isEdit ? 'form.editProductHint' : 'form.addProductHint')}
+        />
         {(['name', 'sku'] as const).map(field => (
           <Controller
             key={field}
             control={control}
             name={field}
             rules={{
-              validate: field === 'name' ? validateProductName : validateSku,
+              validate:
+                field === 'name'
+                  ? withRequiredCheck(validateProductName, 'validation.productNameRequired')
+                  : withRequiredCheck(validateSku, 'validation.skuRequired'),
             }}
             render={({ field: { onChange, value } }) => (
               <CustomInput
@@ -120,30 +122,47 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           />
         ))}
 
-        <Menu visible={categoryMenu} onDismiss={() => setCategoryMenu(false)} anchor={
-          <Button mode="outlined" onPress={() => setCategoryMenu(true)} style={styles.menuButton}>
-            {t('product.categoryLabel', { value: catalogLabel(category) })}
-          </Button>
-        }>
-          {PRODUCT_CATEGORIES.map(c => (
-            <Menu.Item key={c} onPress={() => { setValue('category', c); setCategoryMenu(false); }} title={catalogLabel(c)} />
-          ))}
-        </Menu>
-
-        <Menu visible={unitMenu} onDismiss={() => setUnitMenu(false)} anchor={
-          <Button mode="outlined" onPress={() => setUnitMenu(true)} style={styles.menuButton}>
-            {t('product.unitLabel', { value: catalogLabel(unit) })}
-          </Button>
-        }>
-          {PRODUCT_UNITS.map(u => (
-            <Menu.Item key={u} onPress={() => { setValue('unit', u); setUnitMenu(false); }} title={catalogLabel(u)} />
-          ))}
-        </Menu>
+        <Controller
+          control={control}
+          name="category"
+          rules={{ validate: v => requiredField(v, 'validation.required') }}
+          render={({ field: { onChange, value } }) => (
+            <AppSelect
+              label={t('product.category')}
+              placeholder={t('product.category')}
+              icon="shape-outline"
+              variant="compact"
+              required
+              value={value}
+              error={errors.category?.message as string}
+              options={PRODUCT_CATEGORIES.map(c => ({ value: c, label: catalogLabel(c) }))}
+              onChange={next => next && onChange(next)}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="unit"
+          rules={{ validate: v => requiredField(v, 'validation.required') }}
+          render={({ field: { onChange, value } }) => (
+            <AppSelect
+              label={t('product.unit')}
+              placeholder={t('product.unit')}
+              icon="ruler"
+              variant="compact"
+              required
+              value={value}
+              error={errors.unit?.message as string}
+              options={PRODUCT_UNITS.map(u => ({ value: u, label: catalogLabel(u) }))}
+              onChange={next => next && onChange(next)}
+            />
+          )}
+        />
 
         <Controller
           control={control}
           name="price"
-          rules={{ validate: v => validatePositiveNumber(v, 'Selling price') }}
+          rules={{ validate: withRequiredCheck(v => validatePositiveNumber(v, 'Selling price'), 'validation.numberRequired') }}
           render={({ field: { onChange, value } }) => (
             <CustomInput label={t('product.sellingPrice')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.price?.message as string} />
           )}
@@ -151,7 +170,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
         <Controller
           control={control}
           name="costPrice"
-          rules={{ validate: v => validatePositiveNumber(v, 'Cost price') }}
+          rules={{ validate: withRequiredCheck(v => validatePositiveNumber(v, 'Cost price'), 'validation.numberRequired') }}
           render={({ field: { onChange, value } }) => (
             <CustomInput label={t('product.costPrice')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.costPrice?.message as string} />
           )}
@@ -159,7 +178,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
         <Controller
           control={control}
           name="stockQuantity"
-          rules={{ validate: v => validateInteger(v, 'Stock quantity', 0) }}
+          rules={{ validate: withRequiredCheck(v => validateInteger(v, 'Stock quantity', 0), 'validation.integerRequired') }}
           render={({ field: { onChange, value } }) => (
             <CustomInput label={t('product.stockQty')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.stockQuantity?.message as string} />
           )}
@@ -167,7 +186,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
         <Controller
           control={control}
           name="lowStockThreshold"
-          rules={{ validate: v => validateInteger(v, 'Low stock threshold', 0) }}
+          rules={{ validate: withRequiredCheck(v => validateInteger(v, 'Low stock threshold', 0), 'validation.integerRequired') }}
           render={({ field: { onChange, value } }) => (
             <CustomInput label={t('product.lowStockThreshold')} value={value} onChangeText={onChange} keyboardType="numeric" required error={errors.lowStockThreshold?.message as string} />
           )}
@@ -187,13 +206,8 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           onPress={handleSubmit(onSubmit)}
           loading={loading}
           fullWidth
-          style={{ marginTop: spacing.md }}
+          style={formScreenStyles.submit}
         />
     </FormScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
-  menuButton: { marginBottom: spacing.md },
-});

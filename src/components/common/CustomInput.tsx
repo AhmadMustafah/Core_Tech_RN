@@ -37,6 +37,8 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
       secureTextEntry,
       required,
       label,
+      value,
+      multiline,
       ...props
     },
     forwardedRef,
@@ -65,7 +67,9 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
 
     const handleSubmitEditing: TextInputProps['onSubmitEditing'] = event => {
       onSubmitEditing?.(event);
-      focusProps.onSubmitEditing();
+      if (!multiline) {
+        focusProps.onSubmitEditing();
+      }
     };
 
     const keepLatinDirection = Boolean(secureTextEntry) || isLatinKeyboard(keyboardType);
@@ -99,11 +103,21 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
           placeholderTextColor={colors.textSecondary}
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
+          multiline={multiline}
           {...props}
+          value={value ?? ''}
           style={[styles.input, { backgroundColor: colors.surface }, style]}
-          contentStyle={[styles.content, { textAlign, writingDirection }]}
-          returnKeyType={(returnKeyType ?? focusProps.returnKeyType) as ReturnKeyTypeOptions | undefined}
-          blurOnSubmit={blurOnSubmit ?? focusProps.blurOnSubmit}
+          contentStyle={[
+            styles.content,
+            { textAlign, writingDirection },
+            multiline && styles.multiline,
+          ]}
+          returnKeyType={
+            (returnKeyType ?? (multiline ? undefined : focusProps.returnKeyType)) as
+              | ReturnKeyTypeOptions
+              | undefined
+          }
+          blurOnSubmit={blurOnSubmit ?? (multiline ? false : focusProps.blurOnSubmit)}
           onFocus={handleFocus}
           onSubmitEditing={handleSubmitEditing}
         />
@@ -134,6 +148,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.sm,
+  },
+  multiline: {
+    minHeight: 88,
+    paddingTop: spacing.sm,
+    textAlignVertical: 'top',
   },
   helper: {
     marginTop: spacing.xs,

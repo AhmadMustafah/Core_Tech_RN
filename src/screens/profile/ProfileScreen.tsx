@@ -1,12 +1,12 @@
 import React from 'react';
 import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
-import { Text, Avatar, Divider, Icon } from 'react-native-paper';
+import { Text, Divider, Icon } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
+import { InitialsAvatar } from '@/components/common';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { getInitials } from '@/utils/formatters';
 import type { ProfileStackParamList } from '@/types/navigation';
 import type { TranslationKey } from '@/localization';
 import { spacing, borderRadius } from '@/theme';
@@ -43,7 +43,7 @@ export const ProfileScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <View style={[styles.profileCard, { backgroundColor: colors.surface }]}>
-        <Avatar.Text size={80} label={getInitials(user?.name || 'U')} style={{ backgroundColor: colors.primary }} />
+        <InitialsAvatar size={80} name={user?.name} imageUri={user?.avatar} />
         <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700', marginTop: spacing.md }}>{user?.name}</Text>
         <Text variant="bodyMedium" style={{ color: colors.textSecondary }}>{user?.email}</Text>
         <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 4 }}>{user?.company}</Text>

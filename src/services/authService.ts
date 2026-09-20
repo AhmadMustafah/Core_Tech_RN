@@ -10,8 +10,7 @@ import {
   mockUser,
 } from './mockData';
 
-const delay = (ms = 500): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+import { mockDelay } from '@/utils/mockDelay';
 
 const mockTokens: AuthTokens = {
   accessToken: 'mock_access_token_' + Date.now(),
@@ -21,7 +20,7 @@ const mockTokens: AuthTokens = {
 export const authService = {
   async login(credentials: LoginRequest): Promise<{ user: User; tokens: AuthTokens }> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       if (
         credentials.email !== MOCK_CREDENTIALS.email ||
         credentials.password !== MOCK_CREDENTIALS.password
@@ -36,7 +35,7 @@ export const authService = {
 
   async register(data: RegisterRequest): Promise<{ user: User; tokens: AuthTokens }> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       const user: User = {
         id: Date.now().toString(),
         name: data.name,
@@ -54,7 +53,7 @@ export const authService = {
 
   async forgotPassword(email: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       if (!email) throw new Error('Email is required');
       return;
     }
@@ -63,7 +62,7 @@ export const authService = {
 
   async verifyOtp(email: string, otp: string): Promise<boolean> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       if (otp !== MOCK_OTP) throw new Error('Invalid OTP. Use 123456 for demo.');
       return true;
     }
@@ -73,7 +72,7 @@ export const authService = {
 
   async resetPassword(email: string, otp: string, password: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       if (otp !== MOCK_OTP) throw new Error('Invalid OTP');
       return;
     }
@@ -82,7 +81,7 @@ export const authService = {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       if (currentPassword !== MOCK_CREDENTIALS.password) {
         throw new Error('Current password is incorrect');
       }
@@ -96,7 +95,7 @@ export const authService = {
 
   async getProfile(): Promise<User> {
     if (API_CONFIG.USE_MOCK) {
-      await delay(300);
+      await mockDelay();
       const stored = await storage.getItem<User>(STORAGE_KEYS.USER);
       return stored || mockUser;
     }
@@ -106,7 +105,7 @@ export const authService = {
 
   async updateProfile(data: Partial<User>): Promise<User> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       const stored = await storage.getItem<User>(STORAGE_KEYS.USER);
       const updated = { ...(stored || mockUser), ...data };
       await storage.setItem(STORAGE_KEYS.USER, updated);

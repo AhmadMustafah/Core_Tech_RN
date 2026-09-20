@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import {
+  CustomButton,
+  CustomInput,
+  FormScrollView,
+  FormIntro,
+  FormErrorBanner,
+  formScreenStyles,
+} from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { validateOtp } from '@/utils/validators';
+import { validateOtp, withRequiredCheck } from '@/utils/validators';
 import type { AuthStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 
@@ -20,7 +25,9 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<{ otp: string }>();
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: { otp: '' },
+  });
 
   const onSubmit = async ({ otp }: { otp: string }) => {
     setLoading(true);
@@ -37,24 +44,21 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
 
   return (
     <FormScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}>
-      <View>
-        <Text style={styles.icon}>📱</Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.xl }}>
-          {t('auth.verifyOtpHint', { email })}
-        </Text>
+      centerContent
+      style={[formScreenStyles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={formScreenStyles.content}>
+        <FormIntro
+          icon="shield-key-outline"
+          title={t('auth.verifyOtpTitle')}
+          description={t('auth.verifyOtpHint', { email })}
+        />
 
-        {error && (
-          <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
-            <Text style={{ color: colors.error }}>{error}</Text>
-          </View>
-        )}
+        <FormErrorBanner message={error} />
 
         <Controller
           control={control}
           name="otp"
-          rules={{ validate: validateOtp }}
+          rules={{ validate: withRequiredCheck(validateOtp, 'validation.otpRequired') }}
           render={({ field: { onChange, onBlur, value } }) => (
             <CustomInput
               label={t('auth.otpCode')}
@@ -70,16 +74,14 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
           )}
         />
 
-        <CustomButton title={t('auth.verifyOtp')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
+        <CustomButton
+          title={t('auth.verifyOtp')}
+          onPress={handleSubmit(onSubmit)}
+          loading={loading}
+          fullWidth
+          style={formScreenStyles.submit}
+        />
         <CustomButton title={t('auth.back')} variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
-      </View>
     </FormScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
-  icon: { fontSize: 56, textAlign: 'center', marginBottom: spacing.lg },
-  errorBox: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.md },
-});

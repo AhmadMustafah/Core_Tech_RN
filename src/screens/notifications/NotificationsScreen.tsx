@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
-import { EmptyState, LoadingState } from '@/components/common';
+import { EmptyState, LoadingState, InitialsAvatar } from '@/components/common';
 import { notificationService } from '@/services/notificationService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
@@ -13,7 +13,7 @@ import type { AppNotification } from '@/types';
 import type { DashboardStackParamList, ProfileStackParamList } from '@/types/navigation';
 import { NOTIFICATION_BODY_KEYS, NOTIFICATION_TITLE_KEYS } from '@/localization';
 import { borderRadius, spacing } from '@/theme';
-import { getNotificationColor, getNotificationIcon } from './notifyMeta';
+import { getNotificationColor, getNotificationIcon, getNotificationPersonName } from './notifyMeta';
 
 type NotifyNav = NavigationProp<DashboardStackParamList & ProfileStackParamList>;
 
@@ -78,6 +78,7 @@ export const NotificationsScreen: React.FC = () => {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
         renderItem={({ item }) => {
           const accent = getNotificationColor(item.type, colors);
+          const personName = getNotificationPersonName(item);
           return (
             <TouchableOpacity
               activeOpacity={0.82}
@@ -89,9 +90,13 @@ export const NotificationsScreen: React.FC = () => {
                 },
               ]}
               onPress={() => openDetails(item)}>
-              <View style={[styles.iconWrap, { backgroundColor: accent + '18' }]}>
-                <Icon name={getNotificationIcon(item.type)} size={22} color={accent} />
-              </View>
+              {personName ? (
+                <InitialsAvatar size={44} name={personName} backgroundColor={accent} />
+              ) : (
+                <View style={[styles.iconWrap, { backgroundColor: accent + '18' }]}>
+                  <Icon name={getNotificationIcon(item.type)} size={22} color={accent} />
+                </View>
+              )}
               <View style={styles.textContent}>
                 <View style={styles.titleRow}>
                   <Text

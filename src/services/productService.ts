@@ -2,18 +2,17 @@ import { API_CONFIG } from '@/constants';
 import { API_ENDPOINTS } from '@/constants/api';
 import type { Product } from '@/types';
 import { generateId } from '@/utils/formatters';
+import { mockDelay, MOCK_WRITE_DELAY } from '@/utils/mockDelay';
 import { apiClient } from './api';
 import { mockProducts } from './mockData';
-
-const delay = (ms = 400): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+import { activityService } from './activityService';
 
 let products = [...mockProducts];
 
 export const productService = {
   async getAll(params?: { search?: string; category?: string }): Promise<Product[]> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       let result = [...products];
       if (params?.search) {
         const q = params.search.toLowerCase();
@@ -34,7 +33,7 @@ export const productService = {
 
   async getById(id: string): Promise<Product> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       const product = products.find(p => p.id === id);
       if (!product) throw new Error('Product not found');
       return product;
@@ -45,7 +44,7 @@ export const productService = {
 
   async create(data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay(MOCK_WRITE_DELAY);
       const product: Product = {
         ...data,
         id: generateId(),
@@ -53,6 +52,7 @@ export const productService = {
         updatedAt: new Date().toISOString(),
       };
       products.push(product);
+      void activityService.recordProductSaved(product, true);
       return product;
     }
     const response = await apiClient.post(API_ENDPOINTS.PRODUCTS.CREATE, data);
@@ -61,14 +61,16 @@ export const productService = {
 
   async update(id: string, data: Partial<Product>): Promise<Product> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay(MOCK_WRITE_DELAY);
       const index = products.findIndex(p => p.id === id);
       if (index === -1) throw new Error('Product not found');
+      const previousStock = products[index].stockQuantity;
       products[index] = {
         ...products[index],
         ...data,
         updatedAt: new Date().toISOString(),
       };
+      void activityService.recordProductSaved(products[index], false, previousStock);
       return products[index];
     }
     const response = await apiClient.put(API_ENDPOINTS.PRODUCTS.UPDATE(id), data);
@@ -77,7 +79,7 @@ export const productService = {
 
   async delete(id: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay(MOCK_WRITE_DELAY);
       products = products.filter(p => p.id !== id);
       return;
     }

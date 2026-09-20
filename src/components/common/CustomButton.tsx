@@ -73,7 +73,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   content: {
-    paddingVertical: spacing.xs,
+    minHeight: 48,
+    paddingVertical: spacing.sm,
   },
   label: {
     fontSize: 16,

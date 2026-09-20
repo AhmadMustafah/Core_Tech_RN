@@ -1,16 +1,17 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Text, Avatar } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { getInitials } from '@/utils/formatters';
 import { spacing } from '@/theme';
 import { useLocalization } from '@/hooks/useLocalization';
+import { InitialsAvatar } from './InitialsAvatar';
 
 interface ScreenHeaderProps {
   title: string;
   subtitle?: string;
   showAvatar?: boolean;
   userName?: string;
+  imageUri?: string | null;
 }
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
@@ -18,6 +19,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   subtitle,
   showAvatar,
   userName,
+  imageUri,
 }) => {
   const { colors } = useAppTheme();
   const { directionStyle } = useLocalization();
@@ -34,13 +36,9 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
           </Text>
         )}
       </View>
-      {showAvatar && userName && (
-        <Avatar.Text
-          size={44}
-          label={getInitials(userName)}
-          style={{ backgroundColor: colors.primary }}
-        />
-      )}
+      {showAvatar ? (
+        <InitialsAvatar name={userName} imageUri={imageUri} size={44} />
+      ) : null}
     </View>
   );
 };
@@ -54,5 +52,6 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
+    paddingEnd: spacing.md,
   },
 });

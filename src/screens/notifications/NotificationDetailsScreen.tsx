@@ -4,7 +4,7 @@ import { Text } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { NavigationProp } from '@react-navigation/native';
-import { CustomButton, CustomCard, DetailRow, ErrorState, LoadingState } from '@/components/common';
+import { CustomButton, CustomCard, DetailRow, ErrorState, LoadingState, InitialsAvatar } from '@/components/common';
 import { notificationService } from '@/services/notificationService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
@@ -18,7 +18,7 @@ import type {
 } from '@/types/navigation';
 import { NOTIFICATION_BODY_KEYS, NOTIFICATION_TITLE_KEYS, PAYMENT_STATUS_KEYS } from '@/localization';
 import { borderRadius, spacing } from '@/theme';
-import { getNotificationColor, getNotificationIcon } from './notifyMeta';
+import { getNotificationColor, getNotificationIcon, getNotificationPersonName } from './notifyMeta';
 
 type Props = NativeStackScreenProps<
   DashboardStackParamList & ProfileStackParamList,
@@ -51,6 +51,7 @@ export const NotificationDetailsScreen: React.FC<Props> = ({ navigation, route }
 
   const accent = getNotificationColor(item.type, colors);
   const details = item.details;
+  const personName = getNotificationPersonName(item);
   const statusLabel =
     details?.status && details.status in PAYMENT_STATUS_KEYS
       ? t(PAYMENT_STATUS_KEYS[details.status as keyof typeof PAYMENT_STATUS_KEYS])
@@ -62,9 +63,13 @@ export const NotificationDetailsScreen: React.FC<Props> = ({ navigation, route }
       contentContainerStyle={styles.content}>
       <CustomCard>
         <View style={styles.hero}>
-          <View style={[styles.iconWrap, { backgroundColor: accent + '18' }]}>
-            <Icon name={getNotificationIcon(item.type)} size={28} color={accent} />
-          </View>
+          {personName ? (
+            <InitialsAvatar size={52} name={personName} backgroundColor={accent} />
+          ) : (
+            <View style={[styles.iconWrap, { backgroundColor: accent + '18' }]}>
+              <Icon name={getNotificationIcon(item.type)} size={28} color={accent} />
+            </View>
+          )}
           <View style={styles.heroText}>
             <Text variant="titleLarge" style={{ color: colors.text, fontWeight: '700' }}>
               {t(NOTIFICATION_TITLE_KEYS[item.type])}

@@ -74,11 +74,29 @@ export const isLowStock = (quantity: number, threshold: number): boolean => {
   return quantity <= threshold;
 };
 
-export const getInitials = (name: string): string => {
-  return name
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+export const getInitials = (name?: string | null): string => {
+  const words = (name ?? '')
+    .trim()
+    .split(/[\s\u00A0\u200C\u200D]+/)
+    .map(word => word.replace(/^[\s'"`._-]+|[\s'"`._-]+$/g, ''))
+    .filter(Boolean);
+
+  if (words.length === 0) {
+    return '';
+  }
+
+  const firstLetter = (word: string): string => {
+    for (const char of word) {
+      if (/\p{L}/u.test(char) || /\p{N}/u.test(char)) {
+        return /[a-z]/i.test(char) ? char.toUpperCase() : char;
+      }
+    }
+    return word.charAt(0);
+  };
+
+  if (words.length === 1) {
+    return firstLetter(words[0]);
+  }
+
+  return `${firstLetter(words[0])}${firstLetter(words[1])}`;
 };

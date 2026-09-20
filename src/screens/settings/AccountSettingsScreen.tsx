@@ -1,11 +1,11 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Avatar, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppSelector } from '@/redux/hooks';
+import { InitialsAvatar } from '@/components/common';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { getInitials } from '@/utils/formatters';
 import { APP_NAME } from '@/constants';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { borderRadius, spacing, typography } from '@/theme';
@@ -24,10 +24,10 @@ export const AccountSettingsScreen: React.FC<Props> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}>
       <View style={[styles.companyCard, { backgroundColor: colors.surface }]}>
-        <Avatar.Text
+        <InitialsAvatar
           size={64}
-          label={getInitials(companyName || APP_NAME)}
-          style={{ backgroundColor: colors.primary }}
+          name={user?.name || companyName || APP_NAME}
+          imageUri={user?.avatar}
         />
         <View style={styles.companyText}>
           <Text variant="labelSmall" style={{ color: colors.primary, fontWeight: '700' }}>

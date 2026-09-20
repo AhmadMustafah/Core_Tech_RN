@@ -1,5 +1,4 @@
 import type {
-  Activity,
   AppNotification,
   Customer,
   DashboardSummary,
@@ -229,30 +228,6 @@ export const mockDashboardSummary: DashboardSummary = {
   salesAmount: 25300,
   purchasesAmount: 90000,
 };
-
-export const mockActivities: Activity[] = [
-  {
-    id: '1',
-    type: 'sale',
-    title: 'Sale Completed',
-    description: 'Invoice INV-2024-001 for Ali Hassan',
-    timestamp: now,
-  },
-  {
-    id: '2',
-    type: 'purchase',
-    title: 'Purchase Received',
-    description: 'PO-2024-001 from Tech Distributors',
-    timestamp: now,
-  },
-  {
-    id: '3',
-    type: 'product',
-    title: 'Low Stock Alert',
-    description: 'A4 Paper Ream is running low (8 units)',
-    timestamp: now,
-  },
-];
 
 export const mockNotifications: AppNotification[] = [
   {

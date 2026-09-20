@@ -1,13 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
-import { Text, FAB, Avatar } from 'react-native-paper';
+import { Text, FAB } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { EmptyState, LoadingState, ErrorState } from '@/components/common';
+import { EmptyState, LoadingState, ErrorState, InitialsAvatar } from '@/components/common';
 import { supplierService } from '@/services/supplierService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { formatCurrency, getInitials } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 import type { Supplier } from '@/types';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { spacing, borderRadius } from '@/theme';
@@ -44,7 +44,7 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
               activeOpacity={0.82}
               style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
               onPress={() => navigation.navigate('SupplierDetails', { supplierId: item.id })}>
-              <Avatar.Text size={48} label={getInitials(item.name)} style={{ backgroundColor: colors.secondary }} />
+              <InitialsAvatar size={48} name={item.name} backgroundColor={colors.secondary} />
               <View style={styles.info}>
                 <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '700' }}>{item.name}</Text>
                 <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>

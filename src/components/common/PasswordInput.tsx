@@ -4,7 +4,7 @@ import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 
 interface PasswordInputProps {
   label: string;
-  value: string;
+  value?: string;
   onChangeText: (text: string) => void;
   onBlur?: () => void;
   onFocus?: () => void;
@@ -37,7 +37,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
     <>
       <CustomInput
         label={label}
-        value={value}
+        value={value ?? ''}
         onChangeText={onChangeText}
         onBlur={onBlur}
         onFocus={onFocus}
@@ -60,7 +60,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
         error={error}
         required={required}
       />
-      {showStrength ? <PasswordStrengthIndicator password={value} /> : null}
+      {showStrength ? <PasswordStrengthIndicator password={value ?? ''} /> : null}
     </>
   );
 };

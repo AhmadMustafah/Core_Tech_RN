@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Avatar, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomCard, DetailRow, ErrorState, LoadingState } from '@/components/common';
+import { CustomButton, CustomCard, DetailRow, ErrorState, LoadingState, InitialsAvatar } from '@/components/common';
 import { supplierService } from '@/services/supplierService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import { formatCurrency, formatDate, getInitials } from '@/utils/formatters';
+import { formatCurrency, formatDate } from '@/utils/formatters';
 import type { Supplier } from '@/types';
 import type { ProfileStackParamList } from '@/types/navigation';
 import { borderRadius, spacing } from '@/theme';
@@ -33,11 +33,7 @@ export const SupplierDetailsScreen: React.FC<Props> = ({ navigation, route }) =>
       contentContainerStyle={styles.content}>
       <CustomCard>
         <View style={styles.hero}>
-          <Avatar.Text
-            size={56}
-            label={getInitials(supplier.name)}
-            style={{ backgroundColor: colors.secondary }}
-          />
+          <InitialsAvatar size={56} name={supplier.name} backgroundColor={colors.secondary} />
           <View style={styles.heroText}>
             <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
               {supplier.name}

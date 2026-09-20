@@ -2,11 +2,10 @@ import { API_CONFIG } from '@/constants';
 import { API_ENDPOINTS } from '@/constants/api';
 import type { Purchase, PurchaseItem } from '@/types';
 import { generateId } from '@/utils/formatters';
+import { mockDelay, MOCK_WRITE_DELAY } from '@/utils/mockDelay';
 import { apiClient } from './api';
 import { mockPurchases } from './mockData';
-
-const delay = (ms = 400): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+import { activityService } from './activityService';
 
 let purchases = [...mockPurchases];
 
@@ -21,7 +20,7 @@ export interface CreatePurchasePayload {
 export const purchaseService = {
   async getAll(): Promise<Purchase[]> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       return [...purchases];
     }
     const response = await apiClient.get(API_ENDPOINTS.PURCHASES.LIST);
@@ -30,8 +29,8 @@ export const purchaseService = {
 
   async getById(id: string): Promise<Purchase> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
-      const purchase = purchases.find(p => p.id === id);
+      await mockDelay();
+      const purchase = purchases.find(s => s.id === id);
       if (!purchase) throw new Error('Purchase not found');
       return purchase;
     }
@@ -41,7 +40,7 @@ export const purchaseService = {
 
   async create(data: CreatePurchasePayload): Promise<Purchase> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay(MOCK_WRITE_DELAY);
       const purchase: Purchase = {
         ...data,
         id: generateId(),
@@ -49,6 +48,7 @@ export const purchaseService = {
         createdAt: new Date().toISOString(),
       };
       purchases.unshift(purchase);
+      void activityService.recordPurchaseCreated(purchase);
       return purchase;
     }
     const response = await apiClient.post(API_ENDPOINTS.PURCHASES.CREATE, data);
@@ -57,8 +57,8 @@ export const purchaseService = {
 
   async delete(id: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
-      purchases = purchases.filter(p => p.id !== id);
+      await mockDelay(MOCK_WRITE_DELAY);
+      purchases = purchases.filter(s => s.id !== id);
       return;
     }
     await apiClient.delete(API_ENDPOINTS.PURCHASES.DELETE(id));

@@ -21,9 +21,20 @@ export const getNotificationIcon = (type: AppNotification['type']) => {
   }
 };
 
+export const getNotificationPersonName = (item: AppNotification): string | undefined => {
+  const party = item.details?.partyName?.trim();
+  if (party) {
+    return party;
+  }
+  if (item.type === 'customer_activity' || item.type === 'supplier_activity') {
+    return item.details?.productName?.trim();
+  }
+  return undefined;
+};
+
 export const getNotificationColor = (
   type: AppNotification['type'],
-  colors: AppColors,
+  colors: AppColors
 ) => {
   switch (type) {
     case 'sale_completed':

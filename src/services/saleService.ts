@@ -2,11 +2,10 @@ import { API_CONFIG } from '@/constants';
 import { API_ENDPOINTS } from '@/constants/api';
 import type { Sale, SaleItem } from '@/types';
 import { generateId } from '@/utils/formatters';
+import { mockDelay, MOCK_WRITE_DELAY } from '@/utils/mockDelay';
 import { apiClient } from './api';
 import { mockSales } from './mockData';
-
-const delay = (ms = 400): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+import { activityService } from './activityService';
 
 let sales = [...mockSales];
 
@@ -25,7 +24,7 @@ export interface CreateSalePayload {
 export const saleService = {
   async getAll(): Promise<Sale[]> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       return [...sales];
     }
     const response = await apiClient.get(API_ENDPOINTS.SALES.LIST);
@@ -34,7 +33,7 @@ export const saleService = {
 
   async getById(id: string): Promise<Sale> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay();
       const sale = sales.find(s => s.id === id);
       if (!sale) throw new Error('Sale not found');
       return sale;
@@ -45,7 +44,7 @@ export const saleService = {
 
   async create(data: CreateSalePayload): Promise<Sale> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay(MOCK_WRITE_DELAY);
       const sale: Sale = {
         ...data,
         id: generateId(),
@@ -53,6 +52,7 @@ export const saleService = {
         createdAt: new Date().toISOString(),
       };
       sales.unshift(sale);
+      void activityService.recordSaleCreated(sale);
       return sale;
     }
     const response = await apiClient.post(API_ENDPOINTS.SALES.CREATE, data);
@@ -61,7 +61,7 @@ export const saleService = {
 
   async delete(id: string): Promise<void> {
     if (API_CONFIG.USE_MOCK) {
-      await delay();
+      await mockDelay(MOCK_WRITE_DELAY);
       sales = sales.filter(s => s.id !== id);
       return;
     }

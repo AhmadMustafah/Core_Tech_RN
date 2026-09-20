@@ -30,7 +30,7 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
     if (!isInitialized) return;
 
     const navigate = async () => {
-      await new Promise<void>(resolve => setTimeout(resolve, 1500));
+      await new Promise<void>(resolve => setTimeout(resolve, 400));
 
       if (isAuthenticated) {
         navigation.dispatch(

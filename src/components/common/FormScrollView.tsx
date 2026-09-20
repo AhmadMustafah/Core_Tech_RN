@@ -231,13 +231,14 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        keyboardDismissMode="on-drag"
         {...scrollProps}
         ref={scrollRef}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[
           styles.content,
-          centerContent && styles.centeredContent,
+          centerContent && !keyboardOpen && styles.centeredContent,
           contentContainerStyle,
           keyboardOpen && styles.keyboardContent,
         ]}>
