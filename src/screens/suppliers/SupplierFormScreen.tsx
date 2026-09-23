@@ -74,6 +74,7 @@ export const SupplierFormScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={value}
                 onChangeText={onChange}
                 required={f.required}
+                optional={!f.required}
                 multiline={f.multiline}
                 numberOfLines={f.multiline ? 3 : 1}
                 keyboardType={f.name === 'email' ? 'email-address' : f.name === 'phone' ? 'phone-pad' : 'default'}

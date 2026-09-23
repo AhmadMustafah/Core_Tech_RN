@@ -38,13 +38,20 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {error ? <ErrorState message={error} onRetry={load} /> : (
         <FlatList data={suppliers} keyExtractor={i => i.id} contentContainerStyle={styles.list}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={load}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
           renderItem={({ item }) => (
             <TouchableOpacity
               activeOpacity={0.82}
               style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.borderLight }]}
               onPress={() => navigation.navigate('SupplierDetails', { supplierId: item.id })}>
-              <InitialsAvatar size={48} name={item.name} backgroundColor={colors.secondary} />
+              <InitialsAvatar size={48} name={item.name} />
               <View style={styles.info}>
                 <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '700' }}>{item.name}</Text>
                 <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
@@ -62,7 +69,12 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
           ListEmptyComponent={<EmptyState icon="truck-outline" title={t('supplier.empty')} message={t('supplier.emptyMsg')} />}
         />
       )}
-      <FAB icon="plus" style={[styles.fab, { backgroundColor: colors.secondary }]} onPress={() => navigation.navigate('AddSupplier')} />
+      <FAB
+        icon="plus"
+        color={colors.onPrimary}
+        style={[styles.fab, { backgroundColor: colors.primary }]}
+        onPress={() => navigation.navigate('AddSupplier')}
+      />
     </View>
   );
 };

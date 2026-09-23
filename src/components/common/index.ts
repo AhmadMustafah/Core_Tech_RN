@@ -1,5 +1,6 @@
 export { CustomButton } from './CustomButton';
 export { CustomInput } from './CustomInput';
+export { FieldLabel } from './FieldLabel';
 export { PasswordInput } from './PasswordInput';
 export { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 export { CustomCard } from './CustomCard';

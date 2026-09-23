@@ -15,6 +15,7 @@ import { useLocalization } from '@/hooks/useLocalization';
 import { isTranslationKey } from '@/localization';
 import { borderRadius, spacing } from '@/theme';
 import { EmptyState } from './EmptyState';
+import { FieldLabel } from './FieldLabel';
 
 export type AppSelectOption = {
   value: string;
@@ -33,6 +34,7 @@ type AppSelectProps = {
   loading?: boolean;
   clearable?: boolean;
   required?: boolean;
+  optional?: boolean;
   disabled?: boolean;
   icon?: string;
   error?: string;
@@ -53,6 +55,7 @@ export const AppSelect: React.FC<AppSelectProps> = memo(
     loading = false,
     clearable = false,
     required = false,
+    optional = false,
     disabled = false,
     icon,
     error,
@@ -100,14 +103,7 @@ export const AppSelect: React.FC<AppSelectProps> = memo(
 
     return (
       <View style={styles.field}>
-        {label ? (
-          <Text
-            variant="labelLarge"
-            style={[styles.label, { color: colors.textSecondary, textAlign }, directionStyle]}>
-            {label}
-            {required ? <Text style={{ color: colors.error }}> *</Text> : null}
-          </Text>
-        ) : null}
+        <FieldLabel label={label} required={required} optional={optional} />
 
         <Pressable
           disabled={disabled || loading}
@@ -269,10 +265,6 @@ AppSelect.displayName = 'AppSelect';
 const styles = StyleSheet.create({
   field: {
     marginBottom: spacing.md,
-  },
-  label: {
-    marginBottom: spacing.sm,
-    fontWeight: '600',
   },
   trigger: {
     minHeight: 52,

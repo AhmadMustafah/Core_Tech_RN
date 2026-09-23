@@ -10,6 +10,7 @@ interface PasswordInputProps {
   onFocus?: () => void;
   error?: string;
   required?: boolean;
+  optional?: boolean;
   showStrength?: boolean;
   autoComplete?: 'password' | 'password-new' | 'current-password';
   returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
@@ -25,6 +26,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   onFocus,
   error,
   required,
+  optional,
   showStrength = false,
   autoComplete = 'password',
   returnKeyType,
@@ -59,6 +61,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
         }
         error={error}
         required={required}
+        optional={optional}
       />
       {showStrength ? <PasswordStrengthIndicator password={value ?? ''} /> : null}
     </>

@@ -47,9 +47,9 @@ type FormScrollViewProps = ScrollViewProps & {
   centerContent?: boolean;
 };
 
-const FOCUS_GAP = 24;
-const KEYBOARD_CONTENT_PADDING = 120;
-const MEASURE_DELAY = Platform.OS === 'ios' ? 16 : 80;
+const FOCUS_GAP = 20;
+const ACTION_GAP = 88;
+const MEASURE_DELAY = Platform.OS === 'ios' ? 48 : 100;
 
 const measureNodeInWindow = (node: unknown, callback: MeasureInWindowCallback) => {
   const measurable = node as { measureInWindow?: (cb: MeasureInWindowCallback) => void } | null;
@@ -71,8 +71,10 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
   const fieldsRef = useRef<InputRef[]>([]);
   const focusedRef = useRef<InputRef | null>(null);
   const scrollYRef = useRef(0);
+  const keyboardHeightRef = useRef(0);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [revision, setRevision] = useState(0);
-  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const bumpRevision = useCallback(() => {
     setRevision(value => value + 1);
@@ -133,74 +135,78 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
       measureNodeInWindow(scroll, (_sx, sy, _sw, sh) => {
         measureNodeInWindow(input, (_ix, iy, _iw, ih) => {
           const visibleTop = sy + FOCUS_GAP;
-          const visibleBottom = sy + sh - FOCUS_GAP;
+          const visibleBottom = sy + sh - FOCUS_GAP - ACTION_GAP;
           const inputBottom = iy + ih;
+          let delta = 0;
 
           if (inputBottom > visibleBottom) {
-            scroll.scrollTo({
-              y: Math.max(0, scrollYRef.current + (inputBottom - visibleBottom)),
-              animated: true,
-            });
+            delta = inputBottom - visibleBottom;
           } else if (iy < visibleTop) {
-            scroll.scrollTo({
-              y: Math.max(0, scrollYRef.current - (visibleTop - iy)),
-              animated: true,
-            });
+            delta = iy - visibleTop;
           }
+
+          if (Math.abs(delta) < 8) {
+            return;
+          }
+
+          scroll.scrollTo({
+            y: Math.max(0, scrollYRef.current + delta),
+            animated: true,
+          });
         });
       });
     };
 
-    requestAnimationFrame(() => {
-      setTimeout(run, MEASURE_DELAY);
-    });
+    requestAnimationFrame(run);
   }, []);
+
+  const scheduleScroll = useCallback(() => {
+    if (scrollTimerRef.current) {
+      clearTimeout(scrollTimerRef.current);
+    }
+    scrollTimerRef.current = setTimeout(() => {
+      scrollFocusedIntoView();
+    }, MEASURE_DELAY);
+  }, [scrollFocusedIntoView]);
 
   const scrollToField = useCallback(
     (ref: InputRef) => {
       focusedRef.current = ref;
-      scrollFocusedIntoView();
+      scheduleScroll();
     },
-    [scrollFocusedIntoView],
+    [scheduleScroll],
   );
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
-    const showSub = Keyboard.addListener(showEvent, () => {
-      setKeyboardOpen(true);
-      scrollFocusedIntoView();
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardOpen(false);
-    });
+    const onShow = (event: { endCoordinates?: { height?: number } }) => {
+      const height = event.endCoordinates?.height ?? 0;
+      keyboardHeightRef.current = height;
+      setKeyboardHeight(height);
+      scheduleScroll();
+    };
+
+    const onHide = () => {
+      keyboardHeightRef.current = 0;
+      setKeyboardHeight(0);
+    };
+
+    const showSub = Keyboard.addListener(showEvent, onShow);
+    const hideSub = Keyboard.addListener(hideEvent, onHide);
     const didShowSub =
-      Platform.OS === 'ios'
-        ? Keyboard.addListener('keyboardDidShow', () => {
-            scrollFocusedIntoView();
-          })
-        : null;
-    const frameSub =
-      Platform.OS === 'ios'
-        ? Keyboard.addListener('keyboardDidChangeFrame', () => {
-            scrollFocusedIntoView();
-          })
-        : null;
+      Platform.OS === 'ios' ? Keyboard.addListener('keyboardDidShow', scheduleScroll) : null;
 
     return () => {
       showSub.remove();
       hideSub.remove();
       didShowSub?.remove();
-      frameSub?.remove();
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
     };
-  }, [scrollFocusedIntoView]);
-
-  useEffect(() => {
-    if (keyboardOpen) {
-      scrollFocusedIntoView();
-    }
-  }, [keyboardOpen, scrollFocusedIntoView]);
+  }, [scheduleScroll]);
 
   const handleScroll = useCallback<NonNullable<ScrollViewProps['onScroll']>>(
     event => {
@@ -222,6 +228,13 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
     [register, unregister, focusNext, getFieldMeta, getIndex, scrollToField],
   );
 
+  const keyboardPadding =
+    keyboardHeight > 0
+      ? Platform.OS === 'ios'
+        ? ACTION_GAP
+        : keyboardHeight + spacing.md
+      : 0;
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, style]}
@@ -231,16 +244,16 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        keyboardDismissMode="on-drag"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         {...scrollProps}
         ref={scrollRef}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         contentContainerStyle={[
           styles.content,
-          centerContent && !keyboardOpen && styles.centeredContent,
+          centerContent && styles.centeredContent,
           contentContainerStyle,
-          keyboardOpen && styles.keyboardContent,
+          keyboardHeight > 0 && { paddingBottom: spacing.xxl + keyboardPadding },
         ]}>
         <FormFocusContext.Provider value={focusValue}>
           <FormFocusRevisionContext.Provider value={revision}>
@@ -301,8 +314,5 @@ const styles = StyleSheet.create({
   centeredContent: {
     flexGrow: 1,
     justifyContent: 'center',
-  },
-  keyboardContent: {
-    paddingBottom: spacing.xxl + KEYBOARD_CONTENT_PADDING,
   },
 });

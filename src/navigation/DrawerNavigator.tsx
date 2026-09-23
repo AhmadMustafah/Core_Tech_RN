@@ -167,15 +167,17 @@ const DrawerPanel = memo<{
     [onClose, tabNavigationRef],
   );
 
-  const goToProfile = useCallback(() => {
+  const goToSettings = useCallback(() => {
     const tabNavigation = tabNavigationRef.current;
     if (tabNavigation) {
-      tabNavigation.dispatch(
-        CommonActions.navigate({
-          name: 'Profile',
-          params: { screen: 'ProfileHome' },
-        }),
-      );
+      tabNavigation.navigate({
+        name: 'Profile',
+        params: {
+          screen: 'ProfileHome',
+          initial: false,
+        },
+        merge: true,
+      });
     }
     onClose();
   }, [onClose, tabNavigationRef]);
@@ -215,25 +217,39 @@ const DrawerPanel = memo<{
             transform: [{ translateX: slideAnim }],
           },
         ]}>
-        <Pressable
-          onPress={goToProfile}
-          accessibilityRole="button"
-          accessibilityLabel={t('drawer.openProfile')}
-          style={({ pressed }) => [
-            styles.drawerHeader,
-            { backgroundColor: colors.drawerHeader },
-            pressed && styles.drawerHeaderPressed,
-          ]}>
-          <InitialsAvatar
-            size={52}
-            name={user?.name || t('common.user')}
-            imageUri={user?.avatar}
-            backgroundColor="rgba(255,255,255,0.22)"
-            labelColor="#FFFFFF"
-          />
-          <Text style={styles.drawerName}>{user?.name || t('common.user')}</Text>
-          <Text style={styles.drawerCompany}>{user?.company || t('common.appName')}</Text>
-        </Pressable>
+        <View style={[styles.drawerHeader, { backgroundColor: colors.drawerHeader }]}>
+          <View style={styles.headerRow}>
+            <View style={styles.profileInfo} pointerEvents="none">
+              <InitialsAvatar
+                size={52}
+                name={user?.name || t('common.user')}
+                imageUri={user?.avatar}
+                backgroundColor={`${colors.onPrimary}38`}
+                labelColor={colors.onPrimary}
+              />
+              <Text style={[styles.drawerName, { color: colors.onPrimary }]}>
+                {user?.name || t('common.user')}
+              </Text>
+              <Text style={[styles.drawerCompany, { color: colors.onPrimary }]}>
+                {user?.company || t('common.appName')}
+              </Text>
+            </View>
+            <Pressable
+              onPress={goToSettings}
+              accessibilityRole="button"
+              accessibilityLabel={t('drawer.settings')}
+              hitSlop={8}
+              style={({ pressed }) => [
+                styles.settingsButton,
+                {
+                  backgroundColor: pressed ? `${colors.onPrimary}33` : `${colors.onPrimary}1A`,
+                  opacity: pressed ? 0.92 : 1,
+                },
+              ]}>
+              <Icon name="cog-outline" size={20} color={colors.onPrimary} />
+            </Pressable>
+          </View>
+        </View>
 
         <ScrollView
           contentContainerStyle={[
@@ -405,17 +421,30 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
-  drawerHeaderPressed: {
-    opacity: 0.86,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  profileInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  settingsButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
   drawerName: {
     ...(typography.h3 as object),
-    color: '#FFFFFF',
     marginTop: spacing.md,
   },
   drawerCompany: {
     ...(typography.bodySmall as object),
-    color: 'rgba(255,255,255,0.78)',
+    opacity: 0.78,
     marginTop: spacing.xs,
   },
   drawerScroll: {

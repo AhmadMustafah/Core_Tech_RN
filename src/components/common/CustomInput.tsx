@@ -1,9 +1,10 @@
-import React, { forwardRef, useImperativeHandle, useRef } from 'react';
+import React, { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import { StyleSheet, View, ViewStyle, type ReturnKeyTypeOptions } from 'react-native';
-import { Text, TextInput, TextInputProps, HelperText } from 'react-native-paper';
+import { TextInput, TextInputProps, HelperText } from 'react-native-paper';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { isTranslationKey } from '@/localization';
+import { FieldLabel } from './FieldLabel';
 import { useFormInputFocus, type FormFieldHandle } from './FormScrollView';
 import { borderRadius, spacing } from '@/theme';
 
@@ -11,6 +12,7 @@ interface CustomInputProps extends Omit<TextInputProps, 'error'> {
   error?: string;
   containerStyle?: ViewStyle;
   required?: boolean;
+  optional?: boolean;
 }
 
 type PaperTextInputRef = React.ElementRef<typeof TextInput>;
@@ -36,15 +38,33 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
       keyboardType,
       secureTextEntry,
       required,
+      optional,
       label,
+      placeholder,
       value,
       multiline,
       ...props
     },
     forwardedRef,
   ) => {
-    const { colors } = useAppTheme();
+    const { colors, paperTheme } = useAppTheme();
     const { t, isRTL } = useLocalization();
+    const inputTheme = useMemo(
+      () => ({
+        ...paperTheme,
+        colors: {
+          ...paperTheme.colors,
+          primary: colors.primary,
+          error: colors.error,
+          onSurface: colors.text,
+          onSurfaceVariant: colors.textSecondary,
+          outline: colors.border,
+          background: colors.surface,
+          surface: colors.surface,
+        },
+      }),
+      [colors, paperTheme],
+    );
     const wrapperRef = useRef<View>(null);
     const innerRef = useRef<PaperTextInputRef>(null);
     const formFieldRef = useRef<FormFieldHandle>({
@@ -75,32 +95,31 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
     const keepLatinDirection = Boolean(secureTextEntry) || isLatinKeyboard(keyboardType);
     const textAlign = keepLatinDirection || !isRTL ? 'left' : 'right';
     const writingDirection = keepLatinDirection || !isRTL ? 'ltr' : 'rtl';
-    const errorText =
-      error && isTranslationKey(error) ? t(error) : error;
-
-    const renderedLabel =
-      required && label ? (
-        <Text>
-          {label}
-          <Text style={{ color: colors.error }}> *</Text>
-        </Text>
-      ) : (
-        label
-      );
+    const errorText = error && isTranslationKey(error) ? t(error) : error;
+    const resolvedPlaceholder = placeholder ?? (typeof label === 'string' ? label : undefined);
 
     return (
       <View ref={wrapperRef} collapsable={false} style={[styles.field, containerStyle]}>
+        <FieldLabel
+          label={typeof label === 'string' ? label : undefined}
+          required={required}
+          optional={optional}
+        />
         <TextInput
           ref={(instance: PaperTextInputRef | null) => {
             innerRef.current = instance;
           }}
           mode={mode}
           error={!!error}
-          label={renderedLabel}
-          outlineColor={colors.border}
-          activeOutlineColor={colors.primary}
+          placeholder={resolvedPlaceholder}
+          accessibilityLabel={typeof label === 'string' ? label : resolvedPlaceholder}
+          outlineColor={error ? colors.error : colors.border}
+          activeOutlineColor={error ? colors.error : colors.primary}
           textColor={colors.text}
           placeholderTextColor={colors.textSecondary}
+          cursorColor={colors.primary}
+          selectionColor={colors.primaryMuted}
+          theme={inputTheme}
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
           multiline={multiline}
@@ -125,7 +144,9 @@ export const CustomInput = forwardRef<PaperTextInputRef, CustomInputProps>(
           <HelperText
             type="error"
             visible={!!errorText}
-            style={[styles.helper, { textAlign, writingDirection }]}>
+            padding="none"
+            theme={inputTheme}
+            style={[styles.helper, { color: colors.error, textAlign, writingDirection }]}>
             {errorText}
           </HelperText>
         ) : null}
@@ -157,5 +178,6 @@ const styles = StyleSheet.create({
   helper: {
     marginTop: spacing.xs,
     marginBottom: 0,
+    paddingHorizontal: 0,
   },
 });

@@ -197,7 +197,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
           name="description"
           rules={{ validate: validateDescription }}
           render={({ field: { onChange, value } }) => (
-            <CustomInput label={t('product.description')} value={value} onChangeText={onChange} multiline numberOfLines={3} maxLength={500} error={errors.description?.message as string} />
+            <CustomInput label={t('product.description')} value={value} onChangeText={onChange} multiline numberOfLines={3} maxLength={500} optional error={errors.description?.message as string} />
           )}
         />
 

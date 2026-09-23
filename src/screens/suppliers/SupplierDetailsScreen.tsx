@@ -33,7 +33,7 @@ export const SupplierDetailsScreen: React.FC<Props> = ({ navigation, route }) =>
       contentContainerStyle={styles.content}>
       <CustomCard>
         <View style={styles.hero}>
-          <InitialsAvatar size={56} name={supplier.name} backgroundColor={colors.secondary} />
+          <InitialsAvatar size={56} name={supplier.name} />
           <View style={styles.heroText}>
             <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
               {supplier.name}
