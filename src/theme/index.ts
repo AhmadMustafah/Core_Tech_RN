@@ -67,55 +67,55 @@ type ExtendedBaseColors = SemanticColors &
   >;
 
 const lightSemantic: SemanticColors = {
-  secondary: '#0F766E',
-  accent: '#92400E',
-  background: '#F3F5F8',
+  secondary: '#3D5A73',
+  accent: '#5B7C99',
+  background: '#F4F6F8',
   surface: '#FFFFFF',
-  surfaceVariant: '#E9EEF3',
-  text: '#0F172A',
-  textSecondary: '#475569',
-  border: '#D5DCE5',
-  error: '#B42318',
-  success: '#176C45',
-  warning: '#B45309',
-  info: '#0369A1',
-  lowStock: '#C2410C',
-  cardShadow: 'rgba(15, 23, 42, 0.07)',
+  surfaceVariant: '#E8EDF3',
+  text: '#1A2332',
+  textSecondary: '#4A5568',
+  border: '#D2DBE5',
+  error: '#A33B32',
+  success: '#2A6B4F',
+  warning: '#8F6B24',
+  info: '#2B5F8A',
+  lowStock: '#8F4E2A',
+  cardShadow: 'rgba(16, 32, 54, 0.06)',
 };
 
 const darkSemantic: SemanticColors = {
-  secondary: '#3DABA0',
-  accent: '#D4A373',
-  background: '#0F1419',
-  surface: '#171D24',
-  surfaceVariant: '#24303C',
-  text: '#F1F5F9',
-  textSecondary: '#94A3B8',
-  border: '#2D3946',
-  error: '#E86A64',
-  success: '#5EC98A',
-  warning: '#E0A454',
-  info: '#5BA8D4',
-  lowStock: '#E8956A',
-  cardShadow: 'rgba(0, 0, 0, 0.4)',
+  secondary: '#8FA8C0',
+  accent: '#A8B8C8',
+  background: '#0C121A',
+  surface: '#141C26',
+  surfaceVariant: '#223040',
+  text: '#E8EEF4',
+  textSecondary: '#9AA8B8',
+  border: '#2A3644',
+  error: '#D97A74',
+  success: '#6BA88A',
+  warning: '#C4A35A',
+  info: '#7BA3C9',
+  lowStock: '#C48A68',
+  cardShadow: 'rgba(0, 0, 0, 0.42)',
 };
 
 const lightExtended: ExtendedBaseColors = {
   ...lightSemantic,
   surfaceElevated: '#FFFFFF',
   drawerSurface: '#FFFFFF',
-  textMuted: '#64748B',
-  borderLight: '#E8EDF3',
-  overlay: 'rgba(15, 23, 42, 0.48)',
+  textMuted: '#6B7785',
+  borderLight: '#E6EBF1',
+  overlay: 'rgba(16, 32, 54, 0.46)',
 };
 
 const darkExtended: ExtendedBaseColors = {
   ...darkSemantic,
-  surfaceElevated: '#1E2630',
-  drawerSurface: '#171D24',
-  textMuted: '#7D8B9C',
-  borderLight: '#24303C',
-  overlay: 'rgba(2, 6, 12, 0.62)',
+  surfaceElevated: '#1B2532',
+  drawerSurface: '#141C26',
+  textMuted: '#7D8B9A',
+  borderLight: '#223040',
+  overlay: 'rgba(6, 10, 16, 0.64)',
 };
 
 const primaryPalettes: Record<
@@ -124,30 +124,30 @@ const primaryPalettes: Record<
 > = {
   default: {
     light: {
-      primary: '#1565C0',
-      primaryDark: '#0D47A1',
-      primaryMuted: '#E8F1FA',
-      drawerHeader: '#0D47A1',
+      primary: '#1E4B7B',
+      primaryDark: '#16365A',
+      primaryMuted: '#E8F0F8',
+      drawerHeader: '#16365A',
     },
     dark: {
-      primary: '#4D9DE0',
-      primaryDark: '#1565C0',
-      primaryMuted: '#13283C',
-      drawerHeader: '#0D47A1',
+      primary: '#7BA3C9',
+      primaryDark: '#4A7FA8',
+      primaryMuted: '#1A2838',
+      drawerHeader: '#122033',
     },
   },
   ocean: {
     light: {
-      primary: '#0274B3',
-      primaryDark: '#0369A1',
-      primaryMuted: '#E4F3FB',
-      drawerHeader: '#0369A1',
+      primary: '#1F5F8B',
+      primaryDark: '#174A6C',
+      primaryMuted: '#E6F2F8',
+      drawerHeader: '#174A6C',
     },
     dark: {
-      primary: '#4DB5E0',
-      primaryDark: '#0284C7',
-      primaryMuted: '#0C3A54',
-      drawerHeader: '#0369A1',
+      primary: '#7BB3D0',
+      primaryDark: '#3D87A8',
+      primaryMuted: '#163040',
+      drawerHeader: '#123040',
     },
   },
   emerald: {
@@ -199,8 +199,8 @@ export const THEME_PRESET_OPTIONS: {
   label: string;
   swatch: string;
 }[] = [
-  { id: 'default', label: 'Default', swatch: '#1565C0' },
-  { id: 'ocean', label: 'Ocean', swatch: '#0274B3' },
+  { id: 'default', label: 'Default', swatch: '#1E4B7B' },
+  { id: 'ocean', label: 'Ocean', swatch: '#1F5F8B' },
   { id: 'emerald', label: 'Emerald', swatch: '#047857' },
   { id: 'purple', label: 'Purple', swatch: '#6D28D9' },
   { id: 'sunset', label: 'Sunset', swatch: '#C2410C' },
@@ -292,28 +292,28 @@ type ShadowStyle = Pick<
 
 export const shadows: Record<'sm' | 'md' | 'lg' | 'drawer', ShadowStyle> = {
   sm: {
-    shadowColor: '#0F172A',
+    shadowColor: '#102036',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
   md: {
-    shadowColor: '#0F172A',
+    shadowColor: '#102036',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
   },
   lg: {
-    shadowColor: '#0F172A',
+    shadowColor: '#102036',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 24,
     elevation: 8,
   },
   drawer: {
-    shadowColor: '#0F172A',
+    shadowColor: '#102036',
     shadowOffset: { width: 4, height: 0 },
     shadowOpacity: 0.14,
     shadowRadius: 20,

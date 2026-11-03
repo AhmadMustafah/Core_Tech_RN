@@ -66,6 +66,11 @@ yarn-error.log
 # testing
 /coverage
 
+# Backend secrets
+CT_backend/.env
+CT_backend/atlas-credentials.env
+CT_backend/node_modules/
+
 # Yarn
 .yarn/*
 !.yarn/patches
