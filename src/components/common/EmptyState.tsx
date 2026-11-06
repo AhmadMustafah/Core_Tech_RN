@@ -10,6 +10,7 @@ interface EmptyStateProps {
   title: string;
   message?: string;
   action?: React.ReactNode;
+  compact?: boolean;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -17,13 +18,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   title,
   message,
   action,
+  compact = false,
 }) => {
   const { colors } = useAppTheme();
   const { directionStyle } = useLocalization();
 
   return (
-    <View style={styles.container}>
-      <Icon source={icon} size={64} color={colors.textSecondary} />
+    <View style={[styles.container, compact && styles.compact]}>
+      <View style={[styles.iconWrap, { backgroundColor: colors.primaryMuted }]}>
+        <Icon source={icon} size={compact ? 28 : 36} color={colors.primary} />
+      </View>
       <Text
         variant="titleMedium"
         style={[styles.title, { color: colors.text }, directionStyle]}>
@@ -47,6 +51,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.xl,
+  },
+  compact: {
+    flex: 0,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     marginTop: spacing.md,

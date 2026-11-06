@@ -13,11 +13,6 @@ interface PasswordStrengthIndicatorProps {
 
 const CHECK_KEYS: Record<string, TranslationKey> = {
   minLength: 'password.minLength',
-  hasUppercase: 'password.hasUppercase',
-  hasLowercase: 'password.hasLowercase',
-  hasNumber: 'password.hasNumber',
-  hasSpecialChar: 'password.hasSpecialChar',
-  notCommon: 'password.notCommon',
   noSpaces: 'password.noSpaces',
 };
 

@@ -10,6 +10,7 @@ import {
   getFocusedRouteNameFromRoute,
   type NavigationProp,
 } from '@react-navigation/native';
+import { popToTabs } from './navHelpers';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
@@ -47,8 +48,8 @@ const TAB_ICONS: Record<string, { active: string; inactive: string }> = {
   Profile: { active: 'account-circle', inactive: 'account-circle-outline' },
 };
 
-const ACTIVE_ICON_SCALE = 1.08;
-const ACTIVE_ICON_LIFT = -5;
+const ACTIVE_ICON_SCALE = 1.04;
+const ACTIVE_ICON_LIFT = 0;
 const TAB_ICON_ANIMATION = {
   duration: 220,
   easing: Easing.out(Easing.cubic),
@@ -204,21 +205,26 @@ export const MainTabNavigator: React.FC = () => {
             ? {
                 backgroundColor: colors.surface,
                 borderTopColor: colors.borderLight,
-                borderTopWidth: 1,
-                paddingBottom: Math.max(insets.bottom, 6),
-                paddingTop: 6,
+                borderTopWidth: StyleSheet.hairlineWidth,
+                paddingBottom: Math.max(insets.bottom, 8),
+                paddingTop: 8,
+                paddingHorizontal: 6,
                 height: tabBarHeight,
-                elevation: 8,
+                elevation: 12,
                 shadowColor: colors.cardShadow,
-                shadowOffset: { width: 0, height: -2 },
+                shadowOffset: { width: 0, height: -4 },
                 shadowOpacity: 1,
-                shadowRadius: 8,
+                shadowRadius: 12,
               }
             : { display: 'none' as const, height: 0 },
+          tabBarItemStyle: {
+            borderRadius: 14,
+            marginHorizontal: 2,
+          },
           tabBarLabelStyle: {
             ...(typography.caption as object),
             fontWeight: '600' as const,
-            marginTop: 0,
+            marginTop: 2,
           },
           tabBarIcon: ({
             color,
@@ -242,13 +248,31 @@ export const MainTabNavigator: React.FC = () => {
     [colors, insets.bottom, tabBarHeight],
   );
 
+  const tabListeners = useMemo(
+    () =>
+      ({ navigation, route }: { navigation: NavigationProp<MainTabParamList>; route: { name: string } }) => ({
+        tabPress: (e: { preventDefault: () => void }) => {
+          popToTabs(navigation);
+          const state = navigation.getState();
+          const focused = state.routes[state.index]?.name === route.name;
+          if (focused) {
+            e.preventDefault();
+            navigation.navigate(route.name as keyof MainTabParamList, {
+              screen: TAB_ROOT_SCREENS[route.name as keyof MainTabParamList],
+            } as never);
+          }
+        },
+      }),
+    [],
+  );
+
   return (
     <Tab.Navigator tabBar={props => <DrawerTabBar {...props} />} screenOptions={screenOptions}>
-      <Tab.Screen name="Dashboard" component={DashboardNavigator} options={{ title: tabTitles.Dashboard }} />
-      <Tab.Screen name="Inventory" component={InventoryNavigator} options={{ title: tabTitles.Inventory }} />
-      <Tab.Screen name="Sales" component={SalesNavigator} options={{ title: tabTitles.Sales }} />
-      <Tab.Screen name="Purchases" component={PurchaseNavigator} options={{ title: tabTitles.Purchases }} />
-      <Tab.Screen name="Profile" component={ProfileNavigator} options={{ title: tabTitles.Profile }} />
+      <Tab.Screen name="Dashboard" component={DashboardNavigator} options={{ title: tabTitles.Dashboard }} listeners={tabListeners} />
+      <Tab.Screen name="Inventory" component={InventoryNavigator} options={{ title: tabTitles.Inventory }} listeners={tabListeners} />
+      <Tab.Screen name="Sales" component={SalesNavigator} options={{ title: tabTitles.Sales }} listeners={tabListeners} />
+      <Tab.Screen name="Purchases" component={PurchaseNavigator} options={{ title: tabTitles.Purchases }} listeners={tabListeners} />
+      <Tab.Screen name="Profile" component={ProfileNavigator} options={{ title: tabTitles.Profile }} listeners={tabListeners} />
     </Tab.Navigator>
   );
 };

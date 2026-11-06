@@ -38,6 +38,11 @@ const listPurchases = async (businessId, query) => {
   if (query.supplierId && mongoose.isValidObjectId(query.supplierId)) {
     filter.supplierId = query.supplierId;
   }
+  if (query.from || query.to) {
+    filter.createdAt = {};
+    if (query.from) filter.createdAt.$gte = new Date(query.from);
+    if (query.to) filter.createdAt.$lte = new Date(query.to);
+  }
 
   const [items, total] = await Promise.all([
     Purchase.find(filter).sort(sort).skip(skip).limit(limit),
@@ -47,7 +52,15 @@ const listPurchases = async (businessId, query) => {
 };
 
 const getPurchase = async (businessId, id) => {
-  const purchase = await Purchase.findOne({ _id: id, businessId });
+  const filter = { businessId };
+  if (mongoose.isValidObjectId(id)) {
+    filter._id = id;
+  } else if (id) {
+    filter.purchaseNumber = String(id);
+  } else {
+    throw new ApiError(400, 'Purchase id is required');
+  }
+  const purchase = await Purchase.findOne(filter);
   if (!purchase) throw new ApiError(404, 'Purchase not found');
   return toClient(purchase);
 };
@@ -84,31 +97,32 @@ const createPurchase = async (user, body) => {
   const alerts = [];
   const purchase = await withTransaction(async (session) => {
     const purchaseNumber = await nextPurchaseNumber(user.businessId, session);
-    const [doc] = await Purchase.create(
-      [
-        {
-          businessId: user.businessId,
-          purchaseNumber,
-          supplierId: supplier._id,
-          supplierName: supplier.name,
-          items,
-          totalAmount,
-          notes: body.notes,
-          status,
-          createdBy: user._id,
-          stockApplied: false,
-        },
-      ],
-      { session },
-    );
+    const payload = {
+      businessId: user.businessId,
+      purchaseNumber,
+      supplierId: supplier._id,
+      supplierName: supplier.name,
+      items,
+      totalAmount,
+      notes: body.notes,
+      status,
+      createdBy: user._id,
+      stockApplied: false,
+    };
+    const doc = session
+      ? (await Purchase.create([payload], { session }))[0]
+      : await Purchase.create(payload);
 
     if (status === 'received') {
       await applyPurchaseStock(user, doc, session, alerts);
-      await doc.save({ session });
+      await doc.save(session ? { session } : undefined);
     }
 
-    supplier.totalPurchases = (supplier.totalPurchases || 0) + totalAmount;
-    await supplier.save({ session });
+    await Supplier.updateOne(
+      { _id: supplier._id, businessId: user.businessId },
+      { $inc: { totalPurchases: totalAmount } },
+      session ? { session } : undefined,
+    );
     return doc;
   });
 
@@ -169,25 +183,26 @@ const updatePurchase = async (user, id, body) => {
 };
 
 const receivePurchase = async (user, id) => {
-  const purchase = await Purchase.findOne({ _id: id, businessId: user.businessId });
-  if (!purchase) throw new ApiError(404, 'Purchase not found');
-  if (purchase.status === 'cancelled') throw new ApiError(400, 'Cancelled purchase cannot be received');
-
   const alerts = [];
-  await withTransaction(async (session) => {
-    await applyPurchaseStock(user, purchase, session, alerts);
-    await purchase.save({ session });
+  const purchase = await withTransaction(async (session) => {
+    const query = Purchase.findOne({ _id: id, businessId: user.businessId });
+    const doc = session ? await query.session(session) : await query;
+    if (!doc) throw new ApiError(404, 'Purchase not found');
+    if (doc.status === 'cancelled') throw new ApiError(400, 'Cancelled purchase cannot be received');
+    await applyPurchaseStock(user, doc, session, alerts);
+    await doc.save(session ? { session } : undefined);
+    return doc;
   });
   await flushStockAlerts(user.businessId, alerts);
   return toClient(purchase);
 };
 
 const deletePurchase = async (user, id) => {
-  const purchase = await Purchase.findOne({ _id: id, businessId: user.businessId });
-  if (!purchase) throw new ApiError(404, 'Purchase not found');
-
   const alerts = [];
   await withTransaction(async (session) => {
+    const query = Purchase.findOne({ _id: id, businessId: user.businessId });
+    const purchase = session ? await query.session(session) : await query;
+    if (!purchase) throw new ApiError(404, 'Purchase not found');
     if (purchase.stockApplied) {
       for (const item of purchase.items) {
         await applyStockChange({
@@ -208,9 +223,9 @@ const deletePurchase = async (user, id) => {
     await Supplier.updateOne(
       { _id: purchase.supplierId, businessId: user.businessId },
       { $inc: { totalPurchases: -purchase.totalAmount } },
-      { session },
+      session ? { session } : undefined,
     );
-    await purchase.deleteOne({ session });
+    await purchase.deleteOne(session ? { session } : undefined);
   });
   await flushStockAlerts(user.businessId, alerts);
 };

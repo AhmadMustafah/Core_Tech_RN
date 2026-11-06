@@ -12,9 +12,6 @@ export const PrivacyPolicyScreen: React.FC = () => {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text variant="headlineSmall" style={[{ color: colors.text, fontWeight: '700', marginBottom: spacing.lg }, directionStyle]}>
-        {t('privacy.title')}
-      </Text>
       <Text variant="bodyMedium" style={[{ color: colors.text, lineHeight: 24, marginBottom: spacing.md }, directionStyle]}>
         {t('privacy.intro', { app: APP_NAME })}
       </Text>

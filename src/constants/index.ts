@@ -1,10 +1,11 @@
+import { getApiBaseUrl } from '@/config/apiEnv';
+
 export const APP_NAME = 'CoreTech Enterprise';
 export const APP_VERSION = '1.0.0';
 
 export const API_CONFIG = {
-  BASE_URL: 'https://api.coretech-enterprise.com/api/v1',
+  BASE_URL: getApiBaseUrl(),
   TIMEOUT: 30000,
-  USE_MOCK: true,
 };
 
 export const STORAGE_KEYS = {
@@ -13,7 +14,6 @@ export const STORAGE_KEYS = {
   USER: '@coretech/user',
   ONBOARDING_COMPLETE: '@coretech/onboarding_complete',
   THEME_MODE: '@coretech/theme_mode',
-  THEME_PRESET: '@coretech/theme_preset',
   LANGUAGE: '@coretech/language',
   NOTIFICATIONS_ENABLED: '@coretech/notifications_enabled',
   SETTINGS_PREFERENCES: '@coretech/settings_preferences',

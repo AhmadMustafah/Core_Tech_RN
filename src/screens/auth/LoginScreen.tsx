@@ -7,7 +7,7 @@ import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
-import { CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
+import { BrandMark, CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
 import { useAppDispatch } from '@/redux/hooks';
 import { login as loginAction } from '@/redux/slices/authSlice';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,7 +32,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginRequest>({
-    defaultValues: { email: 'ahmed@coretech.com', password: 'password123' },
+    defaultValues: { email: '', password: '' },
   });
 
   useEffect(() => {
@@ -42,6 +42,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
   }, [clearError]);
 
   const onSubmit = async (data: LoginRequest) => {
+    if (isLoading) return;
     const result = await dispatch(loginAction(data));
     if (loginAction.fulfilled.match(result)) {
       navigation.getParent()?.dispatch(
@@ -55,7 +56,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.scroll}>
         <View style={styles.header}>
-          <Text style={styles.logo}>🏢</Text>
+          <BrandMark size={36} />
           <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
             {t('auth.welcomeBack')}
           </Text>
@@ -142,10 +143,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: spacing.xl,
-  },
-  logo: {
-    fontSize: 56,
-    marginBottom: spacing.md,
+    gap: spacing.md,
   },
   errorBox: {
     padding: spacing.md,

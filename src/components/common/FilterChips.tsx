@@ -31,7 +31,10 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
         <Chip
           selected={selected === null}
           onPress={() => onSelect(null)}
-          style={styles.chip}
+          style={[
+            styles.chip,
+            { backgroundColor: selected === null ? colors.primaryMuted : colors.surface },
+          ]}
           selectedColor={colors.primary}
           showSelectedOverlay>
           {t('common.all')}
@@ -42,7 +45,10 @@ export const FilterChips: React.FC<FilterChipsProps> = ({
           key={option}
           selected={selected === option}
           onPress={() => onSelect(option)}
-          style={styles.chip}
+          style={[
+            styles.chip,
+            { backgroundColor: selected === option ? colors.primaryMuted : colors.surface },
+          ]}
           selectedColor={colors.primary}
           showSelectedOverlay>
           {catalogLabel(option)}

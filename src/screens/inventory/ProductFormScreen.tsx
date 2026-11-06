@@ -4,7 +4,10 @@ import { Text, Menu, Button } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import { useAppDispatch } from '@/redux/hooks';
+import { markAppDataStale } from '@/redux/slices/dataSyncSlice';
 import { productService } from '@/services/productService';
+import { getErrorMessage } from '@/services/api';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import {
@@ -33,13 +36,17 @@ interface ProductForm {
 }
 
 export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
+  const dispatch = useAppDispatch();
   const isEdit = route.name === 'EditProduct';
   const productId = isEdit ? (route.params as { productId: string }).productId : null;
   const { colors } = useAppTheme();
   const { t, catalogLabel } = useLocalization();
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [categoryMenu, setCategoryMenu] = useState(false);
   const [unitMenu, setUnitMenu] = useState(false);
+  const [categories, setCategories] = useState<string[]>([...PRODUCT_CATEGORIES]);
+  const [units, setUnits] = useState<string[]>([...PRODUCT_UNITS]);
 
   const { control, handleSubmit, setValue, watch, formState: { errors } } = useForm<ProductForm>({
     defaultValues: {
@@ -52,6 +59,13 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
   const unit = watch('unit');
 
   React.useEffect(() => {
+    productService.getCategories().then(items => {
+      const names = items.map(item => item.name).filter(Boolean);
+      if (names.length) setCategories(names);
+    }).catch(() => undefined);
+    productService.getUnits().then(items => {
+      if (items.length) setUnits(items);
+    }).catch(() => undefined);
     if (isEdit && productId) {
       productService.getById(productId).then(p => {
         setValue('name', p.name);
@@ -68,6 +82,8 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [isEdit, productId, setValue]);
 
   const onSubmit = async (data: ProductForm) => {
+    if (loading) return;
+    setFormError(null);
     setLoading(true);
     try {
       const payload = {
@@ -87,9 +103,10 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
       } else {
         await productService.create(payload);
       }
+      dispatch(markAppDataStale());
       navigation.goBack();
     } catch (err) {
-      // Error handled by form
+      setFormError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -99,9 +116,9 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
     <FormScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={styles.scroll}>
-        <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>
-          {isEdit ? t('product.edit') : t('product.add')}
-        </Text>
+        {formError ? (
+          <Text style={{ color: colors.error, marginBottom: spacing.md }}>{formError}</Text>
+        ) : null}
 
         {(['name', 'sku'] as const).map(field => (
           <Controller
@@ -128,7 +145,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
             {t('product.categoryLabel', { value: catalogLabel(category) })}
           </Button>
         }>
-          {PRODUCT_CATEGORIES.map(c => (
+          {categories.map(c => (
             <Menu.Item key={c} onPress={() => { setValue('category', c); setCategoryMenu(false); }} title={catalogLabel(c)} />
           ))}
         </Menu>
@@ -138,7 +155,7 @@ export const ProductFormScreen: React.FC<Props> = ({ navigation, route }) => {
             {t('product.unitLabel', { value: catalogLabel(unit) })}
           </Button>
         }>
-          {PRODUCT_UNITS.map(u => (
+          {units.map(u => (
             <Menu.Item key={u} onPress={() => { setValue('unit', u); setUnitMenu(false); }} title={catalogLabel(u)} />
           ))}
         </Menu>

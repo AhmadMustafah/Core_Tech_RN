@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { Activity, AppNotification } from '@/types';
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -36,13 +37,9 @@ export type ProfileStackParamList = {
   EditProfile: undefined;
   ChangePassword: undefined;
   Settings: undefined;
-  ThemeSettings: undefined;
   AccountSettings: undefined;
-  LanguageSettings: undefined;
   NotificationSettings: undefined;
-  PreferencesSettings: undefined;
   AboutSupport: undefined;
-  Notifications: undefined;
   CustomerList: undefined;
   CustomerDetails: { customerId: string };
   AddCustomer: undefined;
@@ -58,6 +55,7 @@ export type ProfileStackParamList = {
 export type DashboardStackParamList = {
   DashboardHome: undefined;
   Activity: undefined;
+  Transactions: undefined;
 };
 
 export type MainTabParamList = {
@@ -68,8 +66,17 @@ export type MainTabParamList = {
   Profile: NavigatorScreenParams<ProfileStackParamList>;
 };
 
+export type MainShellParamList = {
+  Tabs: NavigatorScreenParams<MainTabParamList> | undefined;
+  Notifications: undefined;
+  NotificationDetails: { notification: AppNotification };
+  ActivityDetails: { activity: Activity };
+  SaleDetails: { saleId: string };
+  PurchaseDetails: { purchaseId: string };
+};
+
 export type DrawerParamList = {
-  MainTabs: NavigatorScreenParams<MainTabParamList>;
+  MainTabs: NavigatorScreenParams<MainShellParamList>;
 };
 
 export type RootStackParamList = {

@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setLanguage } from '@/redux/slices/settingsSlice';
 import { storage } from '@/utils/storage';
+import { settingsService } from '@/services/settingsService';
 import { STORAGE_KEYS } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
@@ -12,7 +13,7 @@ import type { ProfileStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 import { SettingsChoiceRow, SettingsHint, SettingsSection } from './settingsUi';
 
-type Props = NativeStackScreenProps<ProfileStackParamList, 'LanguageSettings'>;
+type Props = NativeStackScreenProps<ProfileStackParamList, 'Settings'>;
 
 export const LanguageSettingsScreen: React.FC<Props> = () => {
   const { colors } = useAppTheme();
@@ -27,6 +28,7 @@ export const LanguageSettingsScreen: React.FC<Props> = () => {
       }
       await storage.setItem(STORAGE_KEYS.LANGUAGE, lang);
       dispatch(setLanguage(lang));
+      settingsService.update({ language: lang }).catch(() => undefined);
     },
     [dispatch, language],
   );
@@ -36,7 +38,7 @@ export const LanguageSettingsScreen: React.FC<Props> = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}>
       <SettingsHint>{t('settings.languageHint')}</SettingsHint>
-      <SettingsSection title={t('settings.language')}>
+      <SettingsSection>
         <SettingsChoiceRow
           icon="format-textdirection-l-to-r"
           title={t('settings.english')}

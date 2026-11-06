@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -20,17 +20,20 @@ import {
   LoadingState,
   ErrorState,
   ScreenHeader,
+  NotificationBell,
+  TransactionRow,
 } from '@/components/common';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { fetchDashboard } from '@/redux/slices/dashboardSlice';
+import { openLedgerTransaction } from '@/navigation/navHelpers';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, formatRelativeTime } from '@/utils/formatters';
-import type { Activity } from '@/types';
+import type { Activity, AppNotification } from '@/types';
 import type {
   DashboardStackParamList,
+  MainShellParamList,
   MainTabParamList,
-  RootStackParamList,
 } from '@/types/navigation';
 import type { TranslationKey } from '@/localization';
 import { borderRadius, layout, shadows, spacing, typography } from '@/theme';
@@ -39,74 +42,21 @@ type Props = CompositeScreenProps<
   NativeStackScreenProps<DashboardStackParamList, 'DashboardHome'>,
   CompositeScreenProps<
     BottomTabScreenProps<MainTabParamList, 'Dashboard'>,
-    NativeStackScreenProps<RootStackParamList>
+    NativeStackScreenProps<MainShellParamList>
   >
 >;
 
 const RECENT_ACTIVITY_LIMIT = 5;
 const MAX_CONTENT_WIDTH = layout.maxContentWidth;
 
-const MOCK_TRANSACTIONS = [
-  {
-    id: 'txn-1',
-    ref: 'INV-1042',
-    type: 'Sale' as const,
-    party: 'Ahmed Traders',
-    amount: 45200,
-    status: 'Completed' as const,
-    timestamp: '2026-07-30T10:30:00',
-  },
-  {
-    id: 'txn-2',
-    ref: 'PO-0891',
-    type: 'Purchase' as const,
-    party: 'Metro Supplies',
-    amount: 28750,
-    status: 'Pending' as const,
-    timestamp: '2026-07-30T08:15:00',
-  },
-  {
-    id: 'txn-3',
-    ref: 'INV-1041',
-    type: 'Sale' as const,
-    party: 'City Mart',
-    amount: 12800,
-    status: 'Completed' as const,
-    timestamp: '2026-07-29T16:45:00',
-  },
-];
-
-const MOCK_ALERTS = [
-  {
-    id: 'alert-1',
-    severity: 'warning' as const,
-    titleKey: 'dash.alert.lowStock' as const,
-    messageKey: 'dash.alert.lowStockMsg' as const,
-  },
-  {
-    id: 'alert-2',
-    severity: 'info' as const,
-    titleKey: 'dash.alert.pendingPo' as const,
-    messageKey: 'dash.alert.pendingPoMsg' as const,
-  },
-  {
-    id: 'alert-3',
-    severity: 'error' as const,
-    titleKey: 'dash.alert.overdue' as const,
-    messageKey: 'dash.alert.overdueMsg' as const,
-  },
-];
-
-const transactionIcons: Record<(typeof MOCK_TRANSACTIONS)[number]['type'], string> = {
-  Sale: 'cart-check',
-  Purchase: 'truck-delivery',
-};
-
 const activityIcons: Record<Activity['type'], string> = {
   sale: 'cart-check',
   purchase: 'truck-delivery',
   product: 'package-variant',
   customer: 'account-plus',
+  supplier: 'truck',
+  payment: 'cash',
+  auth: 'account-key',
 };
 
 const activityTypeKeys: Record<Activity['type'], TranslationKey> = {
@@ -114,6 +64,9 @@ const activityTypeKeys: Record<Activity['type'], TranslationKey> = {
   purchase: 'activity.type.purchase',
   product: 'activity.type.product',
   customer: 'activity.type.customer',
+  supplier: 'activity.type.supplier',
+  payment: 'activity.type.payment',
+  auth: 'activity.type.auth',
 };
 
 const sortActivitiesByLatest = (items: Activity[]) =>
@@ -145,14 +98,14 @@ type KpiStatCardProps = {
   compactValue?: boolean;
 };
 
-const KpiStatCard: React.FC<KpiStatCardProps> = ({
+const KpiStatCard = React.memo<KpiStatCardProps>(function KpiStatCard({
   title,
   value,
   icon,
   color,
   onPress,
   compactValue = false,
-}) => {
+}) {
   const { colors } = useAppTheme();
   const { isRTL, directionStyle } = useLocalization();
   const accentColor = color || colors.primary;
@@ -208,7 +161,7 @@ const KpiStatCard: React.FC<KpiStatCardProps> = ({
   }
 
   return <View style={kpiStyles.wrapper}>{content}</View>;
-};
+});
 
 const kpiStyles = StyleSheet.create({
   wrapper: {
@@ -262,15 +215,14 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector(state => state.auth);
-  const { summary, activities, isLoading, error } = useAppSelector(
-    state => state.dashboard,
-  );
+  const { summary, activities, transactions, notifications, isLoading, error } =
+    useAppSelector(state => state.dashboard);
 
   const { isCompact, isWide, contentPadding, kpiColumns, kpiItemWidth } =
     getLayoutMetrics(width);
 
-  const loadData = useCallback(() => {
-    dispatch(fetchDashboard());
+  const loadData = useCallback((force = false) => {
+    dispatch(fetchDashboard(force));
   }, [dispatch]);
 
   useFocusEffect(
@@ -278,6 +230,23 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       loadData();
     }, [loadData]),
   );
+
+  const unreadCount = useMemo(
+    () => notifications.filter(item => !item.read).length,
+    [notifications],
+  );
+
+  const openNotifications = useCallback(() => {
+    navigation.navigate('Notifications');
+  }, [navigation]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <NotificationBell unreadCount={unreadCount} onPress={openNotifications} />
+      ),
+    });
+  }, [navigation, openNotifications, unreadCount]);
 
   const recentActivities = useMemo(
     () => sortActivitiesByLatest(activities).slice(0, RECENT_ACTIVITY_LIMIT),
@@ -288,7 +257,55 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Activity');
   }, [navigation]);
 
-  const getAlertColor = (severity: (typeof MOCK_ALERTS)[number]['severity']) => {
+  const alerts = useMemo(() => {
+    const items: { id: string; severity: 'warning' | 'info' | 'error'; title: string; message: string }[] = [];
+    if ((summary?.lowStockCount ?? 0) > 0) {
+      items.push({
+        id: 'low-stock',
+        severity: 'warning',
+        title: t('dash.alert.lowStock'),
+        message: t('dash.alert.lowStockMsg'),
+      });
+    }
+    const pendingPurchases = transactions.filter(
+      row => row.type === 'Purchase' && row.status === 'pending',
+    ).length;
+    if (pendingPurchases > 0) {
+      items.push({
+        id: 'pending-po',
+        severity: 'info',
+        title: t('dash.alert.pendingPo'),
+        message: t('dash.alert.pendingPoMsg'),
+      });
+    }
+    const pendingSales = transactions.filter(
+      row => row.type === 'Sale' && row.status === 'pending',
+    ).length;
+    if (pendingSales > 0) {
+      items.push({
+        id: 'pending-sales',
+        severity: 'error',
+        title: t('dash.alert.overdue'),
+        message: t('dash.alert.overdueMsg'),
+      });
+    }
+    notifications
+      .filter((item: AppNotification) => !item.read)
+      .slice(0, 3)
+      .forEach(item => {
+        items.push({
+          id: item.id,
+          severity: item.type === 'low_stock' ? 'warning' : 'info',
+          title: item.title,
+          message: item.message,
+        });
+      });
+    return items;
+  }, [notifications, summary, t, transactions]);
+
+  const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
+
+  const getAlertColor = (severity: 'warning' | 'info' | 'error') => {
     switch (severity) {
       case 'warning':
         return colors.warning;
@@ -298,9 +315,6 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         return colors.info;
     }
   };
-
-  const getStatusColor = (status: (typeof MOCK_TRANSACTIONS)[number]['status']) =>
-    status === 'Completed' ? colors.success : colors.warning;
 
   const getActivityColor = (type: Activity['type']) => {
     switch (type) {
@@ -359,7 +373,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   if (error && !summary) {
-    return <ErrorState message={error} onRetry={loadData} />;
+    return <ErrorState message={error} onRetry={() => loadData(true)} />;
   }
 
   return (
@@ -377,7 +391,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         },
       ]}
       refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={loadData} />
+        <RefreshControl refreshing={isLoading} onRefresh={() => loadData(true)} />
       }
       showsVerticalScrollIndicator={false}>
       <ScreenHeader
@@ -387,12 +401,14 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         userName={user?.name || t('common.user')}
       />
 
-      <View
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => navigation.navigate('Sales', { screen: 'SalesList' })}
         style={[
           styles.section,
           styles.heroCard,
           shadows.md,
-          { backgroundColor: colors.primary, borderColor: colors.primaryDark },
+          { backgroundColor: colors.drawerHeader, borderColor: colors.primaryDark },
         ]}>
         <View style={[styles.heroContent, isCompact && styles.heroContentCompact]}>
           <View style={styles.heroText}>
@@ -412,7 +428,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             <Icon source="chart-line" size={28} color="#FFFFFF" />
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.section}>
         <Text
@@ -448,7 +464,12 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.section}>
         <CustomCard title={t('dash.alerts')} subtitle={t('dash.alertsSubtitle')}>
           <View style={styles.cardBody}>
-            {MOCK_ALERTS.map(alert => (
+            {alerts.length === 0 ? (
+              <Text variant="bodyMedium" style={{ color: colors.textSecondary }}>
+                {t('notify.emptyMsg')}
+              </Text>
+            ) : (
+              alerts.map(alert => (
               <View
                 key={alert.id}
                 style={[
@@ -471,14 +492,15 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                 />
                 <View style={styles.alertContent}>
                   <Text variant="bodyMedium" style={{ color: colors.text, fontWeight: '600' }}>
-                    {t(alert.titleKey)}
+                    {alert.title}
                   </Text>
                   <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-                    {t(alert.messageKey)}
+                    {alert.message}
                   </Text>
                 </View>
               </View>
-            ))}
+            ))
+            )}
           </View>
         </CustomCard>
       </View>
@@ -488,71 +510,27 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
           title={t('dash.recentTransactions')}
           subtitle={t('dash.recentTransactionsSubtitle')}
           headerRight={
-            <Text variant="labelMedium" style={{ color: colors.primary }}>
-              {t('common.viewAll')}
-            </Text>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Transactions')}
+              hitSlop={8}
+              style={styles.viewAll}>
+              <Text variant="labelMedium" style={{ color: colors.primary }}>
+                {t('common.viewAll')}
+              </Text>
+            </TouchableOpacity>
           }>
           <View style={styles.cardBody}>
-            {MOCK_TRANSACTIONS.map((transaction, index) => (
-              <View
-                key={transaction.id}
-                style={[
-                  styles.listItem,
-                  index < MOCK_TRANSACTIONS.length - 1 && {
-                    borderBottomWidth: StyleSheet.hairlineWidth,
-                    borderBottomColor: colors.border,
-                  },
-                ]}>
-                <View
-                  style={[
-                    styles.listIcon,
-                    { backgroundColor: colors.primary + '15' },
-                  ]}>
-                  <Icon
-                    source={transactionIcons[transaction.type]}
-                    size={20}
-                    color={colors.primary}
-                  />
-                </View>
-                <View style={styles.listContent}>
-                  <View style={styles.listHeader}>
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: colors.text, fontWeight: '600', flex: 1 }}
-                      numberOfLines={1}>
-                      {transaction.ref}
-                    </Text>
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: colors.text, fontWeight: '700', flexShrink: 0 }}
-                      numberOfLines={1}>
-                      {formatCurrency(transaction.amount)}
-                    </Text>
-                  </View>
-                  <View style={styles.listMeta}>
-                    <Text
-                      variant="bodySmall"
-                      style={[styles.listMetaText, { color: colors.textSecondary }]}
-                      numberOfLines={1}>
-                      {t(transaction.type === 'Sale' ? 'dash.type.sale' : 'dash.type.purchase')} · {transaction.party}
-                    </Text>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        { backgroundColor: getStatusColor(transaction.status) + '18' },
-                      ]}>
-                      <Text
-                        variant="labelSmall"
-                        style={{ color: getStatusColor(transaction.status) }}>
-                        {t(transaction.status === 'Completed' ? 'dash.status.completed' : 'dash.status.pending')}
-                      </Text>
-                    </View>
-                  </View>
-                  <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-                    {formatRelativeTime(transaction.timestamp, language)}
-                  </Text>
-                </View>
-              </View>
+            {recentTransactions.length === 0 ? (
+              <Text variant="bodyMedium" style={{ color: colors.textSecondary, paddingHorizontal: spacing.md }}>
+                {t('sale.emptyMsg')}
+              </Text>
+            ) : recentTransactions.map((transaction, index) => (
+              <TransactionRow
+                key={`${transaction.type}-${transaction.relatedId || transaction.id}`}
+                item={transaction}
+                showDivider={index < recentTransactions.length - 1}
+                onPress={() => openLedgerTransaction(navigation, transaction)}
+              />
             ))}
           </View>
         </CustomCard>
@@ -573,6 +551,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
             {recentActivities.length === 0 ? (
               <View style={styles.emptyActivity}>
                 <EmptyState
+                  compact
                   icon="history"
                   title={t('dash.noRecentActivity')}
                   message={t('dash.noRecentActivityMsg')}
@@ -583,7 +562,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                 <TouchableOpacity
                   key={activity.id}
                   activeOpacity={0.7}
-                  onPress={openActivityHistory}
+                  onPress={() => navigation.navigate('ActivityDetails', { activity })}
                   style={[
                     styles.listItem,
                     index < recentActivities.length - 1 && {
@@ -790,5 +769,9 @@ const styles = StyleSheet.create({
   },
   emptyActivity: {
     paddingVertical: spacing.sm,
+  },
+  viewAll: {
+    flexShrink: 0,
+    paddingTop: 2,
   },
 });

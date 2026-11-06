@@ -54,7 +54,15 @@ const dashboard = {
     success(res, await dashboardService.getSummary(req.businessId));
   }),
   activities: asyncHandler(async (req, res) => {
-    success(res, await dashboardService.getActivities(req.businessId, req.query));
+    const result = await dashboardService.getActivities(req.businessId, req.query);
+    success(res, result.items, 'OK', 200, { total: result.total, page: result.page, limit: result.limit });
+  }),
+};
+
+const transactions = {
+  list: asyncHandler(async (req, res) => {
+    const result = await dashboardService.listTransactions(req.businessId, req.query);
+    success(res, result.items, 'OK', 200, { total: result.total, page: result.page, limit: result.limit });
   }),
 };
 
@@ -71,4 +79,4 @@ const reports = {
   }),
 };
 
-module.exports = { sales, purchases, dashboard, reports };
+module.exports = { sales, purchases, dashboard, reports, transactions };

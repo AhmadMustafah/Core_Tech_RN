@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: '/auth/reset-password',
     CHANGE_PASSWORD: '/auth/change-password',
     PROFILE: '/auth/profile',
+    ME: '/auth/me',
   },
   DASHBOARD: {
     SUMMARY: '/dashboard/summary',
@@ -23,6 +24,16 @@ export const API_ENDPOINTS = {
     CATEGORIES: '/products/categories',
     UNITS: '/products/units',
   },
+  CATEGORIES: {
+    LIST: '/categories',
+    CREATE: '/categories',
+    UPDATE: (id: string) => `/categories/${id}`,
+    DELETE: (id: string) => `/categories/${id}`,
+  },
+  INVENTORY: {
+    MOVEMENTS: '/inventory/movements',
+    ADJUST: '/inventory/adjust',
+  },
   SALES: {
     LIST: '/sales',
     DETAIL: (id: string) => `/sales/${id}`,
@@ -30,11 +41,15 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/sales/${id}`,
     DELETE: (id: string) => `/sales/${id}`,
   },
+  TRANSACTIONS: {
+    LIST: '/transactions',
+  },
   PURCHASES: {
     LIST: '/purchases',
     DETAIL: (id: string) => `/purchases/${id}`,
     CREATE: '/purchases',
     UPDATE: (id: string) => `/purchases/${id}`,
+    RECEIVE: (id: string) => `/purchases/${id}/receive`,
     DELETE: (id: string) => `/purchases/${id}`,
   },
   CUSTOMERS: {
@@ -55,5 +70,24 @@ export const API_ENDPOINTS = {
     LIST: '/notifications',
     MARK_READ: (id: string) => `/notifications/${id}/read`,
     MARK_ALL_READ: '/notifications/read-all',
+  },
+  USERS: {
+    LIST: '/users',
+    DETAIL: (id: string) => `/users/${id}`,
+    CREATE: '/users',
+    UPDATE: (id: string) => `/users/${id}`,
+    DELETE: (id: string) => `/users/${id}`,
+  },
+  BUSINESS: {
+    CURRENT: '/businesses/current',
+  },
+  REPORTS: {
+    SALES: '/reports/sales',
+    PURCHASES: '/reports/purchases',
+    INVENTORY: '/reports/inventory',
+  },
+  SETTINGS: {
+    GET: '/settings',
+    UPDATE: '/settings',
   },
 };

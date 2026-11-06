@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
-  Alert,
 } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { CommonActions } from '@react-navigation/native';
 import { CustomButton, CustomInput, PasswordInput, FormScrollView } from '@/components/common';
+import { useAppDispatch } from '@/redux/hooks';
+import { register as registerAction } from '@/redux/slices/authSlice';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import {
@@ -34,9 +36,11 @@ const defaultValues: RegisterRequest = {
 };
 
 export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
+  const dispatch = useAppDispatch();
   const { colors } = useAppTheme();
   const { t } = useLocalization();
   const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const {
     control,
@@ -55,11 +59,19 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     setFormError(t('auth.formError'));
   };
 
-  const onSubmit = (_data: RegisterRequest) => {
+  const onSubmit = async (data: RegisterRequest) => {
+    if (submitting) return;
     setFormError(null);
-    Alert.alert(t('auth.registrationUnavailable'), t('auth.registrationUnavailableBody'), [
-      { text: t('auth.ok') },
-    ]);
+    setSubmitting(true);
+    const result = await dispatch(registerAction(data));
+    setSubmitting(false);
+    if (registerAction.fulfilled.match(result)) {
+      navigation.getParent()?.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
+      );
+      return;
+    }
+    setFormError((result.payload as string) || t('auth.formError'));
   };
 
   const fields = [
@@ -123,9 +135,6 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     <FormScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.scroll}>
-        <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>
-          {t('auth.createAccount')}
-        </Text>
         <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>
           {t('auth.registerSubtitle')}
         </Text>
@@ -178,6 +187,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         <CustomButton
           title={t('auth.createAccount')}
           onPress={handleSubmit(onSubmit, onInvalid)}
+          loading={submitting}
           fullWidth
           style={{ marginTop: spacing.md }}
         />

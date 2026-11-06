@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import { CustomButton, CustomInput, FormCard, FormIntro, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
@@ -19,9 +19,10 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<{ email: string }>();
+  const { control, handleSubmit, formState: { errors } } = useForm({ defaultValues: { email: '' } });
 
   const onSubmit = async ({ email }: { email: string }) => {
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -38,21 +39,13 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
     <FormScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}>
-      <View>
-        <Text style={styles.icon}>🔐</Text>
-        <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          {t('auth.forgotPasswordTitle')}
-        </Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
-          {t('auth.forgotPasswordHint')}
-        </Text>
-
-        {error && (
-          <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
-            <Text style={{ color: colors.error }}>{error}</Text>
-          </View>
-        )}
-
+      <FormIntro icon="email-lock" description={t('auth.forgotPasswordHint')} />
+      {error ? (
+        <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
+          <Text style={{ color: colors.error }}>{error}</Text>
+        </View>
+      ) : null}
+      <FormCard>
         <Controller
           control={control}
           name="email"
@@ -70,17 +63,15 @@ export const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
             />
           )}
         />
-
         <CustomButton title={t('auth.sendOtp')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-        <CustomButton title={t('auth.backToLogin')} variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
-      </View>
+      </FormCard>
+      <CustomButton title={t('auth.backToLogin')} variant="text" onPress={() => navigation.goBack()} />
     </FormScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
-  icon: { fontSize: 56, textAlign: 'center', marginBottom: spacing.lg },
+  content: { padding: spacing.md, paddingBottom: spacing.xxl },
   errorBox: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.md },
 });

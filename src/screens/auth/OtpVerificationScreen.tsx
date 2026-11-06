@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import { CustomButton, CustomInput, FormCard, FormIntro, FormScrollView } from '@/components/common';
 import { authService } from '@/services/authService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
@@ -20,9 +20,10 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<{ otp: string }>();
+  const { control, handleSubmit, formState: { errors } } = useForm({ defaultValues: { otp: '' } });
 
   const onSubmit = async ({ otp }: { otp: string }) => {
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -39,21 +40,13 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
     <FormScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}>
-      <View>
-        <Text style={styles.icon}>📱</Text>
-        <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700' }}>
-          {t('auth.verifyOtpTitle')}
-        </Text>
-        <Text variant="bodyMedium" style={{ color: colors.textSecondary, marginTop: spacing.sm, marginBottom: spacing.xl }}>
-          {t('auth.verifyOtpHint', { email })}
-        </Text>
-
-        {error && (
-          <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
-            <Text style={{ color: colors.error }}>{error}</Text>
-          </View>
-        )}
-
+      <FormIntro icon="shield-key-outline" description={t('auth.verifyOtpHint', { email })} />
+      {error ? (
+        <View style={[styles.errorBox, { backgroundColor: colors.error + '15' }]}>
+          <Text style={{ color: colors.error }}>{error}</Text>
+        </View>
+      ) : null}
+      <FormCard>
         <Controller
           control={control}
           name="otp"
@@ -71,17 +64,15 @@ export const OtpVerificationScreen: React.FC<Props> = ({ navigation, route }) =>
             />
           )}
         />
-
         <CustomButton title={t('auth.verifyOtp')} onPress={handleSubmit(onSubmit)} loading={loading} fullWidth />
-        <CustomButton title={t('auth.back')} variant="text" onPress={() => navigation.goBack()} style={{ marginTop: spacing.md }} />
-      </View>
+      </FormCard>
+      <CustomButton title={t('auth.back')} variant="text" onPress={() => navigation.goBack()} />
     </FormScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
-  icon: { fontSize: 56, textAlign: 'center', marginBottom: spacing.lg },
+  content: { padding: spacing.md, paddingBottom: spacing.xxl },
   errorBox: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.md },
 });

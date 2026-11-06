@@ -5,8 +5,9 @@ import type {
   Language,
   SessionTimeout,
 } from '@/types';
-import { storage } from '@/utils/storage';
+import { storage, tokenStorage } from '@/utils/storage';
 import { STORAGE_KEYS } from '@/constants';
+import { settingsService } from '@/services/settingsService';
 
 export type AppPreferences = {
   notifySales: boolean;
@@ -101,10 +102,47 @@ export const loadSettingsPreferences = createAsyncThunk(
       storage.getItem<Partial<AppPreferences>>(STORAGE_KEYS.SETTINGS_PREFERENCES),
     ]);
 
+    let nextLanguage = normalizeLanguage(language);
+    let nextNotifications = notificationsEnabled ?? true;
+    let nextPreferences = mergePreferences(preferences);
+
     return {
-      language: normalizeLanguage(language),
-      notificationsEnabled: notificationsEnabled ?? true,
-      preferences: mergePreferences(preferences),
+      language: nextLanguage,
+      notificationsEnabled: nextNotifications,
+      preferences: nextPreferences,
+    };
+  },
+);
+
+export const syncRemoteSettings = createAsyncThunk(
+  'settings/syncRemote',
+  async (_, { getState }) => {
+    const tokens = await tokenStorage.getTokens();
+    if (!tokens) {
+      return null;
+    }
+
+    const remote = await settingsService.get();
+    const current = (getState() as { settings: SettingsState }).settings;
+    const nextLanguage = remote.language
+      ? normalizeLanguage(remote.language)
+      : current.language;
+    const nextNotifications =
+      typeof remote.notificationsEnabled === 'boolean'
+        ? remote.notificationsEnabled
+        : current.notificationsEnabled;
+    const nextPreferences = mergePreferences({
+      ...current.preferences,
+      dateFormat: remote.dateFormat,
+      currencyFormat: remote.currencyDisplay,
+      sessionTimeout: remote.sessionTimeout,
+      notifyLowStock: remote.lowStockAlerts,
+    });
+
+    return {
+      language: nextLanguage,
+      notificationsEnabled: nextNotifications,
+      preferences: nextPreferences,
     };
   },
 );
@@ -115,6 +153,16 @@ export const updateAppPreferences = createAsyncThunk(
     const current = (getState() as { settings: SettingsState }).settings.preferences;
     const next = mergePreferences({ ...current, ...patch });
     await storage.setItem(STORAGE_KEYS.SETTINGS_PREFERENCES, next);
+    try {
+      await settingsService.update({
+        dateFormat: next.dateFormat,
+        currencyDisplay: next.currencyFormat,
+        sessionTimeout: next.sessionTimeout,
+        lowStockAlerts: next.notifyLowStock,
+      });
+    } catch {
+      // Local prefs remain if the user cannot update server settings.
+    }
     return next;
   },
 );
@@ -139,6 +187,14 @@ const settingsSlice = createSlice({
     });
     builder.addCase(loadSettingsPreferences.rejected, state => {
       state.hydrated = true;
+    });
+    builder.addCase(syncRemoteSettings.fulfilled, (state, action) => {
+      if (!action.payload) {
+        return;
+      }
+      state.language = action.payload.language;
+      state.notificationsEnabled = action.payload.notificationsEnabled;
+      state.preferences = action.payload.preferences;
     });
     builder.addCase(updateAppPreferences.fulfilled, (state, action) => {
       state.preferences = action.payload;

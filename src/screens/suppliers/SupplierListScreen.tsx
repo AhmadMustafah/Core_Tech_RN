@@ -5,12 +5,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { EmptyState, LoadingState, ErrorState } from '@/components/common';
 import { supplierService } from '@/services/supplierService';
+import { getErrorMessage } from '@/services/api';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { getInitials } from '@/utils/formatters';
 import type { Supplier } from '@/types';
 import type { ProfileStackParamList } from '@/types/navigation';
-import { spacing, borderRadius } from '@/theme';
+import { spacing, borderRadius, listContentStyle, listPerformanceProps } from '@/theme';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'SupplierList'>;
 
@@ -23,8 +24,9 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try { setSuppliers(await supplierService.getAll()); }
-    catch (err) { setError(err instanceof Error ? err.message : 'common.failedLoad'); }
+    catch (err) { setError(getErrorMessage(err)); }
     finally { setLoading(false); }
   }, []);
 
@@ -32,23 +34,26 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {error ? <ErrorState message={error} onRetry={load} /> : (
-        <FlatList data={suppliers} keyExtractor={i => i.id} contentContainerStyle={styles.list}
+      {loading && suppliers.length === 0 ? (
+        <LoadingState />
+      ) : error ? <ErrorState message={error} onRetry={load} /> : (
+        <FlatList data={suppliers} keyExtractor={i => i.id} contentContainerStyle={listContentStyle}
+          {...listPerformanceProps}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
           renderItem={({ item }) => (
-            <TouchableOpacity style={[styles.card, { backgroundColor: colors.surface }]}
+            <TouchableOpacity style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => navigation.navigate('SupplierDetails', { supplierId: item.id })}>
-              <Avatar.Text size={44} label={getInitials(item.name)} style={{ backgroundColor: colors.secondary }} />
+              <Avatar.Text size={44} label={getInitials(item.name)} color={colors.onPrimary} style={{ backgroundColor: colors.primary }} />
               <View style={styles.info}>
-                <Text variant="titleSmall" style={{ color: colors.text, fontWeight: '600' }}>{item.name}</Text>
-                <Text variant="bodySmall" style={{ color: colors.textSecondary }}>{item.email} • {item.phone}</Text>
+                <Text variant="titleSmall" numberOfLines={1} style={{ color: colors.text, fontWeight: '600' }}>{item.name}</Text>
+                <Text variant="bodySmall" numberOfLines={1} style={{ color: colors.textSecondary }}>{item.email} • {item.phone}</Text>
               </View>
             </TouchableOpacity>
           )}
           ListEmptyComponent={<EmptyState icon="truck-outline" title={t('supplier.empty')} message={t('supplier.emptyMsg')} />}
         />
       )}
-      <FAB icon="plus" style={[styles.fab, { backgroundColor: colors.secondary }]} onPress={() => navigation.navigate('AddSupplier')} />
+      <FAB icon="plus" color={colors.onPrimary} style={[styles.fab, { backgroundColor: colors.primary }]} onPress={() => navigation.navigate('AddSupplier')} />
     </View>
   );
 };
@@ -56,7 +61,7 @@ export const SupplierListScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   list: { padding: spacing.md, paddingBottom: 80 },
-  card: { flexDirection: 'row', padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, alignItems: 'center', elevation: 1 },
+  card: { flexDirection: 'row', padding: spacing.md, borderRadius: borderRadius.md, marginBottom: spacing.sm, alignItems: 'center', borderWidth: 1 },
   info: { marginStart: spacing.md, flex: 1 },
   fab: { position: 'absolute', end: spacing.md, bottom: spacing.md },
 });

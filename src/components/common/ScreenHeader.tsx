@@ -38,6 +38,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
         <Avatar.Text
           size={44}
           label={getInitials(userName)}
+          color={colors.onPrimary}
           style={{ backgroundColor: colors.primary }}
         />
       )}

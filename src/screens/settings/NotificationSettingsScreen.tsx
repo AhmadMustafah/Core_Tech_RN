@@ -1,17 +1,26 @@
 import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
+import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { setNotificationsEnabled, updateAppPreferences } from '@/redux/slices/settingsSlice';
 import { storage } from '@/utils/storage';
+import { settingsService } from '@/services/settingsService';
 import { STORAGE_KEYS } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
-import type { ProfileStackParamList } from '@/types/navigation';
+import type { MainShellParamList, MainTabParamList, ProfileStackParamList } from '@/types/navigation';
 import { spacing } from '@/theme';
 import { SettingsHint, SettingsNavRow, SettingsSection, SettingsToggleRow } from './settingsUi';
 
-type Props = NativeStackScreenProps<ProfileStackParamList, 'NotificationSettings'>;
+type Props = CompositeScreenProps<
+  NativeStackScreenProps<ProfileStackParamList, 'NotificationSettings'>,
+  CompositeScreenProps<
+    BottomTabScreenProps<MainTabParamList, 'Profile'>,
+    NativeStackScreenProps<MainShellParamList>
+  >
+>;
 
 export const NotificationSettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
@@ -24,6 +33,7 @@ export const NotificationSettingsScreen: React.FC<Props> = ({ navigation }) => {
     async (value: boolean) => {
       dispatch(setNotificationsEnabled(value));
       await storage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, value);
+      settingsService.update({ notificationsEnabled: value }).catch(() => undefined);
     },
     [dispatch],
   );

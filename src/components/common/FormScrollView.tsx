@@ -60,7 +60,7 @@ const measureNodeInWindow = (node: unknown, callback: MeasureInWindowCallback) =
 export const FormScrollView: React.FC<FormScrollViewProps> = ({
   children,
   contentContainerStyle,
-  keyboardVerticalOffset = Platform.OS === 'ios' ? 88 : 0,
+  keyboardVerticalOffset = Platform.OS === 'ios' ? 88 : 24,
   onScroll,
   style,
   ...scrollProps
@@ -223,8 +223,8 @@ export const FormScrollView: React.FC<FormScrollViewProps> = ({
   return (
     <KeyboardAvoidingView
       style={[styles.container, style]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      enabled={Platform.OS === 'ios'}
+      behavior="padding"
+      enabled
       keyboardVerticalOffset={keyboardVerticalOffset}>
       <ScrollView
         keyboardShouldPersistTaps="handled"

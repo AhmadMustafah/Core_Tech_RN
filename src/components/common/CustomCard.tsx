@@ -27,12 +27,12 @@ export const CustomCard: React.FC<CustomCardProps> = ({
 
   const content = (
     <Card
-      mode="elevated"
+      mode="outlined"
       style={[
         styles.card,
         {
           backgroundColor: colors.surface,
-          shadowColor: colors.cardShadow,
+          borderColor: colors.borderLight,
         },
         style,
       ]}
@@ -67,17 +67,19 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
-    elevation: 2,
+    elevation: 0,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
+    gap: spacing.sm,
   },
   headerText: {
     flex: 1,
+    minWidth: 0,
   },
 });

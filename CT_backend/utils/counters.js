@@ -1,10 +1,14 @@
 const Counter = require('../models/Counter');
 
 const nextSequence = async (businessId, key, session) => {
+  const options = { returnDocument: 'after', upsert: true };
+  if (session) {
+    options.session = session;
+  }
   const doc = await Counter.findOneAndUpdate(
     { businessId, key },
     { $inc: { seq: 1 } },
-    { returnDocument: 'after', upsert: true, session },
+    options,
   );
   return doc.seq;
 };

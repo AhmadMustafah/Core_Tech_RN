@@ -1,10 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Text, Menu, Button, Divider } from 'react-native-paper';
-import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useCachedFocusLoad } from '@/hooks/useCachedFocusLoad';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
+import { useAppDispatch } from '@/redux/hooks';
+import { markAppDataStale } from '@/redux/slices/dataSyncSlice';
 import { saleService } from '@/services/saleService';
+import { getErrorMessage } from '@/services/api';
 import { productService } from '@/services/productService';
 import { customerService } from '@/services/customerService';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -19,6 +22,7 @@ import { validatePositiveNumber } from '@/utils/validators';
 type Props = NativeStackScreenProps<SalesStackParamList, 'CreateSale'>;
 
 export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
+  const dispatch = useAppDispatch();
   const { colors } = useAppTheme();
   const { t } = useLocalization();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -35,10 +39,12 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
   const [taxError, setTaxError] = useState<string | undefined>();
   const [formError, setFormError] = useState<string | null>(null);
 
-  useFocusEffect(useCallback(() => {
+  const loadLookups = useCallback(() => {
     customerService.getAll().then(setCustomers);
     productService.getAll().then(setProducts);
-  }, []));
+  }, []);
+
+  useCachedFocusLoad(loadLookups);
 
   const addProduct = (product: Product) => {
     setItems(prev => {
@@ -51,12 +57,25 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
     setProductMenu(false);
   };
 
+  const changeQty = (productId: string, delta: number) => {
+    setItems(prev =>
+      prev
+        .map(item =>
+          item.productId === productId
+            ? { ...item, quantity: item.quantity + delta, total: (item.quantity + delta) * item.price }
+            : item,
+        )
+        .filter(item => item.quantity > 0),
+    );
+  };
+
   const subtotal = items.reduce((s, i) => s + i.quantity * i.price, 0);
   const totalDiscount = parseFloat(discount) || 0;
   const totalTax = parseFloat(tax) || 0;
   const totalAmount = subtotal - totalDiscount + totalTax;
 
   const handleSubmit = async () => {
+    if (loading) return;
     setFormError(null);
     const discountValidation = validatePositiveNumber(discount, 'Discount', true);
     const taxValidation = validatePositiveNumber(tax, 'Tax', true);
@@ -89,7 +108,10 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
         totalAmount,
         paymentStatus,
       });
+      dispatch(markAppDataStale());
       navigation.goBack();
+    } catch (err) {
+      setFormError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -97,7 +119,6 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <FormScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.md }}>{t('sale.create')}</Text>
       {formError && (
         <Text style={{ color: colors.error, marginBottom: spacing.sm }}>{formError}</Text>
       )}
@@ -121,9 +142,14 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
       </Menu>
 
       {items.map((item, index) => (
-        <View key={index} style={[styles.itemCard, { backgroundColor: colors.surface }]}>
+        <View key={item.productId} style={[styles.itemCard, { backgroundColor: colors.surface }]}>
           <Text style={{ color: colors.text, fontWeight: '600' }}>{item.productName}</Text>
-          <Text style={{ color: colors.textSecondary }}>{t('common.qty')}: {item.quantity} • {formatCurrency(item.price)}</Text>
+          <Text style={{ color: colors.textSecondary }}>{formatCurrency(item.price)} · {formatCurrency(item.total)}</Text>
+          <View style={styles.qtyRow}>
+            <CustomButton title="−" compact onPress={() => changeQty(item.productId, -1)} />
+            <Text style={{ color: colors.text, fontWeight: '700', minWidth: 24, textAlign: 'center' }}>{item.quantity}</Text>
+            <CustomButton title="+" compact onPress={() => changeQty(item.productId, 1)} />
+          </View>
         </View>
       ))}
 
@@ -142,7 +168,7 @@ export const CreateSaleScreen: React.FC<Props> = ({ navigation }) => {
                   paymentStatus === status ? colors.primary : colors.surfaceVariant,
               },
             ]}>
-            <Text style={{ color: paymentStatus === status ? '#FFF' : colors.text }}>
+            <Text style={{ color: paymentStatus === status ? colors.onPrimary : colors.text }}>
               {t(PAYMENT_STATUS_KEYS[status])}
             </Text>
           </TouchableOpacity>
@@ -162,6 +188,7 @@ const styles = StyleSheet.create({
   content: { padding: spacing.md, paddingBottom: spacing.xxl },
   menuBtn: { marginBottom: spacing.md },
   itemCard: { padding: spacing.md, borderRadius: 8, marginBottom: spacing.sm },
+  qtyRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
   paymentRow: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md },
   paymentChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: 20 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },

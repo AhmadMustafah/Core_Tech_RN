@@ -9,6 +9,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
+  isLoggingOut: boolean;
   error: string | null;
 }
 
@@ -17,15 +18,21 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   isInitialized: false,
+  isLoggingOut: false,
   error: null,
 };
 
 export const initializeAuth = createAsyncThunk('auth/initialize', async () => {
   const tokens = await tokenStorage.getTokens();
   if (!tokens) return null;
-  const user = await storage.getItem<User>(STORAGE_KEYS.USER);
-  if (!user) return null;
-  return user;
+  try {
+    const user = await authService.getProfile();
+    await storage.setItem(STORAGE_KEYS.USER, user);
+    return user;
+  } catch {
+    await tokenStorage.clearTokens();
+    return null;
+  }
 });
 
 export const login = createAsyncThunk(
@@ -56,10 +63,30 @@ export const register = createAsyncThunk(
   },
 );
 
-export const logout = createAsyncThunk('auth/logout', async () => {
-  await authService.logout();
-  await tokenStorage.clearTokens();
-});
+export const logout = createAsyncThunk(
+  'auth/logout',
+  async (_, { rejectWithValue }) => {
+    try {
+      await authService.logout();
+      await tokenStorage.clearTokens();
+    } catch (error) {
+      await tokenStorage.clearTokens();
+      return rejectWithValue(authService.getErrorMessage(error));
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { isLoggingOut } = (getState() as { auth: AuthState }).auth;
+      return !isLoggingOut;
+    },
+  },
+);
+
+const clearSession = (state: AuthState) => {
+  state.user = null;
+  state.isAuthenticated = false;
+  state.isLoggingOut = false;
+};
 
 export const updateProfile = createAsyncThunk(
   'auth/updateProfile',
@@ -129,10 +156,11 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
       })
-      .addCase(logout.fulfilled, state => {
-        state.user = null;
-        state.isAuthenticated = false;
+      .addCase(logout.pending, state => {
+        state.isLoggingOut = true;
       })
+      .addCase(logout.fulfilled, clearSession)
+      .addCase(logout.rejected, clearSession)
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.user = action.payload;
       });

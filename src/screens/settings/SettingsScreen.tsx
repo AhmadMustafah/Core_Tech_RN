@@ -1,116 +1,115 @@
-import React, { useCallback, useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { Text } from 'react-native-paper';
+import React, { useCallback } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useAppSelector } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { setThemeMode } from '@/redux/slices/themeSlice';
+import { setLanguage } from '@/redux/slices/settingsSlice';
+import { storage } from '@/utils/storage';
+import { settingsService } from '@/services/settingsService';
+import { STORAGE_KEYS } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
+import type { Language, ThemeMode } from '@/types';
 import type { ProfileStackParamList } from '@/types/navigation';
-import { spacing, typography } from '@/theme';
-import { SettingsNavRow, SettingsSection } from './settingsUi';
+import { spacing } from '@/theme';
+import { SettingsChoiceRow, SettingsNavRow, SettingsSection } from './settingsUi';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'Settings'>;
-
-const THEME_MODE_KEYS = {
-  light: 'settings.light',
-  dark: 'settings.dark',
-  system: 'settings.system',
-} as const;
-
-const THEME_PRESET_KEYS = {
-  default: 'theme.default',
-  ocean: 'theme.ocean',
-  emerald: 'theme.emerald',
-  purple: 'theme.purple',
-  sunset: 'theme.sunset',
-} as const;
-
-type SettingsHubRoute =
-  | 'AccountSettings'
-  | 'ThemeSettings'
-  | 'LanguageSettings'
-  | 'NotificationSettings'
-  | 'PreferencesSettings'
-  | 'AboutSupport';
 
 export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
   const { t } = useLocalization();
-  const { notificationsEnabled, language } = useAppSelector(state => state.settings);
+  const dispatch = useAppDispatch();
   const themeMode = useAppSelector(state => state.theme.mode);
-  const themePreset = useAppSelector(state => state.theme.preset);
+  const language = useAppSelector(state => state.settings.language);
 
-  const themeValue = useMemo(
-    () => `${t(THEME_MODE_KEYS[themeMode])} · ${t(THEME_PRESET_KEYS[themePreset])}`,
-    [t, themeMode, themePreset],
+  const handleThemeChange = useCallback(
+    async (mode: ThemeMode) => {
+      if (mode === themeMode) {
+        return;
+      }
+      dispatch(setThemeMode(mode));
+      await storage.setItem(STORAGE_KEYS.THEME_MODE, mode);
+      settingsService.update({ themeMode: mode }).catch(() => undefined);
+    },
+    [dispatch, themeMode],
   );
 
-  const go = useCallback(
-    (screen: SettingsHubRoute) => {
-      navigation.navigate(screen);
+  const handleLanguage = useCallback(
+    async (lang: Language) => {
+      if (lang === language) {
+        return;
+      }
+      await storage.setItem(STORAGE_KEYS.LANGUAGE, lang);
+      dispatch(setLanguage(lang));
+      settingsService.update({ language: lang }).catch(() => undefined);
     },
-    [navigation],
+    [dispatch, language],
   );
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}>
-      <View style={styles.intro}>
-        <Text style={[styles.introTitle, { color: colors.text }]}>{t('settings.centerTitle')}</Text>
-        <Text style={[styles.introSubtitle, { color: colors.textSecondary }]}>
-          {t('settings.centerSubtitle')}
-        </Text>
-      </View>
-
-      <SettingsSection title={t('settings.section.workspace')}>
-        <SettingsNavRow
-          icon="account-circle-outline"
-          title={t('settings.account')}
-          description={t('settings.accountDesc')}
-          onPress={() => go('AccountSettings')}
+      <SettingsSection title={t('settings.theme')}>
+        <SettingsChoiceRow
+          icon="white-balance-sunny"
+          title={t('settings.bright')}
+          description={t('settings.brightDesc')}
+          selected={themeMode === 'light'}
+          onPress={() => handleThemeChange('light')}
         />
-        <SettingsNavRow
-          icon="palette-outline"
-          title={t('settings.theme')}
-          description={t('settings.themeDesc')}
-          value={themeValue}
-          onPress={() => go('ThemeSettings')}
-        />
-        <SettingsNavRow
-          icon="translate"
-          title={t('settings.language')}
-          description={t('settings.languageDesc')}
-          value={t(language === 'ur' ? 'settings.urdu' : 'settings.english')}
+        <SettingsChoiceRow
+          icon="moon-waning-crescent"
+          title={t('settings.dark')}
+          description={t('settings.darkDesc')}
+          selected={themeMode === 'dark'}
           last
-          onPress={() => go('LanguageSettings')}
+          onPress={() => handleThemeChange('dark')}
         />
       </SettingsSection>
 
-      <SettingsSection title={t('settings.section.operations')}>
+      <SettingsSection title={t('settings.language')}>
+        <SettingsChoiceRow
+          icon="format-textdirection-l-to-r"
+          title={t('settings.english')}
+          description={t('settings.languageEnglishDesc')}
+          selected={language === 'en'}
+          onPress={() => handleLanguage('en')}
+        />
+        <SettingsChoiceRow
+          icon="format-textdirection-r-to-l"
+          title={t('settings.urdu')}
+          description={t('settings.languageUrduDesc')}
+          selected={language === 'ur'}
+          last
+          onPress={() => handleLanguage('ur')}
+        />
+      </SettingsSection>
+
+      <SettingsSection title={t('settings.account')}>
+        <SettingsNavRow
+          icon="account-circle-outline"
+          title={t('settings.accountProfile')}
+          description={t('settings.accountDesc')}
+          onPress={() => navigation.navigate('AccountSettings')}
+        />
         <SettingsNavRow
           icon="bell-outline"
           title={t('settings.notifications')}
           description={t('settings.notificationsHubDesc')}
-          value={t(notificationsEnabled ? 'settings.on' : 'settings.off')}
-          onPress={() => go('NotificationSettings')}
-        />
-        <SettingsNavRow
-          icon="tune"
-          title={t('settings.preferencesTitle')}
-          description={t('settings.preferencesDesc')}
           last
-          onPress={() => go('PreferencesSettings')}
+          onPress={() => navigation.navigate('NotificationSettings')}
         />
       </SettingsSection>
 
-      <SettingsSection title={t('settings.section.help')}>
+      <SettingsSection title={t('settings.about')}>
         <SettingsNavRow
-          icon="help-circle-outline"
+          icon="information-outline"
           title={t('settings.aboutSupport')}
           description={t('settings.aboutSupportDesc')}
           last
-          onPress={() => go('AboutSupport')}
+          onPress={() => navigation.navigate('AboutSupport')}
         />
       </SettingsSection>
     </ScrollView>
@@ -119,17 +118,5 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingBottom: spacing.xxl, paddingTop: spacing.sm },
-  intro: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    paddingTop: spacing.sm,
-  },
-  introTitle: {
-    ...(typography.h3 as object),
-  },
-  introSubtitle: {
-    ...(typography.bodySmall as object),
-    marginTop: spacing.xs,
-  },
+  content: { paddingBottom: spacing.xxl, paddingTop: spacing.md },
 });

@@ -7,7 +7,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Text } from 'react-native-paper';
+import { Text, Icon } from 'react-native-paper';
 import { CommonActions } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton } from '@/components/common';
@@ -23,9 +23,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 const { width } = Dimensions.get('window');
 
 const SLIDE_KEYS = [
-  { id: '1', icon: '📊', titleKey: 'onboarding.slide1Title', bodyKey: 'onboarding.slide1Body' },
-  { id: '2', icon: '📦', titleKey: 'onboarding.slide2Title', bodyKey: 'onboarding.slide2Body' },
-  { id: '3', icon: '💼', titleKey: 'onboarding.slide3Title', bodyKey: 'onboarding.slide3Body' },
+  { id: '1', icon: 'view-dashboard-outline', titleKey: 'onboarding.slide1Title', bodyKey: 'onboarding.slide1Body' },
+  { id: '2', icon: 'warehouse', titleKey: 'onboarding.slide2Title', bodyKey: 'onboarding.slide2Body' },
+  { id: '3', icon: 'chart-line', titleKey: 'onboarding.slide3Title', bodyKey: 'onboarding.slide3Body' },
 ] as const;
 
 export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
@@ -86,7 +86,9 @@ export const OnboardingScreen: React.FC<Props> = ({ navigation }) => {
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width }]}>
-            <Text style={styles.icon}>{item.icon}</Text>
+            <View style={[styles.iconWrap, { backgroundColor: colors.primaryMuted }]}>
+              <Icon source={item.icon} size={40} color={colors.primary} />
+            </View>
             <Text variant="headlineMedium" style={[styles.title, { color: colors.text }]}>
               {t(item.titleKey)}
             </Text>
@@ -141,8 +143,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.xl,
   },
-  icon: {
-    fontSize: 80,
+  iconWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: spacing.xl,
   },
   title: {

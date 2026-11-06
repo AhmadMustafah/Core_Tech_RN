@@ -24,8 +24,8 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
     : t('common.somethingWrong');
 
   return (
-    <View style={styles.container}>
-      <Icon source="alert-circle-outline" size={64} color={colors.error} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Icon source="alert-circle-outline" size={48} color={colors.error} />
       <Text
         variant="titleMedium"
         style={[styles.title, { color: colors.text }, directionStyle]}>

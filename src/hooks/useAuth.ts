@@ -5,7 +5,7 @@ import type { LoginRequest, RegisterRequest } from '@/types';
 
 export const useAuth = () => {
   const dispatch = useAppDispatch();
-  const { user, isAuthenticated, isLoading, isInitialized, error } =
+  const { user, isAuthenticated, isLoading, isInitialized, isLoggingOut, error } =
     useAppSelector(state => state.auth);
 
   const handleLogin = useCallback(
@@ -30,6 +30,7 @@ export const useAuth = () => {
     isAuthenticated,
     isLoading,
     isInitialized,
+    isLoggingOut,
     error,
     login: handleLogin,
     register: handleRegister,

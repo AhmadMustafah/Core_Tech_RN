@@ -18,7 +18,7 @@ const router = express.Router();
 
 router.post('/register', authLimiter, registerRules, validate, authController.register);
 router.post('/login', authLimiter, loginRules, validate, authController.login);
-router.post('/logout', authController.logout);
+router.post('/logout', refreshRules, validate, authController.logout);
 router.post('/refresh', authLimiter, refreshRules, validate, authController.refresh);
 router.post('/forgot-password', authLimiter, forgotRules, validate, authController.forgotPassword);
 router.post('/verify-otp', authLimiter, otpRules, validate, authController.verifyOtp);

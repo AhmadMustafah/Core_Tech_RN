@@ -6,8 +6,10 @@ const ACCESS_OPTIONS = { expiresIn: env.jwtAccessExpires, algorithm: 'HS256' };
 const REFRESH_OPTIONS = { expiresIn: env.jwtRefreshExpires, algorithm: 'HS256' };
 const VERIFY_OPTIONS = { algorithms: ['HS256'] };
 
-const signAccessToken = (payload) => jwt.sign(payload, env.jwtAccessSecret, ACCESS_OPTIONS);
-const signRefreshToken = (payload) => jwt.sign(payload, env.jwtRefreshSecret, REFRESH_OPTIONS);
+const withJwtId = (payload) => ({ ...payload, jti: crypto.randomUUID() });
+
+const signAccessToken = (payload) => jwt.sign(withJwtId(payload), env.jwtAccessSecret, ACCESS_OPTIONS);
+const signRefreshToken = (payload) => jwt.sign(withJwtId(payload), env.jwtRefreshSecret, REFRESH_OPTIONS);
 
 const verifyAccessToken = (token) => jwt.verify(token, env.jwtAccessSecret, VERIFY_OPTIONS);
 const verifyRefreshToken = (token) => jwt.verify(token, env.jwtRefreshSecret, VERIFY_OPTIONS);

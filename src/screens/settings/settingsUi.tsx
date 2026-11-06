@@ -38,44 +38,65 @@ type RowBaseProps = {
 
 export const SettingsNavRow: React.FC<
   RowBaseProps & {
-    onPress: () => void;
+    onPress?: () => void;
     value?: string;
   }
 > = ({ icon, title, description, value, last, onPress }) => {
   const { colors } = useAppTheme();
   const { directionalIconStyle } = useLocalization();
+  const interactive = Boolean(onPress);
 
-  return (
+  const content = (
     <>
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.primaryMuted }]}
-        accessibilityRole="button">
-        <View style={[styles.iconWrap, { backgroundColor: colors.surfaceVariant }]}>
-          <Icon source={icon} size={20} color={colors.primary} />
-        </View>
-        <View style={styles.rowText}>
-          <Text variant="bodyLarge" style={{ color: colors.text, fontWeight: '600' }}>
-            {title}
-          </Text>
-          {description ? (
-            <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
-              {description}
-            </Text>
-          ) : null}
-        </View>
-        {value ? (
+      <View style={[styles.iconWrap, { backgroundColor: colors.surfaceVariant }]}>
+        <Icon source={icon} size={20} color={colors.primary} />
+      </View>
+      <View style={styles.rowText}>
+        <Text
+          variant="bodyLarge"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={{ color: colors.text, fontWeight: '600' }}>
+          {title}
+        </Text>
+        {description ? (
           <Text
-            variant="labelLarge"
-            numberOfLines={1}
-            style={[styles.value, { color: colors.primary }]}>
-            {value}
+            variant="bodySmall"
+            numberOfLines={2}
+            ellipsizeMode="tail"
+            style={{ color: colors.textSecondary, marginTop: 2 }}>
+            {description}
           </Text>
         ) : null}
+      </View>
+      {value ? (
+        <Text
+          variant="labelLarge"
+          numberOfLines={1}
+          style={[styles.value, { color: colors.primary }]}>
+          {value}
+        </Text>
+      ) : null}
+      {interactive ? (
         <View style={directionalIconStyle}>
           <Icon source="chevron-right" size={22} color={colors.textMuted} />
         </View>
-      </Pressable>
+      ) : null}
+    </>
+  );
+
+  return (
+    <>
+      {interactive ? (
+        <Pressable
+          onPress={onPress}
+          style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.primaryMuted }]}
+          accessibilityRole="button">
+          {content}
+        </Pressable>
+      ) : (
+        <View style={styles.row}>{content}</View>
+      )}
       {last ? null : <Divider />}
     </>
   );

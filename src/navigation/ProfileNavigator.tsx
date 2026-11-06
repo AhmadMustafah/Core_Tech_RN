@@ -4,13 +4,9 @@ import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 import { EditProfileScreen } from '@/screens/profile/EditProfileScreen';
 import { ChangePasswordScreen } from '@/screens/profile/ChangePasswordScreen';
 import { SettingsScreen } from '@/screens/settings/SettingsScreen';
-import { ThemeSettingsScreen } from '@/screens/settings/ThemeSettingsScreen';
 import { AccountSettingsScreen } from '@/screens/settings/AccountSettingsScreen';
-import { LanguageSettingsScreen } from '@/screens/settings/LanguageSettingsScreen';
 import { NotificationSettingsScreen } from '@/screens/settings/NotificationSettingsScreen';
-import { PreferencesSettingsScreen } from '@/screens/settings/PreferencesSettingsScreen';
 import { AboutSupportScreen } from '@/screens/settings/AboutSupportScreen';
-import { NotificationsScreen } from '@/screens/notifications/NotificationsScreen';
 import { CustomerListScreen } from '@/screens/customers/CustomerListScreen';
 import { CustomerDetailsScreen } from '@/screens/customers/CustomerDetailsScreen';
 import { CustomerFormScreen } from '@/screens/customers/CustomerFormScreen';
@@ -42,25 +38,13 @@ export const ProfileNavigator: React.FC = () => {
       <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: t('screen.editProfile') }} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: t('screen.changePassword') }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: t('screen.settings') }} />
-      <Stack.Screen name="ThemeSettings" component={ThemeSettingsScreen} options={{ title: t('screen.theme') }} />
       <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} options={{ title: t('screen.account') }} />
-      <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} options={{ title: t('screen.language') }} />
       <Stack.Screen
         name="NotificationSettings"
         component={NotificationSettingsScreen}
         options={{ title: t('screen.notificationSettings') }}
       />
-      <Stack.Screen
-        name="PreferencesSettings"
-        component={PreferencesSettingsScreen}
-        options={{ title: t('screen.preferences') }}
-      />
       <Stack.Screen name="AboutSupport" component={AboutSupportScreen} options={{ title: t('screen.aboutSupport') }} />
-      <Stack.Screen
-        name="Notifications"
-        component={NotificationsScreen}
-        options={{ title: t('screen.notifications') }}
-      />
       <Stack.Screen name="CustomerList" component={CustomerListScreen} options={{ title: t('screen.customers') }} />
       <Stack.Screen name="CustomerDetails" component={CustomerDetailsScreen} options={{ title: t('screen.customerDetails') }} />
       <Stack.Screen name="AddCustomer" component={CustomerFormScreen} options={{ title: t('screen.addCustomer') }} />

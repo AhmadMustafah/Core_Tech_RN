@@ -5,6 +5,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { supplierService } from '@/services/supplierService';
+import { useAppDispatch } from '@/redux/hooks';
+import { markAppDataStale } from '@/redux/slices/dataSyncSlice';
+import { getErrorMessage } from '@/services/api';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { validateEmail, validatePhone, validateName, validateOptionalText } from '@/utils/validators';
@@ -16,11 +19,13 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'AddSupplier' | 'Edit
 interface SupplierForm { name: string; email: string; phone: string; address: string; company: string; }
 
 export const SupplierFormScreen: React.FC<Props> = ({ navigation, route }) => {
+  const dispatch = useAppDispatch();
   const isEdit = route.name === 'EditSupplier';
   const supplierId = isEdit ? (route.params as { supplierId: string }).supplierId : null;
   const { colors } = useAppTheme();
   const { t } = useLocalization();
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { control, handleSubmit, setValue, formState: { errors } } = useForm<SupplierForm>();
 
   React.useEffect(() => {
@@ -33,11 +38,16 @@ export const SupplierFormScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [isEdit, supplierId, setValue]);
 
   const onSubmit = async (data: SupplierForm) => {
+    if (loading) return;
+    setFormError(null);
     setLoading(true);
     try {
       if (isEdit && supplierId) await supplierService.update(supplierId, data);
       else await supplierService.create(data);
+      dispatch(markAppDataStale());
       navigation.goBack();
+    } catch (err) {
+      setFormError(getErrorMessage(err));
     } finally { setLoading(false); }
   };
 
@@ -51,7 +61,7 @@ export const SupplierFormScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
-        <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>{isEdit ? t('supplier.edit') : t('supplier.add')}</Text>
+        {formError ? <Text style={{ color: colors.error, marginBottom: spacing.md }}>{formError}</Text> : null}
         {fields.map(f => (
           <Controller key={f.name} control={control} name={f.name} rules={{ validate: f.validate }}
             render={({ field: { onChange, value } }) => (

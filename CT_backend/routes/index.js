@@ -15,7 +15,7 @@ const {
   adjustRules,
 } = require('../validators/commonValidators');
 const { products, customers, suppliers, categories, users, businesses, notifications, settings, inventory } = require('../controllers/entityController');
-const { sales, purchases, dashboard, reports } = require('../controllers/opsController');
+const { sales, purchases, dashboard, reports, transactions } = require('../controllers/opsController');
 const authRoutes = require('./authRoutes');
 
 const router = express.Router();
@@ -87,6 +87,6 @@ router.delete('/users/:id', auth, authorize('admin'), mongoId(), validate, users
 router.get('/businesses/current', auth, businesses.get);
 router.put('/businesses/current', auth, authorize('admin'), businesses.update);
 
-router.get('/transactions', auth, sales.list);
+router.get('/transactions', auth, transactions.list);
 
 module.exports = router;

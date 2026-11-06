@@ -5,6 +5,7 @@ import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { APP_NAME, APP_VERSION } from '@/constants';
 import type { TranslationKey } from '@/localization';
+import { BrandMark } from '@/components/common';
 import { spacing } from '@/theme';
 
 const FEATURE_KEYS: TranslationKey[] = [
@@ -25,7 +26,7 @@ export const AboutAppScreen: React.FC = () => {
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.logo}>🏢</Text>
+        <BrandMark size={36} />
         <Text variant="headlineMedium" style={{ color: colors.text, fontWeight: '700' }}>{APP_NAME}</Text>
         <Text variant="bodyMedium" style={{ color: colors.textSecondary }}>
           {t('common.version', { version: APP_VERSION })}
@@ -51,6 +52,5 @@ export const AboutAppScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: spacing.lg },
-  header: { alignItems: 'center', marginBottom: spacing.xl },
-  logo: { fontSize: 64, marginBottom: spacing.md },
+  header: { alignItems: 'center', marginBottom: spacing.xl, gap: spacing.md },
 });

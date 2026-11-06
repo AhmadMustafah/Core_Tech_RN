@@ -1,39 +1,86 @@
 import type { Language } from '@/types';
 import { translate } from '@/localization';
 
-export const formatCurrency = (amount: number, currency = 'PKR'): string => {
-  return `${currency} ${amount.toLocaleString('en-PK', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })}`;
+const toNumber = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return 0;
 };
 
-const dateLocale = (language: Language = 'en') => (language === 'ur' ? 'ur-PK' : 'en-PK');
-
-export const formatDate = (date: string | Date, language: Language = 'en'): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString(dateLocale(language), {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+const toValidDate = (value: string | Date | null | undefined): Date | null => {
+  if (!value) {
+    return null;
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 };
 
-export const formatDateTime = (date: string | Date, language: Language = 'en'): string => {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleString(dateLocale(language), {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+const numberLocale = (language: Language = 'en') => (language === 'ur' ? 'ur-PK' : 'en-PK');
+
+export const formatCurrency = (amount: unknown, currency = 'PKR'): string => {
+  const value = toNumber(amount);
+  try {
+    return `${currency} ${value.toLocaleString('en-PK', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    })}`;
+  } catch {
+    const formatted = Number.isInteger(value) ? String(value) : value.toFixed(2);
+    return `${currency} ${formatted}`;
+  }
 };
 
-export const formatRelativeTime = (date: string, language: Language = 'en'): string => {
-  const now = new Date();
-  const then = new Date(date);
-  const diffMs = now.getTime() - then.getTime();
+export const formatDate = (date: string | Date | null | undefined, language: Language = 'en'): string => {
+  const d = toValidDate(date);
+  if (!d) {
+    return '';
+  }
+  try {
+    return d.toLocaleDateString(numberLocale(language), {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch {
+    return d.toISOString().slice(0, 10);
+  }
+};
+
+export const formatDateTime = (date: string | Date | null | undefined, language: Language = 'en'): string => {
+  const d = toValidDate(date);
+  if (!d) {
+    return '';
+  }
+  try {
+    return d.toLocaleString(numberLocale(language), {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return d.toISOString().slice(0, 16).replace('T', ' ');
+  }
+};
+
+export const formatRelativeTime = (
+  date: string | Date | null | undefined,
+  language: Language = 'en',
+): string => {
+  const then = toValidDate(date);
+  if (!then) {
+    return '';
+  }
+
+  const diffMs = Date.now() - then.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
@@ -42,7 +89,7 @@ export const formatRelativeTime = (date: string, language: Language = 'en'): str
   if (diffMins < 60) return translate(language, 'time.minutesAgo', { count: diffMins });
   if (diffHours < 24) return translate(language, 'time.hoursAgo', { count: diffHours });
   if (diffDays < 7) return translate(language, 'time.daysAgo', { count: diffDays });
-  return formatDate(date, language);
+  return formatDate(then, language);
 };
 
 export const generateId = (): string => {
@@ -75,6 +122,9 @@ export const isLowStock = (quantity: number, threshold: number): boolean => {
 };
 
 export const getInitials = (name: string): string => {
+  if (!name) {
+    return 'U';
+  }
   return name
     .split(' ')
     .map(n => n[0])

@@ -3,6 +3,7 @@ import authReducer from './slices/authSlice';
 import themeReducer from './slices/themeSlice';
 import settingsReducer from './slices/settingsSlice';
 import dashboardReducer from './slices/dashboardSlice';
+import dataSyncReducer from './slices/dataSyncSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     theme: themeReducer,
     settings: settingsReducer,
     dashboard: dashboardReducer,
+    dataSync: dataSyncReducer,
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({

@@ -1,44 +1,28 @@
 import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
-import { Text, SegmentedButtons, Icon } from 'react-native-paper';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text, Icon } from 'react-native-paper';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setThemeMode, setThemePreset } from '@/redux/slices/themeSlice';
+import { setThemeMode } from '@/redux/slices/themeSlice';
 import { storage } from '@/utils/storage';
+import { settingsService } from '@/services/settingsService';
 import { STORAGE_KEYS } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import type { ThemeMode } from '@/types';
-import { THEME_PRESET_OPTIONS, type ThemePreset, borderRadius, spacing } from '@/theme';
-import type { TranslationKey } from '@/localization';
+import { borderRadius, spacing } from '@/theme';
 import { SettingsHint, SettingsSection } from './settingsUi';
-
-const themeLabelKeys: Record<ThemePreset, TranslationKey> = {
-  default: 'theme.default',
-  ocean: 'theme.ocean',
-  emerald: 'theme.emerald',
-  purple: 'theme.purple',
-  sunset: 'theme.sunset',
-};
 
 export const ThemeSettingsScreen: React.FC = () => {
   const { colors } = useAppTheme();
   const { t } = useLocalization();
   const dispatch = useAppDispatch();
   const themeMode = useAppSelector(state => state.theme.mode);
-  const themePreset = useAppSelector(state => state.theme.preset);
 
   const handleThemeChange = useCallback(
     async (mode: ThemeMode) => {
       dispatch(setThemeMode(mode));
       await storage.setItem(STORAGE_KEYS.THEME_MODE, mode);
-    },
-    [dispatch],
-  );
-
-  const handlePresetChange = useCallback(
-    async (preset: ThemePreset) => {
-      dispatch(setThemePreset(preset));
-      await storage.setItem(STORAGE_KEYS.THEME_PRESET, preset);
+      settingsService.update({ themeMode: mode }).catch(() => undefined);
     },
     [dispatch],
   );
@@ -49,51 +33,44 @@ export const ThemeSettingsScreen: React.FC = () => {
       contentContainerStyle={styles.content}>
       <SettingsHint>{t('settings.themeHint')}</SettingsHint>
 
-      <SettingsSection title={t('settings.appearance')}>
-        <SegmentedButtons
-          value={themeMode}
-          onValueChange={v => handleThemeChange(v as ThemeMode)}
-          buttons={[
-            { value: 'light', label: t('settings.light'), icon: 'white-balance-sunny' },
-            { value: 'dark', label: t('settings.dark'), icon: 'moon-waning-crescent' },
-            { value: 'system', label: t('settings.system'), icon: 'theme-light-dark' },
-          ]}
-          style={styles.segmented}
-        />
-      </SettingsSection>
-
-      <SettingsSection title={t('settings.themes')}>
-        <Text variant="bodySmall" style={[styles.sectionHint, { color: colors.textSecondary }]}>
-          {t('settings.themesHint')}
-        </Text>
-        <View style={styles.presetGrid}>
-          {THEME_PRESET_OPTIONS.map(option => {
-            const selected = themePreset === option.id;
-            return (
-              <TouchableOpacity
-                key={option.id}
-                activeOpacity={0.82}
-                onPress={() => handlePresetChange(option.id)}
-                style={[
-                  styles.presetChip,
-                  {
-                    backgroundColor: selected ? colors.primaryMuted : colors.surfaceVariant,
-                    borderColor: selected ? colors.primary : colors.border,
-                  },
-                ]}>
-                <View style={[styles.presetSwatch, { backgroundColor: option.swatch }]} />
-                <Text
-                  style={[
-                    styles.presetLabel,
-                    { color: selected ? colors.primary : colors.text },
-                    selected && styles.presetLabelSelected,
-                  ]}>
-                  {t(themeLabelKeys[option.id])}
-                </Text>
-                {selected ? <Icon source="check-circle" size={16} color={colors.primary} /> : null}
-              </TouchableOpacity>
-            );
-          })}
+      <SettingsSection>
+        <View style={styles.choices}>
+          <Pressable
+            onPress={() => handleThemeChange('light')}
+            style={[
+              styles.choice,
+              {
+                backgroundColor: themeMode === 'light' ? colors.primaryMuted : colors.surfaceVariant,
+                borderColor: themeMode === 'light' ? colors.primary : colors.border,
+              },
+            ]}>
+            <Icon source="white-balance-sunny" size={22} color={colors.primary} />
+            <View style={styles.choiceText}>
+              <Text style={[styles.choiceTitle, { color: colors.text }]}>{t('settings.bright')}</Text>
+              <Text style={[styles.choiceDesc, { color: colors.textSecondary }]}>
+                {t('settings.brightDesc')}
+              </Text>
+            </View>
+            {themeMode === 'light' ? <Icon source="check-circle" size={20} color={colors.primary} /> : null}
+          </Pressable>
+          <Pressable
+            onPress={() => handleThemeChange('dark')}
+            style={[
+              styles.choice,
+              {
+                backgroundColor: themeMode === 'dark' ? colors.primaryMuted : colors.surfaceVariant,
+                borderColor: themeMode === 'dark' ? colors.primary : colors.border,
+              },
+            ]}>
+            <Icon source="moon-waning-crescent" size={22} color={colors.primary} />
+            <View style={styles.choiceText}>
+              <Text style={[styles.choiceTitle, { color: colors.text }]}>{t('settings.dark')}</Text>
+              <Text style={[styles.choiceDesc, { color: colors.textSecondary }]}>
+                {t('settings.darkDesc')}
+              </Text>
+            </View>
+            {themeMode === 'dark' ? <Icon source="check-circle" size={20} color={colors.primary} /> : null}
+          </Pressable>
         </View>
       </SettingsSection>
     </ScrollView>
@@ -103,40 +80,29 @@ export const ThemeSettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingTop: spacing.md, paddingBottom: spacing.xxl },
-  segmented: { margin: spacing.md },
-  sectionHint: {
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  presetGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  choices: {
+    padding: spacing.md,
     gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.md,
   },
-  presetChip: {
+  choice: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+    padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    gap: spacing.sm,
-    minWidth: '47%',
-    flexGrow: 1,
   },
-  presetSwatch: {
-    width: 14,
-    height: 14,
-    borderRadius: borderRadius.full,
-  },
-  presetLabel: {
-    fontSize: 13,
+  choiceText: {
     flex: 1,
-    fontWeight: '500',
+    minWidth: 0,
   },
-  presetLabelSelected: {
+  choiceTitle: {
+    fontSize: 16,
     fontWeight: '600',
+  },
+  choiceDesc: {
+    fontSize: 13,
+    marginTop: 2,
+    lineHeight: 18,
   },
 });

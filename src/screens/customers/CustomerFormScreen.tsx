@@ -5,6 +5,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CustomButton, CustomInput, FormScrollView } from '@/components/common';
 import { customerService } from '@/services/customerService';
+import { useAppDispatch } from '@/redux/hooks';
+import { markAppDataStale } from '@/redux/slices/dataSyncSlice';
+import { getErrorMessage } from '@/services/api';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { validateEmail, validatePhone, validateName, validateOptionalText } from '@/utils/validators';
@@ -16,11 +19,13 @@ type Props = NativeStackScreenProps<ProfileStackParamList, 'AddCustomer' | 'Edit
 interface CustomerForm { name: string; email: string; phone: string; address: string; company: string; }
 
 export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
+  const dispatch = useAppDispatch();
   const isEdit = route.name === 'EditCustomer';
   const customerId = isEdit ? (route.params as { customerId: string }).customerId : null;
   const { colors } = useAppTheme();
   const { t } = useLocalization();
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const { control, handleSubmit, setValue, formState: { errors } } = useForm<CustomerForm>();
 
   React.useEffect(() => {
@@ -33,11 +38,16 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [isEdit, customerId, setValue]);
 
   const onSubmit = async (data: CustomerForm) => {
+    if (loading) return;
+    setFormError(null);
     setLoading(true);
     try {
       if (isEdit && customerId) await customerService.update(customerId, data);
       else await customerService.create(data);
+      dispatch(markAppDataStale());
       navigation.goBack();
+    } catch (err) {
+      setFormError(getErrorMessage(err));
     } finally { setLoading(false); }
   };
 
@@ -51,7 +61,7 @@ export const CustomerFormScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <FormScrollView style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.scroll}>
-        <Text variant="titleLarge" style={{ color: colors.text, marginBottom: spacing.lg }}>{isEdit ? t('customer.edit') : t('customer.add')}</Text>
+        {formError ? <Text style={{ color: colors.error, marginBottom: spacing.md }}>{formError}</Text> : null}
         {fields.map(f => (
           <Controller key={f.name} control={control} name={f.name} rules={{ validate: f.validate }}
             render={({ field: { onChange, value } }) => (

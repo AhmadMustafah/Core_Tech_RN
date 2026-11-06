@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { DashboardScreen } from '@/screens/dashboard/DashboardScreen';
 import { ActivityScreen } from '@/screens/dashboard/ActivityScreen';
+import { TransactionListScreen } from '@/screens/dashboard/TransactionListScreen';
 import { renderDrawerHeaderLeft } from './drawerContext';
 import type { DashboardStackParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
@@ -29,7 +30,14 @@ export const DashboardNavigator: React.FC = () => {
         name="Activity"
         component={ActivityScreen}
         options={{
-          title: t('screen.activity'),
+          title: t('drawer.history'),
+        }}
+      />
+      <Stack.Screen
+        name="Transactions"
+        component={TransactionListScreen}
+        options={{
+          title: t('tx.title'),
         }}
       />
     </Stack.Navigator>

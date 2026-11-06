@@ -16,7 +16,8 @@ const applyStockChange = async ({
   session,
   alerts,
 }) => {
-  const product = await Product.findOne({ _id: productId, businessId }).session(session);
+  const query = Product.findOne({ _id: productId, businessId });
+  const product = session ? await query.session(session) : await query;
   if (!product) {
     throw new ApiError(404, 'Product not found');
   }
@@ -29,26 +30,26 @@ const applyStockChange = async ({
 
   const previousQuantity = product.stockQuantity;
   product.stockQuantity = nextQty;
-  await product.save({ session });
+  await product.save(session ? { session } : undefined);
 
-  await StockMovement.create(
-    [
-      {
-        businessId,
-        productId,
-        type,
-        direction,
-        quantity,
-        previousQuantity,
-        newQuantity: nextQty,
-        referenceType,
-        referenceId,
-        note,
-        createdBy: userId,
-      },
-    ],
-    { session },
-  );
+  const movement = {
+    businessId,
+    productId,
+    type,
+    direction,
+    quantity,
+    previousQuantity,
+    newQuantity: nextQty,
+    referenceType,
+    referenceId,
+    note,
+    createdBy: userId,
+  };
+  if (session) {
+    await StockMovement.create([movement], { session });
+  } else {
+    await StockMovement.create(movement);
+  }
 
   if (product.stockQuantity <= product.lowStockThreshold && Array.isArray(alerts)) {
     alerts.push({
@@ -69,22 +70,30 @@ const applyStockChange = async ({
   return product;
 };
 
+const TXN_UNSUPPORTED = /Transaction numbers are only allowed|replica set member|IllegalOperation/i;
+
 const withTransaction = async (work) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  let session;
   try {
+    session = await mongoose.startSession();
+    session.startTransaction();
     const result = await work(session);
     await session.commitTransaction();
     return result;
   } catch (error) {
-    try {
-      await session.abortTransaction();
-    } catch (_abortError) {
-      // already aborted
+    if (session) {
+      try {
+        await session.abortTransaction();
+      } catch (_abortError) {
+        // already aborted
+      }
+    }
+    if (TXN_UNSUPPORTED.test(String(error?.message || ''))) {
+      return work(null);
     }
     throw error;
   } finally {
-    session.endSession();
+    session?.endSession();
   }
 };
 

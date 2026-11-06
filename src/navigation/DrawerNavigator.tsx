@@ -8,23 +8,20 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, Avatar, TouchableRipple } from 'react-native-paper';
-import {
-  CommonActions,
-  useNavigation,
-  type NavigationProp,
-} from '@react-navigation/native';
+import { Text, Avatar, IconButton, TouchableRipple } from 'react-native-paper';
+import { CommonActions, type NavigationProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { MainTabNavigator } from './MainTabNavigator';
+import { MainShellNavigator } from './MainShellNavigator';
+import { popToTabs } from './navHelpers';
 import { DrawerContext, type ActiveRoute } from './drawerContext';
-import type { MainTabParamList, RootStackParamList } from '@/types/navigation';
+import type { MainTabParamList } from '@/types/navigation';
 import { useAppTheme } from '@/hooks/useAppTheme';
-import { useAuth } from '@/hooks/useAuth';
 import { useAppSelector } from '@/redux/hooks';
 import { getInitials } from '@/utils/formatters';
 import { borderRadius, getDrawerShadow, layout, spacing, typography } from '@/theme';
 import { useLocalization } from '@/hooks/useLocalization';
+import { getDirectionalIconStyle } from '@/localization';
 import type { TranslationKey } from '@/localization';
 
 const OPEN_DURATION = 200;
@@ -36,97 +33,39 @@ type DrawerMenuItem = {
   icon: string;
   tab: keyof MainTabParamList;
   screen: string;
-  section: 'overview' | 'operations' | 'insights';
 };
 
-const MENU_SECTIONS: { key: DrawerMenuItem['section']; titleKey: TranslationKey }[] = [
-  { key: 'overview', titleKey: 'drawer.section.overview' },
-  { key: 'operations', titleKey: 'drawer.section.operations' },
-  { key: 'insights', titleKey: 'drawer.section.insights' },
-];
-
 const DRAWER_MENU_ITEMS: DrawerMenuItem[] = [
+  {
+    id: 'products',
+    labelKey: 'drawer.products',
+    icon: 'package-variant-closed',
+    tab: 'Inventory',
+    screen: 'ProductList',
+  },
+  {
+    id: 'history',
+    labelKey: 'drawer.history',
+    icon: 'history',
+    tab: 'Dashboard',
+    screen: 'Activity',
+  },
   {
     id: 'profile',
     labelKey: 'drawer.profile',
     icon: 'account-circle-outline',
     tab: 'Profile',
     screen: 'ProfileHome',
-    section: 'overview',
-  },
-  {
-    id: 'dashboard',
-    labelKey: 'drawer.dashboard',
-    icon: 'view-dashboard-outline',
-    tab: 'Dashboard',
-    screen: 'DashboardHome',
-    section: 'overview',
-  },
-  {
-    id: 'sales',
-    labelKey: 'drawer.sales',
-    icon: 'cart-outline',
-    tab: 'Sales',
-    screen: 'SalesList',
-    section: 'operations',
-  },
-  {
-    id: 'purchases',
-    labelKey: 'drawer.purchases',
-    icon: 'truck-outline',
-    tab: 'Purchases',
-    screen: 'PurchaseList',
-    section: 'operations',
-  },
-  {
-    id: 'inventory',
-    labelKey: 'drawer.inventory',
-    icon: 'warehouse',
-    tab: 'Inventory',
-    screen: 'ProductList',
-    section: 'operations',
-  },
-  {
-    id: 'products',
-    labelKey: 'drawer.products',
-    icon: 'package-variant-closed',
-    tab: 'Inventory',
-    screen: 'AddProduct',
-    section: 'operations',
-  },
-  {
-    id: 'reports',
-    labelKey: 'drawer.reports',
-    icon: 'chart-line',
-    tab: 'Dashboard',
-    screen: 'Activity',
-    section: 'insights',
-  },
-  {
-    id: 'notifications',
-    labelKey: 'drawer.notifications',
-    icon: 'bell-outline',
-    tab: 'Profile',
-    screen: 'Notifications',
-    section: 'insights',
-  },
-  {
-    id: 'settings',
-    labelKey: 'drawer.settings',
-    icon: 'cog-outline',
-    tab: 'Profile',
-    screen: 'Settings',
-    section: 'insights',
-  },
-  {
-    id: 'help',
-    labelKey: 'drawer.help',
-    icon: 'help-circle-outline',
-    tab: 'Profile',
-    screen: 'AboutApp',
-    section: 'insights',
   },
 ];
+
+const SETTINGS_ITEM: DrawerMenuItem = {
+  id: 'settings',
+  labelKey: 'drawer.settings',
+  icon: 'cog-outline',
+  tab: 'Profile',
+  screen: 'Settings',
+};
 
 const isItemActive = (item: DrawerMenuItem, activeRoute: ActiveRoute | null) => {
   if (!activeRoute) {
@@ -143,6 +82,7 @@ const DrawerMenuRow = memo<{
   onPress: () => void;
 }>(({ item, label, active, onPress }) => {
   const { colors } = useAppTheme();
+  const { isRTL } = useLocalization();
 
   return (
     <TouchableRipple
@@ -168,6 +108,7 @@ const DrawerMenuRow = memo<{
           />
         </View>
         <Text
+          numberOfLines={1}
           style={[
             styles.menuLabel,
             { color: active ? colors.primary : colors.text },
@@ -175,6 +116,12 @@ const DrawerMenuRow = memo<{
           ]}>
           {label}
         </Text>
+        <Icon
+          name="chevron-right"
+          size={18}
+          color={active ? colors.primary : colors.textMuted}
+          style={getDirectionalIconStyle(isRTL)}
+        />
       </View>
     </TouchableRipple>
   );
@@ -192,11 +139,9 @@ const DrawerPanel = memo<{
   isRTL: boolean;
 }>(({ open, slideAnim, backdropAnim, activeRoute, onClose, tabNavigationRef, isRTL }) => {
   const { colors } = useAppTheme();
-  const { t, directionalIconStyle } = useLocalization();
+  const { t } = useLocalization();
   const insets = useSafeAreaInsets();
   const { user } = useAppSelector(state => state.auth);
-  const { logout } = useAuth();
-  const rootNavigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   useEffect(() => {
     if (!open) {
@@ -215,6 +160,7 @@ const DrawerPanel = memo<{
     (item: DrawerMenuItem) => {
       const tabNavigation = tabNavigationRef.current;
       if (tabNavigation) {
+        popToTabs(tabNavigation);
         tabNavigation.dispatch(
           CommonActions.navigate({
             name: item.tab,
@@ -227,17 +173,9 @@ const DrawerPanel = memo<{
     [onClose, tabNavigationRef],
   );
 
-  const handleLogout = useCallback(() => {
-    onClose(() => {
-      logout();
-      rootNavigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Auth', params: { screen: 'Login' } }],
-        }),
-      );
-    });
-  }, [logout, onClose, rootNavigation]);
+  const openSettings = useCallback(() => {
+    navigateTo(SETTINGS_ITEM);
+  }, [navigateTo]);
 
   return (
     <View
@@ -275,14 +213,35 @@ const DrawerPanel = memo<{
           },
         ]}>
         <View style={[styles.drawerHeader, { backgroundColor: colors.drawerHeader }]}>
-          <Avatar.Text
-            size={52}
-            label={getInitials(user?.name || t('common.user'))}
-            style={{ backgroundColor: 'rgba(255,255,255,0.22)' }}
-            color="#FFFFFF"
-          />
-          <Text style={styles.drawerName}>{user?.name || t('common.user')}</Text>
-          <Text style={styles.drawerCompany}>{user?.company || t('common.appName')}</Text>
+          <View style={styles.headerTop}>
+            <Avatar.Text
+              size={44}
+              label={getInitials(user?.name || t('common.user'))}
+              style={styles.headerAvatar}
+              color="#FFFFFF"
+            />
+            <View style={styles.headerIdentity}>
+              <Text style={styles.drawerName} numberOfLines={1}>
+                {user?.name || t('common.user')}
+              </Text>
+              {user?.role ? (
+                <Text style={styles.drawerRole} numberOfLines={1}>
+                  {user.role}
+                </Text>
+              ) : null}
+              <Text style={styles.drawerCompany} numberOfLines={1}>
+                {user?.company || t('common.appName')}
+              </Text>
+            </View>
+            <IconButton
+              icon="cog-outline"
+              iconColor="#FFFFFF"
+              size={20}
+              onPress={openSettings}
+              accessibilityLabel={t('drawer.settings')}
+              style={styles.settingsButton}
+            />
+          </View>
         </View>
 
         <ScrollView
@@ -291,41 +250,16 @@ const DrawerPanel = memo<{
             { paddingBottom: spacing.lg + insets.bottom },
           ]}
           showsVerticalScrollIndicator={false}>
-          {MENU_SECTIONS.map((section, sectionIndex) => (
-            <View key={section.key}>
-              {sectionIndex > 0 ? (
-                <View style={[styles.sectionDivider, { backgroundColor: colors.borderLight }]} />
-              ) : null}
-              <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
-                {t(section.titleKey)}
-              </Text>
-              {DRAWER_MENU_ITEMS.filter(item => item.section === section.key).map(item => (
-                <DrawerMenuRow
-                  key={item.id}
-                  item={item}
-                  label={t(item.labelKey)}
-                  active={isItemActive(item, activeRoute)}
-                  onPress={() => navigateTo(item)}
-                />
-              ))}
-            </View>
+          <Text style={[styles.menuHeading, { color: colors.textMuted }]}>{t('drawer.menu')}</Text>
+          {DRAWER_MENU_ITEMS.map(item => (
+            <DrawerMenuRow
+              key={item.id}
+              item={item}
+              label={t(item.labelKey)}
+              active={isItemActive(item, activeRoute)}
+              onPress={() => navigateTo(item)}
+            />
           ))}
-
-          <View style={[styles.sectionDivider, { backgroundColor: colors.borderLight }]} />
-          <TouchableRipple
-            onPress={handleLogout}
-            style={styles.logoutItem}
-            borderless
-            rippleColor={colors.error + '18'}>
-            <View style={styles.menuItemContent}>
-              <View style={[styles.menuIconWrap, { backgroundColor: colors.error + '14' }]}>
-                <Icon name="logout" size={20} color={colors.error} style={directionalIconStyle} />
-              </View>
-              <Text style={[styles.menuLabel, { color: colors.error, fontWeight: '600' }]}>
-                {t('drawer.logout')}
-              </Text>
-            </View>
-          </TouchableRipple>
         </ScrollView>
       </Animated.View>
     </View>
@@ -425,7 +359,7 @@ export const DrawerNavigator: React.FC = () => {
   return (
     <DrawerContext.Provider value={contextValue}>
       <View style={styles.container}>
-        <MainTabNavigator />
+        <MainShellNavigator />
         {mounted ? (
           <DrawerPanel
             open={open}
@@ -467,33 +401,54 @@ const styles = StyleSheet.create({
     right: 0,
   },
   drawerHeader: {
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255,255,255,0.12)',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  headerAvatar: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  headerIdentity: {
+    flex: 1,
+    minWidth: 0,
+  },
+  settingsButton: {
+    margin: 0,
   },
   drawerName: {
-    ...(typography.h3 as object),
+    ...(typography.h4 as object),
     color: '#FFFFFF',
-    marginTop: spacing.md,
+  },
+  drawerRole: {
+    ...(typography.caption as object),
+    color: 'rgba(255,255,255,0.92)',
+    marginTop: 2,
+    textTransform: 'capitalize',
+    fontWeight: '600',
   },
   drawerCompany: {
-    ...(typography.bodySmall as object),
-    color: 'rgba(255,255,255,0.78)',
-    marginTop: spacing.xs,
+    ...(typography.caption as object),
+    color: 'rgba(255,255,255,0.68)',
+    marginTop: 2,
   },
-  drawerScroll: {
-    paddingTop: spacing.sm,
-  },
-  sectionLabel: {
-    ...(typography.label as object),
+  menuHeading: {
+    ...(typography.caption as object),
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
   },
-  sectionDivider: {
-    height: 1,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.sm,
+  drawerScroll: {
+    paddingTop: spacing.xs,
   },
   menuItem: {
     marginHorizontal: spacing.sm,
@@ -521,10 +476,5 @@ const styles = StyleSheet.create({
   },
   menuLabelActive: {
     fontWeight: '600',
-  },
-  logoutItem: {
-    marginHorizontal: spacing.sm,
-    marginTop: spacing.xs,
-    borderRadius: borderRadius.md,
   },
 });

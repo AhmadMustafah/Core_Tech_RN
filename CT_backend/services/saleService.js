@@ -58,7 +58,15 @@ const listSales = async (businessId, query) => {
 };
 
 const getSale = async (businessId, id) => {
-  const sale = await Sale.findOne({ _id: id, businessId });
+  const filter = { businessId };
+  if (mongoose.isValidObjectId(id)) {
+    filter._id = id;
+  } else if (id) {
+    filter.invoiceNumber = String(id);
+  } else {
+    throw new ApiError(400, 'Sale id is required');
+  }
+  const sale = await Sale.findOne(filter);
   if (!sale) throw new ApiError(404, 'Sale not found');
   return toClient(sale);
 };
@@ -77,26 +85,24 @@ const createSale = async (user, body) => {
   const alerts = [];
   const sale = await withTransaction(async (session) => {
     const invoiceNumber = await nextInvoiceNumber(user.businessId, session);
-    const [doc] = await Sale.create(
-      [
-        {
-          businessId: user.businessId,
-          invoiceNumber,
-          customerId: customer._id,
-          customerName: customer.name,
-          items,
-          subtotal,
-          discount,
-          tax,
-          totalAmount,
-          paymentStatus: body.paymentStatus || 'pending',
-          notes: body.notes,
-          createdBy: user._id,
-          stockApplied: true,
-        },
-      ],
-      { session },
-    );
+    const payload = {
+      businessId: user.businessId,
+      invoiceNumber,
+      customerId: customer._id,
+      customerName: customer.name,
+      items,
+      subtotal,
+      discount,
+      tax,
+      totalAmount,
+      paymentStatus: body.paymentStatus || 'pending',
+      notes: body.notes,
+      createdBy: user._id,
+      stockApplied: true,
+    };
+    const doc = session
+      ? (await Sale.create([payload], { session }))[0]
+      : await Sale.create(payload);
 
     for (const item of items) {
       await applyStockChange({
@@ -114,8 +120,11 @@ const createSale = async (user, body) => {
       });
     }
 
-    customer.totalPurchases = (customer.totalPurchases || 0) + totalAmount;
-    await customer.save({ session });
+    await Customer.updateOne(
+      { _id: customer._id, businessId: user.businessId },
+      { $inc: { totalPurchases: totalAmount } },
+      session ? { session } : undefined,
+    );
     return doc;
   });
 
@@ -174,11 +183,11 @@ const updateSalePayment = async (user, id, paymentStatus) => {
 };
 
 const deleteSale = async (user, id) => {
-  const sale = await Sale.findOne({ _id: id, businessId: user.businessId });
-  if (!sale) throw new ApiError(404, 'Sale not found');
-
   const alerts = [];
-  await withTransaction(async (session) => {
+  const snapshot = await withTransaction(async (session) => {
+    const query = Sale.findOne({ _id: id, businessId: user.businessId });
+    const sale = session ? await query.session(session) : await query;
+    if (!sale) throw new ApiError(404, 'Sale not found');
     if (sale.stockApplied) {
       for (const item of sale.items) {
         await applyStockChange({
@@ -199,9 +208,12 @@ const deleteSale = async (user, id) => {
     await Customer.updateOne(
       { _id: sale.customerId, businessId: user.businessId },
       { $inc: { totalPurchases: -sale.totalAmount } },
-      { session },
+      session ? { session } : undefined,
     );
-    await sale.deleteOne({ session });
+    const invoiceNumber = sale.invoiceNumber;
+    const saleId = String(sale._id);
+    await sale.deleteOne(session ? { session } : undefined);
+    return { invoiceNumber, saleId };
   });
   await flushStockAlerts(user.businessId, alerts);
 
@@ -209,10 +221,10 @@ const deleteSale = async (user, id) => {
     type: 'sale',
     action: 'deleted',
     title: 'Sale deleted',
-    description: sale.invoiceNumber,
+    description: snapshot.invoiceNumber,
     actor: actorFrom(user),
     entityType: 'sale',
-    entityId: String(sale._id),
+    entityId: snapshot.saleId,
   });
 };
 

@@ -5,10 +5,8 @@ const mongoId = (field = 'id') => param(field).isMongoId().withMessage('Invalid 
 
 const passwordRule = (field = 'password') =>
   body(field)
-    .isLength({ min: 8, max: 64 })
-    .withMessage('Password must be 8-64 characters')
-    .matches(/^(?=.*[A-Za-z])(?=.*\d)/)
-    .withMessage('Password must include a letter and a number');
+    .isLength({ min: 6, max: 64 })
+    .withMessage('Password must be at least 6 characters');
 
 const productRules = [
   body('name').trim().isLength({ min: 2, max: 100 }).withMessage('Product name is required'),

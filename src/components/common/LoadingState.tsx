@@ -24,7 +24,12 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
     : t('common.loading');
 
   return (
-    <View style={[styles.container, fullScreen && styles.fullScreen]}>
+    <View
+      style={[
+        styles.container,
+        fullScreen && styles.fullScreen,
+        { backgroundColor: colors.background },
+      ]}>
       <ActivityIndicator size="large" color={colors.primary} />
       <Text
         variant="bodyMedium"

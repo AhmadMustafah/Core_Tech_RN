@@ -107,6 +107,7 @@ export interface Purchase {
   items: PurchaseItem[];
   totalAmount: number;
   notes?: string;
+  status?: 'pending' | 'received' | 'cancelled';
   createdAt: string;
 }
 
@@ -120,21 +121,58 @@ export interface DashboardSummary {
   purchasesAmount: number;
 }
 
+export type ActivityAction =
+  | 'created'
+  | 'updated'
+  | 'deleted'
+  | 'status_changed'
+  | 'stock_changed'
+  | 'logged_in'
+  | 'logged_out'
+  | 'alert';
+
+export interface ActivityActor {
+  id?: string;
+  name?: string;
+  role?: string;
+  avatar?: string;
+}
+
 export interface Activity {
   id: string;
-  type: 'sale' | 'purchase' | 'product' | 'customer';
+  type: 'sale' | 'purchase' | 'product' | 'customer' | 'supplier' | 'payment' | 'auth';
   title: string;
   description: string;
   timestamp: string;
+  action?: ActivityAction;
+  actor?: ActivityActor;
+  entityType?: string;
+  entityId?: string;
+  entityName?: string;
+  entityReference?: string;
+  status?: string;
+  previousValue?: string;
+  newValue?: string;
 }
 
 export interface AppNotification {
   id: string;
-  type: 'order_created' | 'sale_completed' | 'purchase_completed' | 'low_stock';
+  type:
+    | 'order_created'
+    | 'sale_completed'
+    | 'purchase_completed'
+    | 'low_stock'
+    | 'customer_activity'
+    | 'supplier_activity'
+    | 'payment_update'
+    | 'system_alert';
   title: string;
   message: string;
   read: boolean;
   createdAt: string;
+  relatedType?: 'product' | 'sale' | 'purchase' | 'customer' | 'supplier';
+  relatedId?: string;
+  details?: Record<string, unknown> | null;
 }
 
 export interface ApiResponse<T> {
@@ -150,8 +188,7 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
-export type ThemeMode = 'light' | 'dark' | 'system';
-export type { ThemePreset } from '@/theme';
+export type ThemeMode = 'light' | 'dark';
 export type Language = 'en' | 'ur';
 export type DateFormat = 'dmy' | 'mdy' | 'ymd';
 export type CurrencyDisplay = 'symbol' | 'code';

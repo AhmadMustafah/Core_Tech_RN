@@ -34,11 +34,9 @@ export const validateLoginPassword = (password: string): ValidationResult => {
   return true;
 };
 
-/** Used when creating or changing passwords — full security rules */
+/** Used when creating or changing passwords — min 6 characters, confirm match separately */
 export const validateSecurePassword = (password: string): ValidationResult => {
-  if (!password) return 'validation.passwordRequired';
-  const errors = getPasswordSecurityErrors(password);
-  return errors.length > 0 ? errors[0] : true;
+  return validateLoginPassword(password);
 };
 
 /** @deprecated Use validateLoginPassword or validateSecurePassword */

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, StyleSheet, ScrollView } from 'react-native';
 import { Text } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { CustomCard, LoadingState, ErrorState } from '@/components/common';
+import { CustomButton, CustomCard, LoadingState, ErrorState } from '@/components/common';
 import { customerService } from '@/services/customerService';
+import { getErrorMessage } from '@/services/api';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { formatCurrency, formatDate } from '@/utils/formatters';
@@ -13,18 +14,53 @@ import { spacing } from '@/theme';
 
 type Props = NativeStackScreenProps<ProfileStackParamList, 'CustomerDetails'>;
 
-export const CustomerDetailsScreen: React.FC<Props> = ({ route }) => {
+export const CustomerDetailsScreen: React.FC<Props> = ({ navigation, route }) => {
   const { customerId } = route.params;
   const { colors } = useAppTheme();
   const { t, language } = useLocalization();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    customerService.getById(customerId).then(setCustomer).finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    try {
+      setCustomer(await customerService.getById(customerId));
+      setError(null);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   }, [customerId]);
 
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onDelete = () => {
+    Alert.alert(t('common.delete'), t('common.confirmDelete'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          if (busy) return;
+          setBusy(true);
+          try {
+            await customerService.delete(customerId);
+            navigation.goBack();
+          } catch (err) {
+            setError(getErrorMessage(err));
+            setBusy(false);
+          }
+        },
+      },
+    ]);
+  };
+
   if (loading) return <LoadingState />;
+  if (error && !customer) return <ErrorState message={error} onRetry={load} />;
   if (!customer) return <ErrorState message="customer.notFound" />;
 
   const fields = [
@@ -38,16 +74,19 @@ export const CustomerDetailsScreen: React.FC<Props> = ({ route }) => {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      {error ? <Text style={{ color: colors.error, marginBottom: spacing.sm }}>{error}</Text> : null}
       <CustomCard>
-        <Text variant="headlineSmall" style={{ color: colors.text, fontWeight: '700', padding: spacing.md }}>{customer.name}</Text>
+        <Text variant="headlineSmall" numberOfLines={2} style={{ color: colors.text, fontWeight: '700', padding: spacing.md }}>{customer.name}</Text>
       </CustomCard>
       <CustomCard title={t('common.details')}>
         {fields.map(f => (
-          <Text key={f.label} style={{ padding: spacing.md, color: colors.text }}>
+          <Text key={f.label} numberOfLines={2} style={{ padding: spacing.md, color: colors.text }}>
             <Text style={{ color: colors.textSecondary }}>{f.label}: </Text>{f.value}
           </Text>
         ))}
       </CustomCard>
+      <CustomButton title={t('common.edit')} onPress={() => navigation.navigate('EditCustomer', { customerId })} fullWidth />
+      <CustomButton title={t('common.delete')} variant="outline" onPress={onDelete} loading={busy} fullWidth style={{ marginTop: spacing.sm }} />
     </ScrollView>
   );
 };

@@ -2,14 +2,19 @@ import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, IconButton } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import { EmptyState, LoadingState } from '@/components/common';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { EmptyState, ErrorState, LoadingState } from '@/components/common';
+import { getErrorMessage } from '@/services/api';
 import { notificationService } from '@/services/notificationService';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import { formatRelativeTime } from '@/utils/formatters';
 import type { AppNotification } from '@/types';
+import type { MainShellParamList } from '@/types/navigation';
 import { NOTIFICATION_BODY_KEYS, NOTIFICATION_TITLE_KEYS } from '@/localization';
-import { spacing, borderRadius } from '@/theme';
+import { spacing, borderRadius, listContentStyle, listPerformanceProps } from '@/theme';
+
+type Props = NativeStackScreenProps<MainShellParamList, 'Notifications'>;
 
 const getNotificationIcon = (type: AppNotification['type']) => {
   switch (type) {
@@ -20,31 +25,38 @@ const getNotificationIcon = (type: AppNotification['type']) => {
   }
 };
 
-export const NotificationsScreen: React.FC = () => {
+export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
   const { colors } = useAppTheme();
   const { t, language } = useLocalization();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setNotifications(await notificationService.getAll()); }
-    finally { setLoading(false); }
+    setError(null);
+    try {
+      setNotifications(await notificationService.getAll());
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
-
-  const markAsRead = async (id: string) => {
-    await notificationService.markAsRead(id);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-  };
 
   const markAllRead = async () => {
     await notificationService.markAllAsRead();
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  const openDetails = (item: AppNotification) => {
+    navigation.navigate('NotificationDetails', { notification: item });
+  };
+
   if (loading && notifications.length === 0) return <LoadingState message="notify.loading" />;
+  if (error && notifications.length === 0) return <ErrorState message={error} onRetry={load} />;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -56,17 +68,26 @@ export const NotificationsScreen: React.FC = () => {
       <FlatList
         data={notifications}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={listContentStyle}
+        {...listPerformanceProps}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.card, { backgroundColor: item.read ? colors.surface : colors.primary + '08', borderColor: colors.border }]}
-            onPress={() => !item.read && markAsRead(item.id)}>
+            onPress={() => openDetails(item)}>
             <View style={styles.cardContent}>
               <IconButton icon={getNotificationIcon(item.type)} iconColor={colors.primary} size={24} style={styles.icon} />
               <View style={styles.textContent}>
-                <Text variant="titleSmall" style={{ color: colors.text, fontWeight: item.read ? '400' : '700' }}>{t(NOTIFICATION_TITLE_KEYS[item.type])}</Text>
-                <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>{t(NOTIFICATION_BODY_KEYS[item.type])}</Text>
+                <Text variant="titleSmall" numberOfLines={2} style={{ color: colors.text, fontWeight: item.read ? '400' : '700' }}>
+                  {NOTIFICATION_TITLE_KEYS[item.type as keyof typeof NOTIFICATION_TITLE_KEYS]
+                    ? t(NOTIFICATION_TITLE_KEYS[item.type as keyof typeof NOTIFICATION_TITLE_KEYS])
+                    : item.title}
+                </Text>
+                <Text variant="bodySmall" style={{ color: colors.textSecondary, marginTop: 2 }}>
+                  {NOTIFICATION_BODY_KEYS[item.type as keyof typeof NOTIFICATION_BODY_KEYS]
+                    ? t(NOTIFICATION_BODY_KEYS[item.type as keyof typeof NOTIFICATION_BODY_KEYS])
+                    : item.message}
+                </Text>
                 <Text variant="labelSmall" style={{ color: colors.textSecondary, marginTop: 4 }}>{formatRelativeTime(item.createdAt, language)}</Text>
               </View>
               {!item.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />}
@@ -82,7 +103,6 @@ export const NotificationsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   markAll: { alignItems: 'flex-end', padding: spacing.md },
-  list: { padding: spacing.md, paddingTop: 0 },
   card: { borderRadius: borderRadius.md, marginBottom: spacing.sm, borderWidth: 1 },
   cardContent: { flexDirection: 'row', alignItems: 'flex-start', padding: spacing.sm },
   icon: { margin: 0 },

@@ -54,7 +54,7 @@ export const InvoicePreviewScreen: React.FC<Props> = ({ route }) => {
         <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>{t('common.subtotal')}</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.subtotal)}</Text></View>
         <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>{t('common.discount')}</Text><Text style={{ color: colors.text }}>-{formatCurrency(sale.discount)}</Text></View>
         <View style={styles.totalLine}><Text style={{ color: colors.textSecondary }}>{t('common.tax')}</Text><Text style={{ color: colors.text }}>{formatCurrency(sale.tax)}</Text></View>
-        <View style={[styles.totalLine, styles.grandTotal]}><Text variant="titleMedium" style={{ color: colors.text, fontWeight: '700' }}>{t('common.total')}</Text><Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(sale.totalAmount)}</Text></View>
+        <View style={[styles.totalLine, styles.grandTotal, { borderTopColor: colors.border }]}><Text variant="titleMedium" style={{ color: colors.text, fontWeight: '700' }}>{t('common.total')}</Text><Text variant="titleMedium" style={{ color: colors.primary, fontWeight: '700' }}>{formatCurrency(sale.totalAmount)}</Text></View>
         <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg }}>{t('invoice.paymentStatus')}: {t(PAYMENT_STATUS_KEYS[sale.paymentStatus])}</Text>
       </CustomCard>
     </ScrollView>
@@ -68,5 +68,5 @@ const styles = StyleSheet.create({
   invoiceMeta: { flexDirection: 'row', justifyContent: 'space-between' },
   lineItem: { flexDirection: 'row', paddingVertical: spacing.xs, gap: spacing.sm },
   totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
-  grandTotal: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: '#eee' },
+  grandTotal: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1 },
 });

@@ -11,6 +11,7 @@ import { STORAGE_KEYS, APP_NAME } from '@/constants';
 import { useAppTheme } from '@/hooks/useAppTheme';
 import { useLocalization } from '@/hooks/useLocalization';
 import type { RootStackParamList } from '@/types/navigation';
+import { BrandMark } from '@/components/common';
 import { spacing, typography } from '@/theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
@@ -30,8 +31,6 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
     if (!isInitialized) return;
 
     const navigate = async () => {
-      await new Promise<void>(resolve => setTimeout(resolve, 1500));
-
       if (isAuthenticated) {
         navigation.dispatch(
           CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
@@ -61,9 +60,9 @@ export const SplashScreen: React.FC<Props> = ({ navigation }) => {
   }, [isInitialized, isAuthenticated, navigation]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.primary }]}>
+    <View style={[styles.container, { backgroundColor: colors.drawerHeader }]}>
       <View style={styles.logoContainer}>
-        <Text style={styles.logoIcon}>🏢</Text>
+        <BrandMark size={48} inverted />
         <Text style={styles.title}>{APP_NAME}</Text>
         <Text style={styles.subtitle}>{t('common.appTagline')}</Text>
       </View>
@@ -92,10 +91,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-  },
-  logoIcon: {
-    fontSize: 72,
-    marginBottom: spacing.md,
+    gap: spacing.md,
   },
   title: {
     fontSize: 28,
